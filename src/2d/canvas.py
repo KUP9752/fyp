@@ -4,6 +4,8 @@ from pygame.color import Color
 import random
 
 pygame.init()
+clock = pygame.time.Clock()
+
 ## Setup Screen
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -47,8 +49,7 @@ while isRunning:
   keys = pygame.key.get_pressed()
   for key, (dx, dy) in movement.items():
     if keys[key]:
-      print(f"Moving {dx}, {dy}")
-      # agent.move(dx, dy)
+      agent.move_ip(dx, dy)
   #     agent.move_ip(dx, dy) # this is a move 'in-place', doesn't alter the object
   
   
@@ -62,5 +63,5 @@ while isRunning:
   
   
   pygame.display.update()
-  
+  clock.tick(60)
 
