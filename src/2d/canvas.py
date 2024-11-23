@@ -53,9 +53,10 @@ while isRunning:
   #     agent.move_ip(dx, dy) # this is a move 'in-place', doesn't alter the object
   
   
-  
+  ## When collided restart the target, so the game continuosly runs
   if agent.colliderect(target):
-    print("Collision!")
+    target.x = random.randint(0, xBound)
+    target.y = random.randint(0, yBound)
   
   ## draw the squares, agend is BLUE, target is RED
   
