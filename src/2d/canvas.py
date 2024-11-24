@@ -4,6 +4,11 @@ from pygame.color import Color
 import pickle
 import random
 import time
+import typing 
+
+type State = tuple[int, int, int, int]
+type Action = tuple[bool, bool, bool, bool]
+
 
 MOV_SPEED = 5
 BLOCK_SIZE = 20 # per side
@@ -18,7 +23,6 @@ MOVEMENT: dict = {
     pygame.K_LEFT: (-MOV_SPEED, 0),
     pygame.K_RIGHT: (MOV_SPEED, 0)
   }
-
 
 def auto_policy(state: tuple[int, int], target: tuple[int, int]) -> dict[pygame.key, bool]:
   agent_x, agent_y = state
@@ -70,7 +74,8 @@ def learn_game(filepath: str, n = 10000) -> None:
 
   isRunning = True
   
-  data = []
+  data: list[tuple[State, Action]]= []
+  
   targetCount = 1 ## one target at the start
   startTime = time.perf_counter()
 
@@ -211,7 +216,7 @@ def play_game(model: RandomForestClassifier) -> None:
   pygame.quit()
 
 
-learn_game("10k-points.pkl", n = 10000)
+learn_game("10k-targets.pkl", n = 10000)
 # model = fit_model("demonstration.pkl")
 # play_game(model)
 
