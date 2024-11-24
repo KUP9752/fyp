@@ -3,6 +3,7 @@ from pygame.color import Color
 
 import pickle
 import random
+import time
 
 MOV_SPEED = 5
 BLOCK_SIZE = 20 # per side
@@ -19,8 +20,42 @@ MOVEMENT: dict = {
   }
 
 
+def auto_policy(state: tuple[int, int], target: tuple[int, int]) -> dict[pygame.key, bool]:
+  agent_x, agent_y = state
+  target_x, target_y = target
+  
+  movement = {
+    pygame.K_UP: False,
+    pygame.K_DOWN: False,
+    pygame.K_LEFT: False,
+    pygame.K_RIGHT: False
+  }
+  
+  ## To remove the jitter adjust the boundary of the condition
+  match agent_x:
+    case _ if agent_x >= target_x and agent_x < target_x + BLOCK_SIZE:
+      movement[pygame.K_LEFT] = False
+      movement[pygame.K_RIGHT] = False
+    case _ if agent_x >= target_x + BLOCK_SIZE:
+      movement[pygame.K_LEFT] = True
+    case _ if agent_x < target_x:
+      movement[pygame.K_RIGHT] = True
+      
+  match agent_y:
+    case _ if agent_y >= target_y and agent_y < target_y + BLOCK_SIZE:
+      movement[pygame.K_UP] = False
+      movement[pygame.K_DOWN] = False
+    case _ if agent_y >= target_y + BLOCK_SIZE:
+      movement[pygame.K_UP] = True
+    case _ if agent_y < target_y:
+      movement[pygame.K_DOWN] = True
+      
+  
+    
+  return movement
+
 ## File to save the demonstration data to train on
-def play_game_to_teach(filepath: str) -> None:
+def learn_game(filepath: str, n = 10000) -> None:
 
   pygame.init()
   clock = pygame.time.Clock()
@@ -34,7 +69,10 @@ def play_game_to_teach(filepath: str) -> None:
 
 
   isRunning = True
+  
   data = []
+  targetCount = 1 ## one target at the start
+  startTime = time.perf_counter()
 
   while isRunning:
     ## White Background
@@ -44,9 +82,8 @@ def play_game_to_teach(filepath: str) -> None:
       if event.type == pygame.QUIT:
         isRunning = False
       if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-        with open(filepath, "wb") as f:
-          pickle.dump(data, f)
-          isRunning = False
+        print(f"Agent(x={agent.x}, y={agent.y}) Target(x={target.x}, y={target.y})")
+        
           
     ## Game Logic
     ## draw the squares, agend is BLUE, target is RED
@@ -57,7 +94,9 @@ def play_game_to_teach(filepath: str) -> None:
     state = agent.x, agent.y, target.x, target.y
     action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
     
-    keys = pygame.key.get_pressed()
+    keys = auto_policy((agent.x, agent.y), (target.x, target.y))
+    # keys = pygame.key.get_pressed() ## teaching by human demonstration
+    
     for key, (dx, dy) in MOVEMENT.items():
       if keys[key]:
         action[key] = True
@@ -66,6 +105,7 @@ def play_game_to_teach(filepath: str) -> None:
     
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
+      targetCount += 1
       target.x = random.randint(0, X_BOUND)
       target.y = random.randint(0, Y_BOUND)
     
@@ -73,10 +113,24 @@ def play_game_to_teach(filepath: str) -> None:
     ## save the data from this frame  
     data.append((state, tuple(action.values())))
     
+    ## Finish learning when n targets are reached
+    if targetCount == n:
+      isRunning = False
+    
     pygame.display.update()
     clock.tick(60)
 
   pygame.quit()
+  
+  ## Once the Game Ends save the data
+  elapsedTime = time.perf_counter() - startTime
+  print(f"Elapsed Time: {elapsedTime} for {n} targets -> (state, action) datapoints")
+  print(f"Writing to file {filepath}")
+  
+  with open(filepath, "wb") as f:
+    pickle.dump(data, f)
+  
+  
   
   
   
@@ -85,7 +139,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
 ## Train a model on teh demonstration data
-def learn_game(filepath: str) -> RandomForestClassifier:
+def fit_model(filepath: str) -> RandomForestClassifier:
   
   with open(filepath, "rb") as f:
     data = pickle.load(f)
@@ -157,8 +211,8 @@ def play_game(model: RandomForestClassifier) -> None:
   pygame.quit()
 
 
-# play_game_to_teach("demonstration.pkl")
-model = learn_game("demonstration.pkl")
-play_game(model)
+learn_game("10k-points.pkl", n = 10000)
+# model = fit_model("demonstration.pkl")
+# play_game(model)
 
 
