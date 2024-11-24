@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 import pickle
 from tqdm import tqdm as progress
+
 ## Attempting behavioral cloning with pytorch
 
 class AgentNetwork(nn.Module):
@@ -52,5 +53,12 @@ def train_on_behaviour(dataFilepath: str) -> AgentNetwork:
   
   return policy
 
+# def play_game(model: AgentNetwork) -> None:
   
-train_on_behaviour("1k-points.pkl")
+
+  
+# train_on_behaviour("10k-targets.pkl")
+
+
+
+
