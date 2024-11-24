@@ -1,7 +1,10 @@
 import pygame
 from pygame.color import Color
 
+
+import pickle
 import random
+
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -32,6 +35,7 @@ movement: dict = {
   pygame.K_RIGHT: (MOV_SPEED, 0)
 }
 
+data = []
 
 while isRunning:
   ## White Background
@@ -40,15 +44,25 @@ while isRunning:
   for event in pygame.event.get():
     if event.type == pygame.QUIT:
       isRunning = False
-  
+    if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+      with open("demonstration.pkl", "wb") as f:
+        pickle.dump(data, f)
+        isRunning = False
+        
   ## Game Logic
+  ## draw the squares, agend is BLUE, target is RED
   pygame.draw.rect(screen, Color("blue"), agent)
   pygame.draw.rect(screen, Color("red"), target)
   
   
+  ## record the action given to the robot in this coord system
+  state = agent.x, agent.y, target.x, target.y
+  action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
+  
   keys = pygame.key.get_pressed()
   for key, (dx, dy) in movement.items():
     if keys[key]:
+      action[key] = True
       agent.move_ip(dx, dy)
   #     agent.move_ip(dx, dy) # this is a move 'in-place', doesn't alter the object
   
@@ -58,11 +72,11 @@ while isRunning:
     target.x = random.randint(0, xBound)
     target.y = random.randint(0, yBound)
   
-  ## draw the squares, agend is BLUE, target is RED
-  
-
-  
+    
+  ## save the data from this frame  
+  data.append((state, action))
   
   pygame.display.update()
   clock.tick(60)
 
+pygame.quit()
