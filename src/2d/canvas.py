@@ -4,6 +4,20 @@ from pygame.color import Color
 import pickle
 import random
 
+MOV_SPEED = 5
+BLOCK_SIZE = 20 # per side
+
+WIDTH, HEIGHT = 800, 600
+X_BOUND = WIDTH - BLOCK_SIZE
+Y_BOUND = HEIGHT - BLOCK_SIZE
+
+MOVEMENT: dict = {
+    pygame.K_UP: (0, -MOV_SPEED),
+    pygame.K_DOWN: (0, MOV_SPEED),
+    pygame.K_LEFT: (-MOV_SPEED, 0),
+    pygame.K_RIGHT: (MOV_SPEED, 0)
+  }
+
 
 ## File to save the demonstration data to train on
 def play_game_to_teach(filepath: str) -> None:
@@ -12,31 +26,14 @@ def play_game_to_teach(filepath: str) -> None:
   clock = pygame.time.Clock()
 
   ## Setup Screen
-  WIDTH, HEIGHT = 800, 600
   screen = pygame.display.set_mode((WIDTH, HEIGHT))
   pygame.display.set_caption("2D Canvas")
 
+  agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+  target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
 
-
-  MOV_SPEED = 5
-
-  BLOCK_SIZE = 20 # per side
-
-  xBound = WIDTH - BLOCK_SIZE
-  yBound = HEIGHT - BLOCK_SIZE
-
-  agent = pygame.Rect(random.randint(0, xBound), random.randint(0, yBound), BLOCK_SIZE, BLOCK_SIZE)
-  target = pygame.Rect(random.randint(0, xBound), random.randint(0, yBound), BLOCK_SIZE, BLOCK_SIZE)
 
   isRunning = True
-
-  movement: dict = {
-    pygame.K_UP: (0, -MOV_SPEED),
-    pygame.K_DOWN: (0, MOV_SPEED),
-    pygame.K_LEFT: (-MOV_SPEED, 0),
-    pygame.K_RIGHT: (MOV_SPEED, 0)
-  }
-
   data = []
 
   while isRunning:
@@ -56,23 +53,21 @@ def play_game_to_teach(filepath: str) -> None:
     pygame.draw.rect(screen, Color("blue"), agent)
     pygame.draw.rect(screen, Color("red"), target)
     
-    
     ## record the action given to the robot in this coord system
     state = agent.x, agent.y, target.x, target.y
     action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
     
     keys = pygame.key.get_pressed()
-    for key, (dx, dy) in movement.items():
+    for key, (dx, dy) in MOVEMENT.items():
       if keys[key]:
         action[key] = True
-        agent.move_ip(dx, dy)
-    #     agent.move_ip(dx, dy) # this is a move 'in-place', doesn't alter the object
+        agent.move_ip(dx, dy) # this is a move 'in-place', doesn't alter the object
     
     
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
-      target.x = random.randint(0, xBound)
-      target.y = random.randint(0, yBound)
+      target.x = random.randint(0, X_BOUND)
+      target.y = random.randint(0, Y_BOUND)
     
       
     ## save the data from this frame  
@@ -120,24 +115,10 @@ def play_game(model: RandomForestClassifier) -> None:
   screen = pygame.display.set_mode((WIDTH, HEIGHT))
   pygame.display.set_caption("2D Canvas")
 
-  MOV_SPEED = 5
-
-  BLOCK_SIZE = 20 # per side
-
-  xBound = WIDTH - BLOCK_SIZE
-  yBound = HEIGHT - BLOCK_SIZE
-
-  agent = pygame.Rect(random.randint(0, xBound), random.randint(0, yBound), BLOCK_SIZE, BLOCK_SIZE)
-  target = pygame.Rect(random.randint(0, xBound), random.randint(0, yBound), BLOCK_SIZE, BLOCK_SIZE)
+  agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+  target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
 
   isRunning = True
-
-  movement: dict = {
-    pygame.K_UP: (0, -MOV_SPEED),
-    pygame.K_DOWN: (0, MOV_SPEED),
-    pygame.K_LEFT: (-MOV_SPEED, 0),
-    pygame.K_RIGHT: (MOV_SPEED, 0)
-  }
 
   while isRunning:
     ## White Background
@@ -157,18 +138,18 @@ def play_game(model: RandomForestClassifier) -> None:
     pred = model.predict([state])[0]
     
     
-    action = {key: movement for key, movement in zip(movement.keys(), pred)}
+    action = {key: movement for key, movement in zip(MOVEMENT.keys(), pred)}
     print(f"{action = }")
     
     
-    for key, (dx, dy) in movement.items():
+    for key, (dx, dy) in MOVEMENT.items():
       if action[key]:
         agent.move_ip(dx, dy)
     
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
-      target.x = random.randint(0, xBound)
-      target.y = random.randint(0, yBound)
+      target.x = random.randint(0, X_BOUND)
+      target.y = random.randint(0, Y_BOUND)
     
     pygame.display.update()
     clock.tick(60)
