@@ -4,11 +4,9 @@ from pygame.color import Color
 import pickle
 import random
 import time
-from typing import Callable, type
+from typing import Callable
 
-type State = tuple[int, int, int, int]
-type Action = tuple[bool, bool, bool, bool]
-type Movement = dict[pygame.key, bool]
+from my_types import State, Action, Movement
 
 MOV_SPEED = 5
 BLOCK_SIZE = 20 # per side
@@ -62,7 +60,7 @@ def human_interaction(state: State) -> Movement:
   return pygame.key.get_pressed()
 
 ## File to save the demonstration data to train on
-def learn_game(filepath: str, movBehaviour: Callable[[State], Movement],n = 10000) -> None:
+def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] = auto_policy, n = 10) -> list[tuple[State, Action]]:
 
   pygame.init()
   clock = pygame.time.Clock()
@@ -102,7 +100,7 @@ def learn_game(filepath: str, movBehaviour: Callable[[State], Movement],n = 1000
     state = agent.x, agent.y, target.x, target.y
     action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
     
-    keys = movBehaviour((agent.x, agent.y), (target.x, target.y))
+    keys = agentMovement(state)
     
     for key, (dx, dy) in MOVEMENT.items():
       if keys[key]:
@@ -134,12 +132,23 @@ def learn_game(filepath: str, movBehaviour: Callable[[State], Movement],n = 1000
   print(f"Elapsed Time: {elapsedTime} for {n} targets -> (state, action) datapoints")
   print(f"Writing to file {filepath}")
   
-  with open(filepath, "wb") as f:
-    pickle.dump(data, f)
+  if filepath:
+    with open(f"./datasets/{filepath}", "wb") as f:
+      pickle.dump(data, f)
+      
+  return data
   
 from torch_bc import AgentNetwork
 
-def play_game(model: AgentNetwork) -> None:
+def play_game(model: AgentNetwork = None, loadModelFromFile: str = None) -> None:
+  if not model and not loadModelFromFile:
+    raise ValueError("Must provide either 'model' or 'loadModelFromFile', loadModelFromFile takes priority if provided")
+  
+  if loadModelFromFile:
+    with open(loadModelFromFile, "rb") as f:
+      model = AgentNetwork(4, 4)
+      model.load_state_dict(torch.load(f))
+  
   pygame.init()
   clock = pygame.time.Clock()
 
@@ -211,9 +220,10 @@ def play_game(model: AgentNetwork) -> None:
 import torch
 
 if __name__ == "__main__":
+  print(f"'canvas' [main]")
   # with open("agent-network-1k.pth", "rb") as f:
   #   model = AgentNetwork(4, 4)
   #   model.load_state_dict(torch.load(f))
   #   model.eval() ## set to evaluation mode as the training is complete
   #   play_game(model)
-  
+  # learn_game("10-targets.pkl", human_interaction, n=10)

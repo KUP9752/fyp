@@ -6,6 +6,8 @@ from torch.utils.data import DataLoader, TensorDataset
 import pickle
 from tqdm import tqdm as progress
 
+from my_types import State, Action
+
 ## Attempting behavioral cloning with pytorch
 
 class AgentNetwork(nn.Module):
@@ -20,9 +22,13 @@ class AgentNetwork(nn.Module):
   def forward(self, x):
     return self.fc(x)
   
-def train_on_behaviour(dataFilepath: str, modelName: str) -> AgentNetwork:
-  with open(dataFilepath, "rb") as f:
-    data = pickle.load(f)
+def train_on_behaviour(modelName: str = None, dataFilepath: str = None, data: list[tuple[State, Action]] = None) -> AgentNetwork:
+  if data is None and dataFilepath is None:
+    raise ValueError("Must provide either 'dataFilePath' or 'data', dataFilePath takes priority if provided")
+  
+  if dataFilepath:
+    with open(dataFilepath, "rb") as f:
+      data = pickle.load(f)
   
   states, actions = zip(*data)
 
@@ -48,14 +54,15 @@ def train_on_behaviour(dataFilepath: str, modelName: str) -> AgentNetwork:
       optimiser.step()
       trainingLoss += loss.item()
       
-    print(f"Epoch {epoch} Loss: {trainingLoss / len(loader)}")
+    print(f" Loss: {trainingLoss / len(loader)}")
     
-  
   print(f"Done training!")
-  print(f"Saving...")
-  torch.save(policy.state_dict(), modelName)
   
-  print(f"Saved!")
+  if modelName:
+    print(f"Saving...")
+    torch.save(policy.state_dict(), f"./models/{modelName}")
+    print(f"Saved!")
+  
   
   return policy
 
@@ -63,6 +70,7 @@ def train_on_behaviour(dataFilepath: str, modelName: str) -> AgentNetwork:
   
 
 if __name__ == "__main__":
+  print(f"'torch_bc' [main]")
   train_on_behaviour("1k-targets.pkl", "agent-network-1k.pth")
 
 
