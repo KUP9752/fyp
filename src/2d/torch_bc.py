@@ -5,9 +5,9 @@ from torch.utils.data import DataLoader, TensorDataset
 
 import pickle
 from tqdm import tqdm as progress
+from typing import Literal
 
 from my_types import State, Action
-
 ## Attempting behavioral cloning with pytorch
 
 class AgentNetwork(nn.Module):
@@ -22,7 +22,7 @@ class AgentNetwork(nn.Module):
   def forward(self, x):
     return self.fc(x)
   
-def train_on_behaviour(modelName: str = None, dataFilepath: str = None, data: list[tuple[State, Action]] = None) -> AgentNetwork:
+def train_on_behaviour(modelName: str = None, dataFilepath: str = None, data: list[tuple[State, Action]] = None, overwriteDevice: Literal['cpu', 'cuda'] | None = None ) -> AgentNetwork:
   if data is None and dataFilepath is None:
     raise ValueError("Must provide either 'dataFilePath' or 'data', dataFilePath takes priority if provided")
   
@@ -32,8 +32,14 @@ def train_on_behaviour(modelName: str = None, dataFilepath: str = None, data: li
   
   states, actions = zip(*data)
 
+  device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
   
-  policy = AgentNetwork(4, 4)
+  if overwriteDevice:
+    device = torch.device(overwriteDevice)
+    
+  print(f"Device to use: {device}")
+  
+  policy = AgentNetwork(4, 4).to(device)
   lossFunc = nn.BCEWithLogitsLoss()
   optimiser = optim.Adam(policy.parameters(), lr = 0.01)
   
@@ -47,6 +53,8 @@ def train_on_behaviour(modelName: str = None, dataFilepath: str = None, data: li
   
   for epoch in progress(range(100)):
     for stateBatch, actionBatch in loader:
+      stateBatch, actionBatch = stateBatch.to(device), actionBatch.to(device)
+      
       optimiser.zero_grad()
       predActions = policy(stateBatch)
       loss = lossFunc(predActions, actionBatch)
@@ -60,7 +68,7 @@ def train_on_behaviour(modelName: str = None, dataFilepath: str = None, data: li
   
   if modelName:
     print(f"Saving...")
-    torch.save(policy.state_dict(), f"./models/{modelName}")
+    torch.save(policy.state_dict(), f"./src/2d/models/{modelName}")
     print(f"Saved!")
   
   
@@ -71,7 +79,8 @@ def train_on_behaviour(modelName: str = None, dataFilepath: str = None, data: li
 
 if __name__ == "__main__":
   print(f"'torch_bc' [main]")
-  train_on_behaviour("1k-targets.pkl", "agent-network-1k.pth")
+  print(f"Check for cuda; {torch.cuda.is_available() = }")
+  
 
 
 
