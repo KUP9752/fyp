@@ -170,12 +170,6 @@ def play_game(model: AgentNetwork) -> None:
     state = torch.tensor(state, dtype=torch.float32)
     action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
     
-    
-    # print(f"{pygame.K_UP = }")
-    # print(f"{pygame.K_DOWN = }")
-    # print(f"{pygame.K_LEFT = }")
-    # print(f"{pygame.K_RIGHT = }")
-    
     with torch.no_grad():
       pred = model(state) ## currently returns 4 floats, do some post processing
       ## if below a certain threshold reject it
@@ -198,27 +192,6 @@ def play_game(model: AgentNetwork) -> None:
         action[pygame.K_LEFT] = True
       elif pred[3] > pred[2]:
         action[pygame.K_RIGHT] = True
-      
-      # if pred[0] <= 0:
-      #   action[pygame.K_UP] = False
-      # if pred[1] <= 0:
-      #   action[pygame.K_DOWN] = False
-      # if pred[2] <= 0:
-      #   action[pygame.K_LEFT] = False
-      # if pred[3] == 0:
-      #   action[pygame.K_RIGHT] = False
-      
-      
-      # print(f"{pred = }")
-      print(f"{action = }")
-      # raise Exception("Done")
-    
-    
-    # print(f"{action = }")
-    
-        
-    
-    
     
     for key, (dx, dy) in MOVEMENT.items():
       if action[key]:
