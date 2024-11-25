@@ -4,11 +4,11 @@ from pygame.color import Color
 import pickle
 import random
 import time
-import typing 
+from typing import Callable, type
 
 type State = tuple[int, int, int, int]
 type Action = tuple[bool, bool, bool, bool]
-
+type Movement = dict[pygame.key, bool]
 
 MOV_SPEED = 5
 BLOCK_SIZE = 20 # per side
@@ -24,9 +24,9 @@ MOVEMENT: dict = {
     pygame.K_RIGHT: (MOV_SPEED, 0)
   }
 
-def auto_policy(state: tuple[int, int], target: tuple[int, int]) -> dict[pygame.key, bool]:
-  agent_x, agent_y = state
-  target_x, target_y = target
+## Movement Behaviour to be used by the 'learn_game' 
+def auto_policy(state: State) -> Movement:
+  agent_x, agent_y,target_x, target_y = state
   
   movement = {
     pygame.K_UP: False,
@@ -58,8 +58,11 @@ def auto_policy(state: tuple[int, int], target: tuple[int, int]) -> dict[pygame.
     
   return movement
 
+def human_interaction(state: State) -> Movement:
+  return pygame.key.get_pressed()
+
 ## File to save the demonstration data to train on
-def learn_game(filepath: str, n = 10000) -> None:
+def learn_game(filepath: str, movBehaviour: Callable[[State], Movement],n = 10000) -> None:
 
   pygame.init()
   clock = pygame.time.Clock()
@@ -99,8 +102,7 @@ def learn_game(filepath: str, n = 10000) -> None:
     state = agent.x, agent.y, target.x, target.y
     action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
     
-    keys = auto_policy((agent.x, agent.y), (target.x, target.y))
-    # keys = pygame.key.get_pressed() ## teaching by human demonstration
+    keys = movBehaviour((agent.x, agent.y), (target.x, target.y))
     
     for key, (dx, dy) in MOVEMENT.items():
       if keys[key]:
@@ -241,4 +243,4 @@ if __name__ == "__main__":
   #   model.load_state_dict(torch.load(f))
   #   model.eval() ## set to evaluation mode as the training is complete
   #   play_game(model)
-
+  
