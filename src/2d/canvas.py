@@ -164,8 +164,9 @@ def fit_model(filepath: str) -> RandomForestClassifier:
   print(accuracy_score(y_test, y_pred))
   return model
   
+from torch_bc import AgentNetwork
 
-def play_game(model: RandomForestClassifier) -> None:
+def play_game(model: AgentNetwork) -> None:
   pygame.init()
   clock = pygame.time.Clock()
 
@@ -193,12 +194,57 @@ def play_game(model: RandomForestClassifier) -> None:
     pygame.draw.rect(screen, Color("red"), target)
     
     state = agent.x, agent.y, target.x, target.y
+    state = torch.tensor(state, dtype=torch.float32)
+    action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
     
-    pred = model.predict([state])[0]
+    
+    # print(f"{pygame.K_UP = }")
+    # print(f"{pygame.K_DOWN = }")
+    # print(f"{pygame.K_LEFT = }")
+    # print(f"{pygame.K_RIGHT = }")
+    
+    with torch.no_grad():
+      pred = model(state) ## currently returns 4 floats, do some post processing
+      ## if below a certain threshold reject it
+      print(f"{pred = }")
+      print(f"{target = }")
+      print(f"{agent = }")
+      
+      
+      ## Thresholding didn't seem to be necessary with BCEWithLogitsLoss
+      # pred = torch.where(pred > 0.4, pred, torch.tensor(0.0))
+      # print(f"After filter {pred = }")
+      
+      ## map into key pairs
+      if pred[0] > pred[1]:
+        action[pygame.K_UP] = True
+      elif pred[1] > pred[0]:
+        action[pygame.K_DOWN] = True
+        
+      if pred[2] > pred[3]:
+        action[pygame.K_LEFT] = True
+      elif pred[3] > pred[2]:
+        action[pygame.K_RIGHT] = True
+      
+      # if pred[0] <= 0:
+      #   action[pygame.K_UP] = False
+      # if pred[1] <= 0:
+      #   action[pygame.K_DOWN] = False
+      # if pred[2] <= 0:
+      #   action[pygame.K_LEFT] = False
+      # if pred[3] == 0:
+      #   action[pygame.K_RIGHT] = False
+      
+      
+      # print(f"{pred = }")
+      print(f"{action = }")
+      # raise Exception("Done")
     
     
-    action = {key: movement for key, movement in zip(MOVEMENT.keys(), pred)}
-    print(f"{action = }")
+    # print(f"{action = }")
+    
+        
+    
     
     
     for key, (dx, dy) in MOVEMENT.items():
@@ -216,8 +262,14 @@ def play_game(model: RandomForestClassifier) -> None:
   pygame.quit()
 
 
-learn_game("10k-targets.pkl", n = 10000)
-# model = fit_model("demonstration.pkl")
-# play_game(model)
+import torch
 
+if __name__ == "__main__":
+  # learn_game("10k-targets.pkl", n = 10000)
+  # model = fit_model("demonstration.pkl")
+  with open("agent-network-1k.pth", "rb") as f:
+    model = AgentNetwork(4, 4)
+    model.load_state_dict(torch.load(f))
+    model.eval() ## set to evaluation mode as the training is complete
+    play_game(model)
 
