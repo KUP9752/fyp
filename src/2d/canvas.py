@@ -135,35 +135,6 @@ def learn_game(filepath: str, n = 10000) -> None:
   with open(filepath, "wb") as f:
     pickle.dump(data, f)
   
-  
-  
-  
-  
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-
-## Train a model on teh demonstration data
-def fit_model(filepath: str) -> RandomForestClassifier:
-  
-  with open(filepath, "rb") as f:
-    data = pickle.load(f)
-  
-  
-  print(f"{data = }")
-  
-  X, y = zip(*data) # states, (demonstrated) actions
-
-  X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=12) ## random state shuffles the data
-
-  model = RandomForestClassifier()
-  model.fit(X_train, y_train)
-
-  y_pred = model.predict(X_test)
-  
-  print(accuracy_score(y_test, y_pred))
-  return model
-  
 from torch_bc import AgentNetwork
 
 def play_game(model: AgentNetwork) -> None:
@@ -265,11 +236,9 @@ def play_game(model: AgentNetwork) -> None:
 import torch
 
 if __name__ == "__main__":
-  # learn_game("10k-targets.pkl", n = 10000)
-  # model = fit_model("demonstration.pkl")
-  with open("agent-network-1k.pth", "rb") as f:
-    model = AgentNetwork(4, 4)
-    model.load_state_dict(torch.load(f))
-    model.eval() ## set to evaluation mode as the training is complete
-    play_game(model)
+  # with open("agent-network-1k.pth", "rb") as f:
+  #   model = AgentNetwork(4, 4)
+  #   model.load_state_dict(torch.load(f))
+  #   model.eval() ## set to evaluation mode as the training is complete
+  #   play_game(model)
 
