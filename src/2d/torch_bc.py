@@ -14,13 +14,13 @@ class AgentNetwork(nn.Module):
     self.fc = nn.Sequential(
       nn.Linear(stateDim, 128),
       nn.ReLU(),
-      nn.Linear(128, actionDim)
+      nn.Linear(128, actionDim),
     )
     
   def forward(self, x):
     return self.fc(x)
   
-def train_on_behaviour(dataFilepath: str) -> AgentNetwork:
+def train_on_behaviour(dataFilepath: str, modelName: str) -> AgentNetwork:
   with open(dataFilepath, "rb") as f:
     data = pickle.load(f)
   
@@ -28,7 +28,7 @@ def train_on_behaviour(dataFilepath: str) -> AgentNetwork:
 
   
   policy = AgentNetwork(4, 4)
-  lossFunc = nn.MSELoss()
+  lossFunc = nn.BCEWithLogitsLoss()
   optimiser = optim.Adam(policy.parameters(), lr = 0.01)
   
   dataset = TensorDataset(torch.tensor(states, dtype=torch.float32), torch.tensor(actions, dtype=torch.float32))
@@ -36,18 +36,24 @@ def train_on_behaviour(dataFilepath: str) -> AgentNetwork:
   loader = DataLoader(dataset, batch_size=32, shuffle=True)
   
   print(f"Training on {len(dataset)} points")
+  policy.train()
+  trainingLoss = 0
   
   for epoch in progress(range(100)):
     for stateBatch, actionBatch in loader:
+      optimiser.zero_grad()
       predActions = policy(stateBatch)
       loss = lossFunc(predActions, actionBatch)
-      optimiser.zero_grad()
       loss.backward()
       optimiser.step()
+      trainingLoss += loss.item()
+      
+    print(f"Epoch {epoch} Loss: {trainingLoss / len(loader)}")
+    
   
   print(f"Done training!")
   print(f"Saving...")
-  torch.save(policy.state_dict(), "agent-network.pth")
+  torch.save(policy.state_dict(), modelName)
   
   print(f"Saved!")
   
@@ -56,8 +62,8 @@ def train_on_behaviour(dataFilepath: str) -> AgentNetwork:
 # def play_game(model: AgentNetwork) -> None:
   
 
-  
-# train_on_behaviour("10k-targets.pkl")
+if __name__ == "__main__":
+  train_on_behaviour("1k-targets.pkl", "agent-network-1k.pth")
 
 
 
