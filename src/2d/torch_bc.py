@@ -50,9 +50,11 @@ class AgentNetwork_Regression(AgentNetwork):
   def __init__(self):
     super(AgentNetwork_Regression, self).__init__(stateDim=4, actionDim=2)
     self.fc = nn.Sequential(
-      nn.Linear(self.stateDim, 128),
+      nn.Linear(self.stateDim, 64),
       nn.ReLU(),
-      nn.Linear(128, self.actionDim),
+      nn.Linear(64, 64),
+      nn.ReLU(),
+      nn.Linear(64, self.actionDim), ## output dx, dy
     )
     
   ## static method creates the model and trains it
