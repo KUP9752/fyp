@@ -138,12 +138,75 @@ def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] 
       
   return data
   
-from torch_bc import AgentNetwork
+from torch_bc import AgentNetwork, AgentNetwork_Classification, AgentNetwork_Regression
 from torch import nn
 
 T = TypeVar("T")
 
-def play_game(model: AgentNetwork = None, loadModelFromFile: str = None, modelType: Type[T] = None) -> None:
+def move_arrowkeys(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork) -> None:
+  keys = pygame.key.get_pressed()
+  
+  for key, (dx, dy) in MOVEMENT.items():
+    if keys[key]:
+      agent.move_ip(dx, dy)
+  
+  
+  
+def move_classification(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork_Classification) -> None:
+  state = agent.x, agent.y, target.x, target.y
+  state = torch.tensor(state, dtype=torch.float32)
+  action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
+  
+  with torch.no_grad():
+    pred = model(state) ## currently returns 4 floats, do some post processing
+    ## if below a certain threshold reject it
+    print(f"{pred = }")
+    print(f"{target = }")
+    print(f"{agent = }")
+    
+    
+    ## Thresholding didn't seem to be necessary with BCEWithLogitsLoss
+    # pred = torch.where(pred > 0.4, pred, torch.tensor(0.0))
+    # print(f"After filter {pred = }")
+    
+    ## map into key pairs
+    if pred[0] > pred[1]:
+      action[pygame.K_UP] = True
+    elif pred[1] > pred[0]:
+      action[pygame.K_DOWN] = True
+      
+    if pred[2] > pred[3]:
+      action[pygame.K_LEFT] = True
+    elif pred[3] > pred[2]:
+      action[pygame.K_RIGHT] = True
+  
+  for key, (dx, dy) in MOVEMENT.items():
+    if action[key]:
+      agent.move_ip(dx, dy)
+
+def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork_Regression) -> None:
+  state = agent.x, agent.y, target.x, target.y
+  state = torch.tensor(state, dtype=torch.float32)
+  action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
+  
+  with torch.no_grad():
+    pred = model(state) 
+    print(f"{pred = }")
+    print(f"{target = }")
+    print(f"{agent = }")
+    
+    ## map into key pairs
+    dx, dy = int(pred[0] * MOV_SPEED), int(pred[1] * MOV_SPEED)
+    print(f"{dx = }, {dy = }")
+    
+    agent.move_ip(dx, dy)
+
+def play_game(
+              move_agent: Callable[[pygame.Rect, pygame.Rect, AgentNetwork], None],
+              model: AgentNetwork = None, 
+              loadModelFromFile: str = None, 
+              modelType: Type[T] = None, 
+            ) -> None:
   if not model and not loadModelFromFile:
     raise ValueError("Must provide either 'model' or 'loadModelFromFile', loadModelFromFile takes priority if provided !!modelType must be also provided!!")
   
@@ -181,36 +244,7 @@ def play_game(model: AgentNetwork = None, loadModelFromFile: str = None, modelTy
     pygame.draw.rect(screen, Color("blue"), agent)
     pygame.draw.rect(screen, Color("red"), target)
     
-    state = agent.x, agent.y, target.x, target.y
-    state = torch.tensor(state, dtype=torch.float32)
-    action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
-    
-    with torch.no_grad():
-      pred = model(state) ## currently returns 4 floats, do some post processing
-      ## if below a certain threshold reject it
-      print(f"{pred = }")
-      print(f"{target = }")
-      print(f"{agent = }")
-      
-      
-      ## Thresholding didn't seem to be necessary with BCEWithLogitsLoss
-      # pred = torch.where(pred > 0.4, pred, torch.tensor(0.0))
-      # print(f"After filter {pred = }")
-      
-      ## map into key pairs
-      if pred[0] > pred[1]:
-        action[pygame.K_UP] = True
-      elif pred[1] > pred[0]:
-        action[pygame.K_DOWN] = True
-        
-      if pred[2] > pred[3]:
-        action[pygame.K_LEFT] = True
-      elif pred[3] > pred[2]:
-        action[pygame.K_RIGHT] = True
-    
-    for key, (dx, dy) in MOVEMENT.items():
-      if action[key]:
-        agent.move_ip(dx, dy)
+    move_agent(agent, target, model)
     
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
