@@ -1,5 +1,5 @@
-from canvas import learn_game, play_game, human_interaction
-from torch_bc import AgentNetwork_Classification
+from canvas import learn_game, play_game, human_interaction, move_arrowkeys, move_regression
+from torch_bc import AgentNetwork_Classification, AgentNetwork_Regression
 import pickle
 
 if __name__ == "__main__":
@@ -7,10 +7,7 @@ if __name__ == "__main__":
   # with open("./src/2d/datasets/1k-targets.pkl", "rb") as f:
   #   data = pickle.load(f)
     
-  # points = int(len(data) * 0.05) ## 10% of the data = 200 points
-    
-  # model = train_on_behaviour(modelName = "agent-network-50.pth", data = data[:points], overwriteDevice="cpu")
-  # play_game(model = model)
-  # play_game(loadModelFromFile="./src/2d/models/agent-network-1k.pth")    
-  # learn_game(n = 10)
-  # play_game(loadModelFromFile="./src/2d/models/agent-network-1k.pth", modelType = AgentNetwork)
+  # point = int(len(data) * 0.1)  # 10% of the data = 100 points
+  # model = AgentNetwork_Regression().train_on_behaviour(data=data[:point], modelName="regression-100.pth", overwriteDevice="cpu")
+  
+  play_game(move_agent=move_regression, modelType=AgentNetwork_Regression, loadModelFromFile="./src/2d/models/regression-100.pth")
