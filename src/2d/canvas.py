@@ -6,7 +6,7 @@ import random
 import time
 from typing import Type, Callable, TypeVar
 
-from my_types import State, Action, Movement
+from my_types import State, Action4, Movement
 
 MOV_SPEED = 5
 BLOCK_SIZE = 20 # per side
@@ -60,7 +60,7 @@ def human_interaction(state: State) -> Movement:
   return pygame.key.get_pressed()
 
 ## File to save the demonstration data to train on
-def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] = auto_policy, n = 10) -> list[tuple[State, Action]]:
+def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] = auto_policy, n = 10) -> list[tuple[State, Action4]]:
 
   pygame.init()
   clock = pygame.time.Clock()
@@ -75,7 +75,7 @@ def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] 
 
   isRunning = True
   
-  data: list[tuple[State, Action]]= []
+  data: list[tuple[State, Action4]]= []
   
   targetCount = 1 ## one target at the start
   startTime = time.perf_counter()
@@ -143,7 +143,7 @@ from torch import nn
 
 T = TypeVar("T")
 
-def play_game(model: nn.Module = None, loadModelFromFile: str = None, modelType: Type[T] = None) -> None:
+def play_game(model: AgentNetwork = None, loadModelFromFile: str = None, modelType: Type[T] = None) -> None:
   if not model and not loadModelFromFile:
     raise ValueError("Must provide either 'model' or 'loadModelFromFile', loadModelFromFile takes priority if provided !!modelType must be also provided!!")
   
@@ -152,7 +152,7 @@ def play_game(model: nn.Module = None, loadModelFromFile: str = None, modelType:
       raise ValueError("Must provide 'modelType' when loading model from file")
     
     with open(loadModelFromFile, "rb") as f:
-      model = modelType(4, 4)
+      model = modelType() ## initialise model class before loading weights
       model.load_state_dict(torch.load(f))
   
   pygame.init()
