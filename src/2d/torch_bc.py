@@ -57,19 +57,31 @@ class AgentNetwork_Regression(AgentNetwork):
       nn.Linear(64, self.actionDim), ## output dx, dy
     )
     
+    
+  def preprocess_data(data: list[tuple[State, Action4]]) -> list[tuple[State, Action2]]:
+    ## (left - right, up - down) for (dx, dy)
+    bool2int = lambda b: 1 if b else -1
+    
+    return [(state, (bool2int(action[3]) + bool2int(action[2]), bool2int(action[0]) + bool2int(action[1]))) for state, action in data]
+  
   ## static method creates the model and trains it
   def train_on_behaviour(self, 
                          modelName: str = None, 
                          dataFilepath: str = None, 
-                         data: list[tuple[State, Action2]] = None, 
+                         data: list[tuple[State, Action4]] = None, 
                          overwriteDevice: Literal['cpu', 'cuda'] | None = None ) -> Self:
       
     ## !! Data is inherently of type list[tuple[State, Action4]] must be converted for this
     
     data, device = super().training_init(data, dataFilepath, overwriteDevice)
+    
+    ## process data to be [(State, Action2)]
+    
+    data = AgentNetwork_Regression.preprocess_data(data)
+    
     print(f"Device to use: {device}")
     
-    states, actions = zip(*data) 
+    states, actions = zip(*data) ## Action2 at this point
     
     
     policy = self.to(device)
