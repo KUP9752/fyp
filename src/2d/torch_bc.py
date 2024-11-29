@@ -60,9 +60,8 @@ class AgentNetwork_Regression(AgentNetwork):
     
   def preprocess_data(data: list[tuple[State, Action4]]) -> list[tuple[State, Action2]]:
     ## (left - right, up - down) for (dx, dy)
-    bool2int = lambda b: 1 if b else -1
     
-    return [(state, (bool2int(action[3]) + bool2int(action[2]), bool2int(action[0]) + bool2int(action[1]))) for state, action in data]
+    return [(state, (int(action[3]) - int(action[2]), int(action[0]) - int(action[1]))) for state, action in data]
   
   ## static method creates the model and trains it
   def train_on_behaviour(self, 
