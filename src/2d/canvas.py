@@ -4,7 +4,7 @@ from pygame.color import Color
 import pickle
 import random
 import time
-from typing import Callable
+from typing import Type, Callable, TypeVar
 
 from my_types import State, Action, Movement
 
@@ -139,14 +139,20 @@ def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] 
   return data
   
 from torch_bc import AgentNetwork
+from torch import nn
 
-def play_game(model: AgentNetwork = None, loadModelFromFile: str = None) -> None:
+T = TypeVar("T")
+
+def play_game(model: nn.Module = None, loadModelFromFile: str = None, modelType: Type[T] = None) -> None:
   if not model and not loadModelFromFile:
-    raise ValueError("Must provide either 'model' or 'loadModelFromFile', loadModelFromFile takes priority if provided")
+    raise ValueError("Must provide either 'model' or 'loadModelFromFile', loadModelFromFile takes priority if provided !!modelType must be also provided!!")
   
   if loadModelFromFile:
+    if modelType is None:
+      raise ValueError("Must provide 'modelType' when loading model from file")
+    
     with open(loadModelFromFile, "rb") as f:
-      model = AgentNetwork(4, 4)
+      model = modelType(4, 4)
       model.load_state_dict(torch.load(f))
   
   pygame.init()
