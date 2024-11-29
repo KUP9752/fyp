@@ -196,10 +196,29 @@ def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork
     print(f"{agent = }")
     
     ## map into key pairs
-    dx, dy = int(pred[0] * MOV_SPEED), int(pred[1] * MOV_SPEED)
+    dx, dy = pred[0], pred[1]
     print(f"{dx = }, {dy = }")
     
+    dx = int(dx * MOV_SPEED)
+    dy = int(dy * MOV_SPEED)
+    
     agent.move_ip(dx, dy)
+    
+    
+    # old key sytem:
+    # if dx > 0: 
+    #   action[pygame.K_RIGHT] = True
+    # elif dx < 0:
+    #   action[pygame.K_LEFT] = True
+      
+    # if dy > 0: 
+    #   action[pygame.K_UP] = True
+    # elif dy < 0:
+    #   action[pygame.K_DOWN] = True
+    
+    # for key, (dx, dy) in MOVEMENT.items():
+    #   if action[key]:
+    #     agent.move_ip(dx, dy)
 
 def play_game(
               move_agent: Callable[[pygame.Rect, pygame.Rect, AgentNetwork], None],
