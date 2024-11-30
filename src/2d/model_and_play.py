@@ -1,4 +1,4 @@
-from canvas import learn_game, play_game, human_interaction, move_arrowkeys, move_regression
+from canvas import learn_game, play_game, human_interaction, move_arrowkeys, move_regression, move_classification
 from torch_bc import AgentNetwork_Classification, AgentNetwork_Regression
 import pickle
 
