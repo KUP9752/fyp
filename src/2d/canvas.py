@@ -165,8 +165,8 @@ def move_classification(agent: pygame.Rect, target: pygame.Rect, model: AgentNet
     print(f"{agent = }")
     
     
-    ## Thresholding didn't seem to be necessary with BCEWithLogitsLoss
-    # pred = torch.where(pred > 0.4, pred, torch.tensor(0.0))
+    ## Thresholding didn't seem to be working consistenty with BCEWithLogitsLoss
+    # pred = torch.where(pred > 0.5, pred, torch.tensor(0.0))
     # print(f"After filter {pred = }")
     
     ## map into key pairs
@@ -197,28 +197,22 @@ def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork
     
     ## map into key pairs
     dx, dy = pred[0], pred[1]
-    print(f"{dx = }, {dy = }")
     
-    dx = int(dx * MOV_SPEED)
-    dy = int(dy * MOV_SPEED)
-    
-    agent.move_ip(dx, dy)
-    
-    
+    thresh = 0.5 ## threshold for the movement
     # old key sytem:
-    # if dx > 0: 
-    #   action[pygame.K_RIGHT] = True
-    # elif dx < 0:
-    #   action[pygame.K_LEFT] = True
+    if dx > thresh: 
+      action[pygame.K_RIGHT] = True
+    elif dx < -thresh:
+      action[pygame.K_LEFT] = True
       
-    # if dy > 0: 
-    #   action[pygame.K_UP] = True
-    # elif dy < 0:
-    #   action[pygame.K_DOWN] = True
+    if dy > thresh: 
+      action[pygame.K_UP] = True
+    elif dy < -thresh:
+      action[pygame.K_DOWN] = True
     
-    # for key, (dx, dy) in MOVEMENT.items():
-    #   if action[key]:
-    #     agent.move_ip(dx, dy)
+    for key, (dx, dy) in MOVEMENT.items():
+      if action[key]:
+        agent.move_ip(dx, dy)
 
 def play_game(
               move_agent: Callable[[pygame.Rect, pygame.Rect, AgentNetwork], None],
