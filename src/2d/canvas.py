@@ -198,7 +198,7 @@ def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork
     ## map into key pairs
     dx, dy = pred[0], pred[1]
     
-    thresh = 0.5 ## threshold for the movement
+    thresh = 0.05## threshold for the movement, 0.5 works well for 1k, 0.25 for 500, 0.05 for 250 otherwise they can get stuck
     # old key sytem:
     if dx > thresh: 
       action[pygame.K_RIGHT] = True

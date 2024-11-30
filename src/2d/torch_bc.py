@@ -68,6 +68,8 @@ class AgentNetwork_Regression(AgentNetwork):
                          modelName: str = None, 
                          dataFilepath: str = None, 
                          data: list[tuple[State, Action4]] = None, 
+                         batchSize: int = 32,
+                         epochs: int = 100,
                          overwriteDevice: Literal['cpu', 'cuda'] | None = None ) -> Self:
       
     ## !! Data is inherently of type list[tuple[State, Action4]] must be converted for this
@@ -89,13 +91,13 @@ class AgentNetwork_Regression(AgentNetwork):
     
     dataset = TensorDataset(torch.tensor(states, dtype=torch.float32), torch.tensor(actions, dtype=torch.float32))
     
-    loader = DataLoader(dataset, batch_size=32, shuffle=True)
+    loader = DataLoader(dataset, batch_size=batchSize, shuffle=True)
     
     print(f"Training on {len(dataset)} points")
     policy.train()
     trainingLoss = 0
     
-    for epoch in progress(range(100)):
+    for epoch in progress(range(epochs)):
       for stateBatch, actionBatch in loader:
         stateBatch, actionBatch = stateBatch.to(device), actionBatch.to(device)
         
@@ -132,6 +134,8 @@ class AgentNetwork_Classification(AgentNetwork):
   def train_on_behaviour(self, modelName: str = None,
                          dataFilepath: str = None,
                          data: list[tuple[State,Action4]] = None,
+                         batchSize: int = 32,
+                         epochs: int = 100,
                          overwriteDevice: Literal['cpu','cuda'] | None = None ) -> Self:
     data, device = super().training_init(data, dataFilepath, overwriteDevice)
     
@@ -145,13 +149,13 @@ class AgentNetwork_Classification(AgentNetwork):
     
     dataset = TensorDataset(torch.tensor(states, dtype=torch.float32), torch.tensor(actions, dtype=torch.float32))
     
-    loader = DataLoader(dataset, batch_size=32, shuffle=True)
+    loader = DataLoader(dataset, batch_size=batchSize, shuffle=True)
     
     print(f"Training on {len(dataset)} points")
     policy.train()
     trainingLoss = 0
     
-    for epoch in progress(range(100)):
+    for epoch in progress(range(epochs)):
       for stateBatch, actionBatch in loader:
         stateBatch, actionBatch = stateBatch.to(device), actionBatch.to(device)
         
