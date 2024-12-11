@@ -10,7 +10,12 @@ from typing import Literal, Self
 from my_types import State, Action4, Action2
 ## Attempting behavioral cloning with pytorch
 
+def printc(condition: bool | None, text: str) -> None:
+  if condition:
+    print(text)
+
 class AgentNetwork(nn.Module):
+  
   def __init__(self, stateDim: int, actionDim: int):
     super(AgentNetwork, self).__init__()
     self.stateDim = stateDim
@@ -22,7 +27,8 @@ class AgentNetwork(nn.Module):
   def training_init(self, 
                     data: list = None, 
                     dataFilePath: str = None,
-                    overwriteDevice: Literal['cpu', 'cuda'] | None = None) -> list:
+                    overwriteDevice: Literal['cpu', 'cuda'] | None = None,
+                    ) -> list:
     if data is None and dataFilePath is None:
       raise ValueError("Must provide either 'dataFilePath' or 'data', dataFilePath takes priority if provided")
     
@@ -37,27 +43,44 @@ class AgentNetwork(nn.Module):
       
     return data, device
   
-  def training_save_model(self, modelName: str = None) -> None:
-    if modelName:
-      print(f"Saving...")
-      torch.save(self.state_dict(), f"./src/2d/models/{modelName}")
-      print(f"Saved!")
+  # def training_save_model(self, modelName: str = None, doPrints: bool = False) -> None:
+  #   if modelName:
+  #     printc(doPrints, f"Saving...")
+  #     torch.save(self.state_dict(), f"./models/{modelName}")
+  #     printc(doPrints, f"Saved!")
     
   
   
 ## Regression Task
 class AgentNetwork_Regression(AgentNetwork):
-  def __init__(self):
+  # batchSize: int
+  # lossFunc: nn.Loss
+  # lr: float = 0.001
+  def __init__(self, 
+               npl: int = 64, # neurons per layer
+               lossFunc = nn.MSELoss(),
+               lr: float = 0.001,
+               epochs: int = 100,
+               batchSize: int = 32):
     super(AgentNetwork_Regression, self).__init__(stateDim=4, actionDim=2)
+    self.losses = None
+    self.lossFunc = lossFunc
+    self.batchSize = batchSize
+    self.lr = lr
+    self.epochs = epochs
+    self.loss = None
+    
+    
+    ## currently 1 input 1 hidden 1 output
     self.fc = nn.Sequential(
-      nn.Linear(self.stateDim, 64),
+      nn.Linear(self.stateDim, npl),
       nn.ReLU(),
-      nn.Linear(64, 64),
+      nn.Linear(npl, npl),
       nn.ReLU(),
-      nn.Linear(64, self.actionDim), ## output dx, dy
+      nn.Linear(npl, self.actionDim), ## output dx, dy
     )
     
-    
+  
   def preprocess_data(data: list[tuple[State, Action4]]) -> list[tuple[State, Action2]]:
     ## (left - right, up - down) for (dx, dy)
     
@@ -65,12 +88,11 @@ class AgentNetwork_Regression(AgentNetwork):
   
   ## static method creates the model and trains it
   def train_on_behaviour(self, 
-                         modelName: str = None, 
+                         modelPath: str = None, 
                          dataFilepath: str = None, 
                          data: list[tuple[State, Action4]] = None, 
-                         batchSize: int = 32,
-                         epochs: int = 100,
-                         overwriteDevice: Literal['cpu', 'cuda'] | None = None ) -> Self:
+                         overwriteDevice: Literal['cpu', 'cuda'] | None = None,
+                         doPrints: bool = False) -> Self:
       
     ## !! Data is inherently of type list[tuple[State, Action4]] must be converted for this
     
@@ -80,24 +102,26 @@ class AgentNetwork_Regression(AgentNetwork):
     
     data = AgentNetwork_Regression.preprocess_data(data)
     
-    print(f"Device to use: {device}")
+    
+    printc(doPrints, f"Device to use: {device}")
     
     states, actions = zip(*data) ## Action2 at this point
     
     
     policy = self.to(device)
     lossFunc = nn.MSELoss()
-    optimiser = optim.Adam(policy.parameters(), lr = 0.001)
+    optimiser = optim.Adam(policy.parameters(), lr = self.lr)
     
     dataset = TensorDataset(torch.tensor(states, dtype=torch.float32), torch.tensor(actions, dtype=torch.float32))
     
-    loader = DataLoader(dataset, batch_size=batchSize, shuffle=True)
+    loader = DataLoader(dataset, batch_size=self.batchSize, shuffle=True)
     
-    print(f"Training on {len(dataset)} points")
+    printc(doPrints, f"Training on {len(dataset)} points")
     policy.train()
-    trainingLoss = 0
+    self.losses = [0 for _ in range(self.epochs)]
     
-    for epoch in progress(range(epochs)):
+    for epoch in progress(range(self.epochs)):
+      runningLoss = 0
       for stateBatch, actionBatch in loader:
         stateBatch, actionBatch = stateBatch.to(device), actionBatch.to(device)
         
@@ -106,19 +130,28 @@ class AgentNetwork_Regression(AgentNetwork):
         loss = lossFunc(predActions, actionBatch)
         loss.backward()
         optimiser.step()
-        trainingLoss += loss.item()
+        runningLoss += loss.item()
         
-      print(f" Loss: {trainingLoss / len(loader)}")
+      loss = runningLoss / len(loader)
+      self.losses[epoch] = loss
+      printc(doPrints, f" [{epoch}/{self.epochs}] Loss: {loss}")
       
       
       
-    print(f"Done training!")
+    printc(doPrints, f"Done training!")
     
-    super().training_save_model(modelName)
-    
+    if modelPath:
+      printc(doPrints, f"Saving...")
+      torch.save(self.state_dict(), f"{modelPath}")
+      printc(doPrints, f"Saved!")
+    self.loss = runningLoss
     
     return policy
   
+  def get_training_losses(self) -> list[float]:
+    if self.losses is None:
+      raise ValueError("Not trained yet!")
+    return self.losses
   
 ## Classification task
 class AgentNetwork_Classification(AgentNetwork):
@@ -131,10 +164,9 @@ class AgentNetwork_Classification(AgentNetwork):
     )
   
   ## static method creates the model and trains it
-  def train_on_behaviour(self, modelName: str = None,
+  def train_on_behaviour(self, modelPath: str = None,
                          dataFilepath: str = None,
                          data: list[tuple[State,Action4]] = None,
-                         batchSize: int = 32,
                          epochs: int = 100,
                          overwriteDevice: Literal['cpu','cuda'] | None = None ) -> Self:
     data, device = super().training_init(data, dataFilepath, overwriteDevice)
@@ -149,7 +181,7 @@ class AgentNetwork_Classification(AgentNetwork):
     
     dataset = TensorDataset(torch.tensor(states, dtype=torch.float32), torch.tensor(actions, dtype=torch.float32))
     
-    loader = DataLoader(dataset, batch_size=batchSize, shuffle=True)
+    loader = DataLoader(dataset, batch_size=self.batchSize, shuffle=True)
     
     print(f"Training on {len(dataset)} points")
     policy.train()
@@ -170,7 +202,10 @@ class AgentNetwork_Classification(AgentNetwork):
       
     print(f"Done training!")
     
-    super().training_save_model(modelName)
+    if modelPath:
+      print(f"Saving...")
+      torch.save(self.state_dict(), f"{modelPath}")
+      print(f"Saved!")
     
     return policy
     
