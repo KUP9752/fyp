@@ -9,6 +9,7 @@ if __name__ == "__main__":
   isTraining = False
   size: int = 250
   modelName = f"regression-{size}.pth"
+  modelPath = f"./src/2d/models/{modelName}"
   
   if isTraining:
     with open("./src/2d/datasets/1k-targets.pkl", "rb") as f:
@@ -17,6 +18,9 @@ if __name__ == "__main__":
     points = int(len(data) * (250 / 1000))  
     samples = random.sample(data, points)
     
-    model = AgentNetwork_Regression().train_on_behaviour(data=samples, modelName=f"{modelName}", overwriteDevice="cpu")
+    model = AgentNetwork_Regression().train_on_behaviour(data=samples, modelPath=modelPath, overwriteDevice="cpu")
   else:
-    play_game(move_agent=move_regression, modelType=AgentNetwork_Regression, loadModelFromFile=f"./src/2d/models/{modelName}")
+    play_game(move_agent=move_regression, modelType=AgentNetwork_Regression, loadModelFromFile=modelPath)
+    
+    
+    
