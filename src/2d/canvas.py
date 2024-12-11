@@ -1,10 +1,12 @@
 import pygame
 from pygame.color import Color
 
+import pandas as pd
 import pickle
 import random
 import time
 from typing import Type, Callable, TypeVar
+import re
 
 from my_types import State, Action4, Movement
 
@@ -24,7 +26,7 @@ MOVEMENT: dict = {
 
 ## Movement Behaviour to be used by the 'learn_game' 
 def auto_policy(state: State) -> Movement:
-  agent_x, agent_y,target_x, target_y = state
+  agent_x, agent_y, target_x, target_y = state
   
   movement = {
     pygame.K_UP: False,
@@ -214,6 +216,39 @@ def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork
       if action[key]:
         agent.move_ip(dx, dy)
 
+def create_image_data(n: int, ssFolder: str) -> None:
+  pygame.init()
+
+  ## Setup Screen
+  screen = pygame.display.set_mode((WIDTH, HEIGHT))
+  pygame.display.set_caption("2D Canvas")
+
+  coords: dict[str, State] = {}
+  for i in range(n):
+    ## White Background
+    agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+    target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+    
+    screen.fill(Color("white"))
+      
+          
+    ## Game Logic
+    ## draw the squares, agend is BLUE, target is RED
+    pygame.draw.rect(screen, Color("blue"), agent)
+    pygame.draw.rect(screen, Color("red"), target)
+    
+    pygame.display.update()
+    
+    imageName = f"ss-{i}"
+    coords[imageName] = (agent.x, agent.y, target.x, target.y)
+    pygame.image.save(screen, f"{ssFolder}/{imageName}.png")
+    # pygame.time.wait(1000)
+  
+  df = pd.DataFrame.from_dict(coords, orient="index", columns=["agent_x", "agent_y", "target_x", "target_y"])
+  print(df)
+  df.to_pickle(f"{ssFolder}/ss-coords.pkl")
+  pygame.quit()
+
 def play_game(
               move_agent: Callable[[pygame.Rect, pygame.Rect, AgentNetwork], None],
               model: AgentNetwork = None, 
@@ -235,7 +270,6 @@ def play_game(
   clock = pygame.time.Clock()
 
   ## Setup Screen
-  WIDTH, HEIGHT = 800, 600
   screen = pygame.display.set_mode((WIDTH, HEIGHT))
   pygame.display.set_caption("2D Canvas")
 
@@ -274,6 +308,7 @@ import torch
 
 if __name__ == "__main__":
   print(f"'canvas' [main]")
+  # create_image_data(1000, "./datasets/screenshots")
   # with open("agent-network-1k.pth", "rb") as f:
   #   model = AgentNetwork(4, 4)
   #   model.load_state_dict(torch.load(f))
