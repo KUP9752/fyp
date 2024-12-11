@@ -239,9 +239,9 @@ def create_image_data(n: int, ssFolder: str) -> None:
     
     pygame.display.update()
     
-    imageName = f"ss-{i}"
+    imageName = f"ss-{i}.png"
     coords[imageName] = (agent.x, agent.y, target.x, target.y)
-    pygame.image.save(screen, f"{ssFolder}/{imageName}.png")
+    pygame.image.save(screen, f"{ssFolder}/{imageName}")
     # pygame.time.wait(1000)
   
   df = pd.DataFrame.from_dict(coords, orient="index", columns=["agent_x", "agent_y", "target_x", "target_y"])
