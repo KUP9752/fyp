@@ -1,5 +1,5 @@
 from canvas import learn_game, play_game, human_interaction, move_arrowkeys, move_regression, move_classification
-from torch_bc import AgentNetwork_Classification, AgentNetwork_Regression
+from torch_bc import AgentNetwork_Classification, AgentNetwork_Regression, PositionPredictor
 import pickle
 import random
 from argparse import ArgumentParser
@@ -22,14 +22,17 @@ if __name__ == "__main__":
   # modelPath = f"{args.model_path}/{modelName}"
   modelPath = args.model_path
   
+  
   if isTraining:
-    with open(args.dataset, "rb") as f:
-      data = pickle.load(f)
+    ss = "./datasets/screenshots"
+    coords = f"{ss}/ss-coords.pkl"
+    # with open(args.dataset, "rb") as f:
+    #   data = pickle.load(f)
     
-    points = int(len(data) * (size / 1000))  
-    samples = random.sample(data, points)
+    # points = int(len(data) * (size / 1000))  
+    # samples = random.sample(data, points)
     
-    model = AgentNetwork_Regression().train_on_behaviour(data=samples, modelPath=modelPath, overwriteDevice="cpu")
+    model = PositionPredictor().train_on_images(doPrints=True, imagesDir= ss, imageCoordsPath=coords, modelPath=modelPath)
   else:
     play_game(move_agent=move_regression, modelType=AgentNetwork_Regression, loadModelFromFile=modelPath)
     
