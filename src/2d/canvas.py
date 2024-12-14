@@ -192,6 +192,7 @@ def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork
   state = agent.x, agent.y, target.x, target.y
   state = torch.tensor(state, dtype=torch.float32)
   action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
+  print(f"{state = }")
   
   model.eval()
   with torch.no_grad():
@@ -252,34 +253,75 @@ def create_image_data(n: int, ssFolder: str) -> None:
   df.to_pickle(f"{ssFolder}/ss-coords.pkl")
   pygame.quit()
 
-def move_cnn(image: Image, model: PositionPredictor ) -> None:
+def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: PositionPredictor ) -> None:
   model.eval()
   with torch.no_grad():
     ## moved the image tranformation to the model, I think this makes the most sense, coupling these things
     x = model.transform_image(image)
     x = x.unsqueeze(0) ## add the batch dimension to make [1,3,600,800], otherwise model complains
     predPos = model(x)
-    print(f"{predPos = }")
   
+  action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
+  with open("./models/regression-1k.pth", "rb") as f:
+    regrModel = AgentNetwork_Regression() ## initialise model class before loading weights
+    regrModel.load_state_dict(torch.load(f))
+    
+  regrModel.eval()
+  pred = regrModel(predPos[0]) # for some reason this is [[a, b, c, d]] so unwrap once
+  print(f"(from cnn) {predPos[0] = }")
+  print(f"(from cnn + 1k regr) {pred = }")
+  print(f"{agent = }")
+  print(f"{target = }")
+  
+  ## map into key pairs
+  dx, dy = pred[0], pred[1]
+  
+  thresh = 0.05## threshold for the movement, 0.5 works well for 1k, 0.25 for 500, 0.05 for 250 otherwise they can get stuck
+  # old key sytem:
+  if dx > thresh: 
+    action[pygame.K_RIGHT] = True
+  elif dx < -thresh:
+    action[pygame.K_LEFT] = True
+    
+  if dy > thresh: 
+    action[pygame.K_UP] = True
+  elif dy < -thresh:
+    action[pygame.K_DOWN] = True
+  
+  
+  
+  for key, (dx, dy) in MOVEMENT.items():
+    if action[key]:
+      agent.move_ip(dx, dy)
       
+  
+  
+def load_model(loadModelFromFile: str, 
+               modelType: Type[T] = None) -> None:
+  
+  if modelType is None:
+    raise ValueError("Must provide 'modelType' when loading model from file")
+    
+  print(f"Loading type {modelType}")
+    
+  with open(loadModelFromFile, "rb") as f:
+    model = modelType() ## initialise model class before loading weights
+    model.load_state_dict(torch.load(f))
+    return model
+      
+MODEL_TYPES = {
+  "move_regression": lambda s: load_model(s, AgentNetwork_Regression),
+  "move_classification": lambda s: load_model(s, AgentNetwork_Classification),
+  "move_cnn": lambda s: load_model(s, PositionPredictor),
+  "move_arrowkeys": lambda s: None
+}
       
 def play_game(
-              move_agent: Literal["move_regression", "move_classification", "move_arrowkeys", "move_cnn"],
-              model: AgentNetwork = None, 
+              moveAgent: Literal["move_regression", "move_classification", "move_arrowkeys", "move_cnn"],
               loadModelFromFile: str = None, 
-              modelType: Type[T] = None, 
             ) -> None:
-  if not model and not loadModelFromFile:
-    raise ValueError("Must provide either 'model' or 'loadModelFromFile', loadModelFromFile takes priority if provided !!modelType must be also provided!!")
-  
-  if loadModelFromFile:
-    if modelType is None:
-      raise ValueError("Must provide 'modelType' when loading model from file")
-    
-    with open(loadModelFromFile, "rb") as f:
-      model = modelType() ## initialise model class before loading weights
-      model.load_state_dict(torch.load(f))
-  
+  if not loadModelFromFile:
+    raise ValueError("Must provide 'loadModelFromFile'")
   pygame.init()
   clock = pygame.time.Clock()
 
@@ -307,7 +349,9 @@ def play_game(
     
     print(f"Real Agent pos: {agent.x, agent.y} Target pos: {target.x, target.y}")
     
-    match move_agent:
+    model = MODEL_TYPES[moveAgent](loadModelFromFile)
+    
+    match moveAgent:
       case "move_regression":
         move_regression(agent, target, model)
       case "move_classification":
@@ -315,12 +359,8 @@ def play_game(
       case "move_arrowkeys":
         move_arrowkeys(agent, target, model)
       case "move_cnn":
-        # image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
-        # pygame.image.save(screen, "temp.png")
-        image = Image.open("./datasets/screenshots/ss-0.png")
-        move_cnn(image, model)
-    
-    
+        image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
+        move_cnn(agent, target, image, model)
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
       target.x = random.randint(0, X_BOUND)

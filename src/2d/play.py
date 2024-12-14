@@ -10,8 +10,9 @@ def move(args):
   moveFunc = args.movement
   modelPath = args.model_path
   
-  play_game(move_agent=moveFunc, 
-            modelType=PositionPredictor, 
+  print(f"{moveFunc = }")
+  print(f"{modelPath = }")
+  play_game(moveAgent=moveFunc, 
             loadModelFromFile=modelPath)
 
 def train(args):
