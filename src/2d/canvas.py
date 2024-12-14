@@ -257,7 +257,7 @@ def move_cnn(image: Image, model: PositionPredictor ) -> None:
   with torch.no_grad():
     ## moved the image tranformation to the model, I think this makes the most sense, coupling these things
     x = model.transform_image(image)
-    x = x.unsqueeze(0) ## add the batch dimension to make [1,3,600,800]
+    x = x.unsqueeze(0) ## add the batch dimension to make [1,3,600,800], otherwise model complains
     predPos = model(x)
     print(f"{predPos = }")
   
@@ -305,6 +305,8 @@ def play_game(
     pygame.draw.rect(screen, Color("blue"), agent)
     pygame.draw.rect(screen, Color("red"), target)
     
+    print(f"Real Agent pos: {agent.x, agent.y} Target pos: {target.x, target.y}")
+    
     match move_agent:
       case "move_regression":
         move_regression(agent, target, model)
@@ -317,6 +319,7 @@ def play_game(
         # pygame.image.save(screen, "temp.png")
         image = Image.open("./datasets/screenshots/ss-0.png")
         move_cnn(image, model)
+    
     
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
