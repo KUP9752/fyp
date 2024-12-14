@@ -1,14 +1,16 @@
 import pygame
 from pygame.color import Color
+from PIL import Image
 
 import pandas as pd
 import pickle
 import random
 import time
-from typing import Type, Callable, TypeVar
-import re
+from typing import Literal, Type, Callable, TypeVar
 
 from my_types import State, Action4, Movement
+
+MOVES= ["move_regression", "move_classification", "move_arrowkeys", "move_cnn"]
 
 MOV_SPEED = 5
 BLOCK_SIZE = 20 # per side
@@ -140,7 +142,7 @@ def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] 
       
   return data
   
-from torch_bc import AgentNetwork, AgentNetwork_Classification, AgentNetwork_Regression
+from torch_bc import AgentNetwork, AgentNetwork_Classification, AgentNetwork_Regression, PositionPredictor
 from torch import nn
 
 T = TypeVar("T")
@@ -153,12 +155,12 @@ def move_arrowkeys(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork)
       agent.move_ip(dx, dy)
   
   
-  
 def move_classification(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork_Classification) -> None:
   state = agent.x, agent.y, target.x, target.y
   state = torch.tensor(state, dtype=torch.float32)
   action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
   
+  model.eval()
   with torch.no_grad():
     pred = model(state) ## currently returns 4 floats, do some post processing
     ## if below a certain threshold reject it
@@ -191,6 +193,7 @@ def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork
   state = torch.tensor(state, dtype=torch.float32)
   action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
   
+  model.eval()
   with torch.no_grad():
     pred = model(state) 
     print(f"{pred = }")
@@ -249,8 +252,19 @@ def create_image_data(n: int, ssFolder: str) -> None:
   df.to_pickle(f"{ssFolder}/ss-coords.pkl")
   pygame.quit()
 
+def move_cnn(image: Image, model: PositionPredictor ) -> None:
+  model.eval()
+  with torch.no_grad():
+    ## moved the image tranformation to the model, I think this makes the most sense, coupling these things
+    x = model.transform_image(image)
+    x = x.unsqueeze(0) ## add the batch dimension to make [1,3,600,800]
+    predPos = model(x)
+    print(f"{predPos = }")
+  
+      
+      
 def play_game(
-              move_agent: Callable[[pygame.Rect, pygame.Rect, AgentNetwork], None],
+              move_agent: Literal["move_regression", "move_classification", "move_arrowkeys", "move_cnn"],
               model: AgentNetwork = None, 
               loadModelFromFile: str = None, 
               modelType: Type[T] = None, 
@@ -291,7 +305,18 @@ def play_game(
     pygame.draw.rect(screen, Color("blue"), agent)
     pygame.draw.rect(screen, Color("red"), target)
     
-    move_agent(agent, target, model)
+    match move_agent:
+      case "move_regression":
+        move_regression(agent, target, model)
+      case "move_classification":
+        move_classification(agent, target, model)
+      case "move_arrowkeys":
+        move_arrowkeys(agent, target, model)
+      case "move_cnn":
+        # image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
+        # pygame.image.save(screen, "temp.png")
+        image = Image.open("./datasets/screenshots/ss-0.png")
+        move_cnn(image, model)
     
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
@@ -308,7 +333,6 @@ import torch
 
 if __name__ == "__main__":
   print(f"'canvas' [main]")
-  # create_image_data(1000, "./datasets/screenshots")
   # with open("agent-network-1k.pth", "rb") as f:
   #   model = AgentNetwork(4, 4)
   #   model.load_state_dict(torch.load(f))
