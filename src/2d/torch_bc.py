@@ -74,7 +74,7 @@ class PositionDataset(Dataset):
     
     if self.transform:
       image = self.transform(image)
-    
+      
     return image, torch.tensor(label, dtype=torch.float32)
   
 class PositionPredictor(nn.Module):
@@ -89,6 +89,9 @@ class PositionPredictor(nn.Module):
     self.batchSize = batchSize
     self.lr = lr
     self.epochs = epochs
+    self.transform = transforms.Compose([
+      transforms.ToTensor(),
+    ])
     
     self.cnn = nn.Sequential(
       nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1),
@@ -109,8 +112,13 @@ class PositionPredictor(nn.Module):
     )
     
   def forward(self, x):
-    x_cnn= self.cnn(x)
+    x_cnn = self.cnn(x)
     return self.fc(x_cnn)
+  
+  def transform_image(self, image):
+    if self.transform:
+      return self.transform(image)
+    raise ValueError("No transform set, means model hasn't been trained yet")
   
   def train_on_images(self, 
                       imagesDir: str, #directory of the images to train on
@@ -123,11 +131,7 @@ class PositionPredictor(nn.Module):
     else:
       device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    transform = transforms.Compose([
-      transforms.ToTensor(),
-    ])
-    
-    trainingData = PositionDataset(imagesDir, imageCoordsPath, transform)
+    trainingData = PositionDataset(imagesDir, imageCoordsPath, transform=self.transform)
     loader = DataLoader(trainingData, batch_size=self.batchSize, shuffle=True)
     
     model = self.to(device)
@@ -141,10 +145,15 @@ class PositionPredictor(nn.Module):
     for epoch in progress(range(self.epochs)):
       runningLoss = 0
       for images, labels in loader:
+        print(f"images shape: {images.shape}")
+        print(f"labels shape: {labels.shape}")
+        
         images, labels = images.to(device), labels.to(device)
         
         optimiser.zero_grad()
         predActions = model(images)
+        print(f"predActions shape: {predActions.shape}")
+        
         loss = self.lossFunc(predActions, labels)
         loss.backward()
         optimiser.step()
@@ -322,11 +331,6 @@ class AgentNetwork_Classification(AgentNetwork):
     
     return policy
     
-  
-
-# def play_game(model: AgentNetwork) -> None:
-  
-
 if __name__ == "__main__":
   print(f"'torch_bc' [main]")
   print(f"Check for cuda; {torch.cuda.is_available() = }")
