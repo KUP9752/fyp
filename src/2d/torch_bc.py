@@ -145,14 +145,14 @@ class PositionPredictor(nn.Module):
     for epoch in progress(range(self.epochs)):
       runningLoss = 0
       for images, labels in loader:
-        print(f"images shape: {images.shape}")
-        print(f"labels shape: {labels.shape}")
+        printc(doPrints, f"images shape: {images.shape}")
+        printc(doPrints, f"labels shape: {labels.shape}")
         
         images, labels = images.to(device), labels.to(device)
         
         optimiser.zero_grad()
         predActions = model(images)
-        print(f"predActions shape: {predActions.shape}")
+        printc(doPrints, f"predActions shape: {predActions.shape}")
         
         loss = self.lossFunc(predActions, labels)
         loss.backward()

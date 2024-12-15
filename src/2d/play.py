@@ -29,7 +29,7 @@ def train(args):
   # points = int(len(data) * (size / 1000))  
   # samples = random.sample(data, points)
   
-  model = PositionPredictor().train_on_images(doPrints=True, 
+  model = PositionPredictor().train_on_images(doPrints=False, 
                                               imagesDir= dataPath, 
                                               imageCoordsPath=coords, 
                                               modelPath=modelPath)
