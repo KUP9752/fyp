@@ -227,7 +227,7 @@ def create_image_data(n: int, ssFolder: str) -> None:
   screen = pygame.display.set_mode((WIDTH, HEIGHT))
   pygame.display.set_caption("2D Canvas")
 
-  coords: dict[str, State] = {}
+  coords: dict[str, Movement] = {}
   for i in range(n):
     ## White Background
     agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
@@ -244,13 +244,21 @@ def create_image_data(n: int, ssFolder: str) -> None:
     pygame.display.update()
     
     imageName = f"ss-{i}.png"
-    coords[imageName] = (agent.x, agent.y, target.x, target.y)
+    movement = auto_policy((agent.x, agent.y, target.x, target.y))
+    coords[imageName] = {
+      "agent_x": agent.x,
+      "agent_y": agent.y,
+      "target_x": target.x,
+      "target_y": target.y,
+      "movement": (movement[pygame.K_UP], movement[pygame.K_DOWN], movement[pygame.K_LEFT], movement[pygame.K_RIGHT])
+    }
     pygame.image.save(screen, f"{ssFolder}/{imageName}")
     # pygame.time.wait(1000)
   
-  df = pd.DataFrame.from_dict(coords, orient="index", columns=["agent_x", "agent_y", "target_x", "target_y"])
+  df = pd.DataFrame.from_dict(coords, orient="index", columns=[
+    "agent_x", "agent_y", "target_x", "target_y", "movement"])
   print(df)
-  df.to_pickle(f"{ssFolder}/ss-coords.pkl")
+  df.to_pickle(f"{ssFolder}/ss-info.pkl")
   pygame.quit()
 
 def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: PositionPredictor ) -> None:
@@ -376,6 +384,12 @@ import torch
 
 if __name__ == "__main__":
   print(f"'canvas' [main]")
+  create_image_data(10000, "./datasets/screenshots-10k")
+  # print(f"Up -> {pygame.K_UP}")
+  # print(f"DOWN -> {pygame.K_DOWN}")
+  # print(f"LEFT -> {pygame.K_LEFT}")
+  # print(f"RIGHT -> {pygame.K_RIGHT}")
+  
   # with open("agent-network-1k.pth", "rb") as f:
   #   model = AgentNetwork(4, 4)
   #   model.load_state_dict(torch.load(f))

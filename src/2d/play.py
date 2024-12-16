@@ -1,5 +1,5 @@
 from canvas import play_game, MOVES
-from torch_bc import AgentNetwork_Classification, AgentNetwork_Regression, PositionPredictor
+from torch_bc import AgentNetwork_Classification, AgentNetwork_Regression, PositionPredictor, CNN_Regression
 import pickle
 import random
 from argparse import ArgumentParser
@@ -17,7 +17,7 @@ def move(args):
 
 def train(args):
   dataPath = args.dataset
-  coords = f"{dataPath}/ss-coords.pkl"
+  coords = f"{dataPath}/ss-info.pkl"
   
   size = args.size # default to 1000
   # modelName = f"regression-{"1k" if size == 1000 else size}.pth"
@@ -29,9 +29,9 @@ def train(args):
   # points = int(len(data) * (size / 1000))  
   # samples = random.sample(data, points)
   
-  model = PositionPredictor().train_on_images(doPrints=False, 
+  model = CNN_Regression().train_on_images(doPrints=False, 
                                               imagesDir= dataPath, 
-                                              imageCoordsPath=coords, 
+                                              imageMovementsPath=coords, 
                                               modelPath=modelPath)
 
 

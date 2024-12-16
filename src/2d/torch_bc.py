@@ -57,20 +57,21 @@ class AgentNetwork(nn.Module):
     
   
 class PositionDataset(Dataset):
-  def __init__(self, imagesDir: str, imageCoordsPath: str, transform = None):
+  def __init__(self, imagesDir: str, labelsPath: str, transform = None):
     
     self.imagesDir = imagesDir
-    self.imageCoords = pd.read_pickle(imageCoordsPath)
+    self.imageLabels = pd.read_pickle(labelsPath)
     self.transform = transform
     
   def __len__(self):
-    return len(self.imageCoords)
+    return len(self.imageLabels)
   
   def __getitem__(self, idx):
-    imageName = self.imageCoords.iloc[idx].name
+    imageName = self.imageLabels.iloc[idx].name
     imagePath = os.path.join(self.imagesDir, imageName)
     image = Image.open(imagePath)
-    label = self.imageCoords.iloc[idx]
+    toExtract = ["agent_x", "agent_y", "target_x", "target_y"]
+    label = self.imageLabels.iloc[idx][toExtract]
     
     if self.transform:
       image = self.transform(image)
@@ -174,6 +175,141 @@ class PositionPredictor(nn.Module):
     self.loss = runningLoss
     
     return model
+  
+class MovementDataset(Dataset):
+  def __init__(self, imagesDir: str, labelsPath: str, transform = None):
+    
+    self.imagesDir = imagesDir
+    print(f"{labelsPath = }")
+    
+    self.imageLabels = pd.read_pickle(labelsPath)
+    self.imageLabels["movement"] = self.imageLabels["movement"].apply(self.preprocess_to_movement)
+    self.imageLabels
+    self.transform = transform
+    
+  def __len__(self):
+    return len(self.imageLabels)
+  
+  def preprocess_to_movement(self, action: Action4) -> Action2:
+    ## (right - left, up - down) for (dx, dy)
+    
+    return (int(action[3]) - int(action[2]), int(action[0]) - int(action[1]))
+  
+  def __getitem__(self, idx):
+    imageName = self.imageLabels.iloc[idx].name
+    imagePath = os.path.join(self.imagesDir, imageName)
+    image = Image.open(imagePath)
+    label = self.imageLabels.iloc[idx]["movement"]
+    
+    
+    if self.transform:
+      image = self.transform(image)
+      
+    return image, torch.tensor(label, dtype=torch.float32)
+    
+class CNN_Regression(nn.Module):
+  def __init__(self, 
+               lossFunc = nn.MSELoss(),
+               lr: float = 0.001,
+               epochs: int = 100,
+               batchSize: int = 32):
+    super(CNN_Regression, self).__init__()
+    self.losses = None
+    self.lossFunc = lossFunc
+    self.batchSize = batchSize
+    self.lr = lr
+    self.epochs = epochs
+    self.transform = transforms.Compose([
+      transforms.ToTensor(),
+    ])
+    
+    self.cnn = nn.Sequential(
+      nn.Conv2d(in_channels=3, out_channels=16, kernel_size=5, stride=2, padding=2),  # 16 x 300 x 400
+      nn.ReLU(),
+      nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5, stride=2, padding=2), # 32 x 150 x 200
+      nn.ReLU(),
+      nn.Conv2d(in_channels=32, out_channels=64, kernel_size=5, stride=2, padding=2), # 64 x 75 x 100
+      nn.ReLU(),
+      nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, padding=1), # 128 x 38 x 50
+      nn.ReLU()
+    )
+        
+        # Fully connected layers (self.fc using nn.Sequential)
+    self.fc = nn.Sequential(
+      nn.Linear(128 * 38 * 50, 1024),  # Flattened features
+      nn.ReLU(),
+      nn.Linear(1024, 256),
+      nn.ReLU(),
+      nn.Linear(256, 2),  # Output: dx and dy
+      nn.Tanh()  # Ensure outputs are between -1 and 1
+    )
+    
+  def forward(self, x):
+    x = self.cnn(x)  # CNN feature extractor
+    x = x.view(x.size(0), -1)  # Flatten
+    x = self.fc(x)  # Fully connected layers
+    return x
+  
+  def transform_image(self, image):
+    if self.transform:
+      return self.transform(image)
+    raise ValueError("No transform set, means model hasn't been trained yet")
+  
+  def train_on_images(self, 
+                      imagesDir: str, #directory of the images to train on
+                      imageMovementsPath: str, # DataFrame image-name -> State
+                      modelPath: str = None, 
+                      overwriteDevice: Literal['cpu', 'cuda'] | None = None,
+                      doPrints: bool = False) -> Self:
+    if overwriteDevice:
+      device = torch.device(overwriteDevice)
+    else:
+      device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    trainingData = MovementDataset(imagesDir, imageMovementsPath, transform=self.transform)
+    loader = DataLoader(trainingData, batch_size=self.batchSize, shuffle=True)
+    
+    model = self.to(device)
+    optimiser = optim.Adam(model.parameters(), lr = self.lr)
+    
+    printc(doPrints, f"Training on {len(trainingData)} points")
+    
+    model.train()
+    self.losses = [0 for _ in range(self.epochs)]
+    
+    for epoch in progress(range(self.epochs)):
+      runningLoss = 0
+      for images, labels in loader:
+        printc(doPrints, f"images shape: {images.shape}")
+        printc(doPrints, f"labels shape: {labels.shape}")
+        
+        images, labels = images.to(device), labels.to(device)
+        
+        optimiser.zero_grad()
+        predActions = model(images)
+        printc(doPrints, f"predActions shape: {predActions.shape}")
+        
+        loss = self.lossFunc(predActions, labels)
+        loss.backward()
+        optimiser.step()
+        runningLoss += loss.item()
+        
+      loss = runningLoss / len(loader)
+      self.losses[epoch] = loss
+      printc(doPrints, f" [{epoch}/{self.epochs}] Loss: {loss}")
+      
+      
+      
+    printc(doPrints, f"Done training!")
+    
+    if modelPath:
+      printc(doPrints, f"Saving...")
+      torch.save(self.state_dict(), f"{modelPath}")
+      printc(doPrints, f"Saved!")
+    self.loss = runningLoss
+    
+    return model
+    
     
 ## Regression Task
 class AgentNetwork_Regression(AgentNetwork):
@@ -205,7 +341,7 @@ class AgentNetwork_Regression(AgentNetwork):
     
   
   def preprocess_data(data: list[tuple[State, Action4]]) -> list[tuple[State, Action2]]:
-    ## (left - right, up - down) for (dx, dy)
+    ## (right - left, up - down) for (dx, dy)
     
     return [(state, (int(action[3]) - int(action[2]), int(action[0]) - int(action[1]))) for state, action in data]
   
