@@ -2,3 +2,6 @@
 
 **/demonstration*
 **/__pycache__*
+
+src/2d/datasets/screenshots/*
+src/2d/datasets/screenshots-10k/*
