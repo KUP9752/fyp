@@ -262,7 +262,7 @@ class CNN_Regression(nn.Module):
     
     model = self.to(device)
     optimiser = optim.Adam(model.parameters(), lr = self.lr)
-    
+    print(f"Using device: {device}")
     printc(doPrints, f"Training on {len(trainingData)} points")
     
     model.train()
