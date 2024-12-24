@@ -64,6 +64,8 @@ class PositionDataset(Dataset):
     self.imageLabels = pd.read_pickle(labelsPath)
     self.transform = transform
     
+    raise ValueError(f"No Layers configured for this, not using this for now")
+    
   def __len__(self):
     return len(self.imageLabels)
   
@@ -95,43 +97,6 @@ class PositionPredictor(nn.Module):
       transforms.ToTensor(),
     ])
     
-    # self.cnn = nn.Sequential(
-    #   nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1),
-    #   nn.ReLU(),
-    #   nn.MaxPool2d(kernel_size=2),
-    #   nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
-    #   nn.ReLU(),
-    #   nn.MaxPool2d(kernel_size=2),
-    #   nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
-    #   nn.ReLU(),
-    #   nn.AdaptiveAvgPool2d((4, 4))  # Reduce to fixed size
-    # )
-    # self.fc = nn.Sequential(
-    #   nn.Flatten(),
-    #   nn.Linear(64 * 4 * 4, 128),
-    #   nn.ReLU(),
-    #   nn.Linear(128, 4)  # Output 4 values: agent_x, agent_y, target_x, target_y
-    # )
-    self.cnn = nn.Sequential(
-      nn.Conv2d(in_channels=3, out_channels=16, kernel_size=5, stride=2, padding=2),  # 16 x 300 x 400
-      nn.ReLU(),
-      nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5, stride=2, padding=2), # 32 x 150 x 200
-      nn.ReLU(),
-      nn.Conv2d(in_channels=32, out_channels=64, kernel_size=5, stride=2, padding=2), # 64 x 75 x 100
-      nn.ReLU(),
-      nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, padding=1), # 128 x 38 x 50
-      nn.ReLU()
-    )
-        
-        # Fully connected layers (self.fc using nn.Sequential)
-    self.fc = nn.Sequential(
-      nn.Flatten(),
-      nn.Linear(128 * 38 * 50, 1024),  # Flattened features
-      nn.ReLU(),
-      nn.Linear(1024, 256),
-      nn.ReLU(),
-      nn.Linear(256, 4),  # Output: agent_x, agent_y, target_x, target_y
-    )
     
   def forward(self, x):
     x = self.cnn(x)
@@ -244,43 +209,37 @@ class CNN_Regression(nn.Module):
     self.transform = transforms.Compose([
       transforms.ToTensor(),
     ])
-    self.model = nn.Sequential(
-    nn.Conv2d(3, 16, kernel_size=3, stride=2),  # Conv1: 3 input channels (RGB), 16 output channels
-    nn.ReLU(),
-    nn.Conv2d(16, 32, kernel_size=3, stride=2),  # Conv2: 16 input channels, 32 output channels
-    nn.ReLU(),
-    nn.Flatten(),  # Flatten the output from Conv2 to pass to fully connected layers
-    nn.Linear(32 * 149 * 199, 128),  # Adjusted for the correct flattened size
-    nn.ReLU(),
-    nn.Linear(128, 2)  # Output layer with 2 values (e.g., dx, dy)
-  )
-    # self.cnn = nn.Sequential(
-    #   nn.Conv2d(in_channels=3, out_channels=16, kernel_size=5, stride=2, padding=2),  # 16 x 300 x 400
-    #   nn.ReLU(),
-    #   nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5, stride=2, padding=2), # 32 x 150 x 200
-    #   nn.ReLU(),
-    #   nn.Conv2d(in_channels=32, out_channels=64, kernel_size=5, stride=2, padding=2), # 64 x 75 x 100
-    #   nn.ReLU(),
-    #   nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, padding=1), # 128 x 38 x 50
-    #   nn.ReLU()
-    # )
-        
-    #     # Fully connected layers (self.fc using nn.Sequential)
-    # self.fc = nn.Sequential(
-    #   nn.Linear(128 * 38 * 50, 1024),  # Flattened features
-    #   nn.ReLU(),
-    #   nn.Linear(1024, 256),
-    #   nn.ReLU(),
-    #   nn.Linear(256, 2),  # Output: dx and dy
-    #   # nn.Tanh()  # Ensure outputs are between -1 and 1
-    # )
+    
+    self.cnn = nn.Sequential(
+      nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1), # 3 channles RBG
+      nn.ReLU(),
+      nn.MaxPool2d(kernel_size=2, stride=2),  # Downsample 800x600 -> 400x300
+      nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1), 
+      nn.ReLU(),
+      nn.MaxPool2d(kernel_size=2, stride=2),  # Downsample 400x300 -> 200x150
+      nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1), 
+      nn.ReLU(),
+      nn.MaxPool2d(kernel_size=2, stride=2), # Downsample 200x150 -> 100x75
+      nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1), 
+      nn.ReLU(),
+      nn.MaxPool2d(kernel_size=2, stride=2),  # Downsample 100x75 -> 50x37
+    )
+    
+    self.fc = nn.Sequential(
+      nn.Flatten(),
+      nn.Linear(256 * 50 * 37, 512),
+      nn.ReLU(),
+      nn.Linear(512, 128),
+      nn.ReLU(),
+      nn.Linear(128, 32),  # Output: dx and dy
+      nn.ReLU(),
+      nn.Linear(32, 2)  # Output: dx and dy
+    )
     
   def forward(self, x):
-    # x = self.cnn(x)  # CNN feature extractor
-    # x = x.view(x.size(0), -1)  # Flatten
-    # x = self.fc(x)  # Fully connected layers
-    # return x
-    return self.model(x)
+    x = self.cnn(x)  # CNN feature extractor
+    x = self.fc(x)  # Fully connected layers
+    return x
   
   def transform_image(self, image):
     if self.transform:

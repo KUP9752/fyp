@@ -10,7 +10,7 @@ from typing import Literal, Type, Callable, TypeVar
 
 from my_types import State, Action4, Movement
 
-MOVES= ["move_regression", "move_classification", "move_arrowkeys", "move_cnn", "move_cnn1"]
+
 
 MOV_SPEED = 5
 BLOCK_SIZE = 20 # per side
@@ -261,43 +261,6 @@ def create_image_data(n: int, ssFolder: str) -> None:
   df.to_pickle(f"{ssFolder}/ss-info.pkl")
   pygame.quit()
   
-def move_cnn1(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_Regression ) -> None:
-  model.eval()
-  with torch.no_grad():
-    ## moved the image tranformation to the model, I think this makes the most sense, coupling these things
-    x = model.transform_image(image)
-    x = x.unsqueeze(0) ## add the batch dimension to make [1,3,600,800], otherwise model complains
-    predPos = model(x)[0]
-  print(f"{predPos = }")
-  
-  
-  model = load_model("./models/regression-1k.pth", modelType=AgentNetwork_Regression)
-  
-  model.eval()
-  with torch.no_grad():
-    pred = model(predPos)
-   ## map into key pairs
-    dx, dy = pred[0], pred[1]
-    action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
-    thresh = 0.05## threshold for the movement, 0.5 works well for 1k, 0.25 for 500, 0.05 for 250 otherwise they can get stuck
-    # old key sytem:
-    if dx > thresh: 
-      action[pygame.K_RIGHT] = True
-    elif dx < -thresh:
-      action[pygame.K_LEFT] = True
-      
-    if dy > thresh: 
-      action[pygame.K_UP] = True
-    elif dy < -thresh:
-      action[pygame.K_DOWN] = True
-    
-    for key, (dx, dy) in MOVEMENT.items():
-      if action[key]:
-        agent.move_ip(dx, dy)
-  
-  
-    
-    
     
 def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_Regression ) -> None:
   model.eval()
@@ -353,10 +316,10 @@ MODEL_TYPES = {
   "move_regression": lambda s: load_model(s, modelType=AgentNetwork_Regression),
   "move_classification": lambda s: load_model(s, modelType=AgentNetwork_Classification),
   "move_cnn": lambda s: load_model(s, modelType=CNN_Regression),
-  "move_cnn1": lambda s: load_model(s, modelType=PositionPredictor),
   "move_arrowkeys": lambda s: None
 }
       
+MOVES= ["move_regression", "move_classification", "move_arrowkeys", "move_cnn"]
 def play_game(
               moveAgent: Literal["move_regression", "move_classification", "move_arrowkeys", "move_cnn"],
               loadModelFromFile: str = None, 
@@ -399,10 +362,6 @@ def play_game(
         move_classification(agent, target, model)
       case "move_arrowkeys":
         move_arrowkeys(agent, target, model)
-      case "move_cnn1":
-        image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
-        image.save("temp.png")
-        move_cnn1(agent, target, image, model)
       case "move_cnn":
         image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
         image.save("temp.png")
