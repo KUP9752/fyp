@@ -11,7 +11,8 @@ from typing import Literal, Type, Callable, TypeVar
 from my_types import State, Action4, Movement
 
 
-
+SPEED = 2.0
+FPS = 60
 MOV_SPEED = 5
 BLOCK_SIZE = 20 # per side
 
@@ -27,40 +28,21 @@ MOVEMENT: dict = {
   }
 
 ## Movement Behaviour to be used by the 'learn_game' 
-def auto_policy(state: State) -> Movement:
-  agent_x, agent_y, target_x, target_y = state
+def auto_policy(agent: pygame.Rect, target: pygame.Rect) -> Movement:
+  dx = target.x - agent.x
+  dy = target.y - agent.y
+  mag = (dx**2 + dy**2)**0.5
   
-  movement = {
-    pygame.K_UP: False,
-    pygame.K_DOWN: False,
-    pygame.K_LEFT: False,
-    pygame.K_RIGHT: False
-  }
+  if mag > 0:
+    dx /= mag
+    dy /= mag    
   
-  ## To remove the jitter adjust the boundary of the condition
-  match agent_x:
-    case _ if agent_x >= target_x and agent_x < target_x + BLOCK_SIZE:
-      movement[pygame.K_LEFT] = False
-      movement[pygame.K_RIGHT] = False
-    case _ if agent_x >= target_x + BLOCK_SIZE:
-      movement[pygame.K_LEFT] = True
-    case _ if agent_x < target_x:
-      movement[pygame.K_RIGHT] = True
-      
-  match agent_y:
-    case _ if agent_y >= target_y and agent_y < target_y + BLOCK_SIZE:
-      movement[pygame.K_UP] = False
-      movement[pygame.K_DOWN] = False
-    case _ if agent_y >= target_y + BLOCK_SIZE:
-      movement[pygame.K_UP] = True
-    case _ if agent_y < target_y:
-      movement[pygame.K_DOWN] = True
-      
+  dx = int(dx * MOV_SPEED)
+  dy = int(dy * MOV_SPEED)
   
-    
-  return movement
+  agent.move_ip(dx, dy)
 
-def human_interaction(state: State) -> Movement:
+def human_interaction(agent: pygame.Rect, target: pygame.Rect) -> dict[pygame.key, bool]:
   return pygame.key.get_pressed()
 
 ## File to save the demonstration data to train on
@@ -127,7 +109,7 @@ def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] 
       isRunning = False
     
     pygame.display.update()
-    clock.tick(60)
+    clock.tick(FPS)
 
   pygame.quit()
   
@@ -314,15 +296,16 @@ def load_model(loadModelFromFile: str,
     return model
       
 MODEL_TYPES = {
+  "auto_policy": lambda s: None,
   "move_regression": lambda s: load_model(s, modelType=AgentNetwork_Regression),
   "move_classification": lambda s: load_model(s, modelType=AgentNetwork_Classification),
   "move_cnn": lambda s: load_model(s, modelType=CNN_Regression),
   "move_arrowkeys": lambda s: None
 }
       
-MOVES= ["move_regression", "move_classification", "move_arrowkeys", "move_cnn"]
+MOVES= ["auto_policy", "move_regression", "move_classification", "move_arrowkeys", "move_cnn"]
 def play_game(
-              moveAgent: Literal["move_regression", "move_classification", "move_arrowkeys", "move_cnn"],
+              moveAgent: Literal["auto_policy", "move_regression", "move_classification", "move_arrowkeys", "move_cnn"],
               loadModelFromFile: str = None, 
             ) -> None:
   if not loadModelFromFile:
@@ -338,6 +321,7 @@ def play_game(
   target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
 
   isRunning = True
+  
   model = MODEL_TYPES[moveAgent](loadModelFromFile)
 
   while isRunning:
@@ -353,10 +337,11 @@ def play_game(
     pygame.draw.rect(screen, Color("blue"), agent)
     pygame.draw.rect(screen, Color("red"), target)
     
-    print(f"Real Agent pos: {agent.x, agent.y} Target pos: {target.x, target.y}")
-    
+    # print(f"Real Agent pos: {agent.x, agent.y} Target pos: {target.x, target.y}")
     
     match moveAgent:
+      case "auto_policy":
+        auto_policy(agent, target)
       case "move_regression":
         move_regression(agent, target, model)
       case "move_classification":
@@ -373,7 +358,7 @@ def play_game(
       target.y = random.randint(0, Y_BOUND)
     
     pygame.display.update()
-    clock.tick(60)
+    clock.tick(FPS)
 
   pygame.quit()
 
