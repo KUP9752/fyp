@@ -278,22 +278,23 @@ def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_R
   dx, dy = pred[0], pred[1]
   
   thresh = 0.00## threshold for the movement, 0.5 works well for 1k, 0.25 for 500, 0.05 for 250 otherwise they can get stuck
-  # old key sytem:
-  if dx > thresh: 
-    action[pygame.K_RIGHT] = True
-  elif dx < -thresh:
-    action[pygame.K_LEFT] = True
+  agent.move_ip(int(dx * MOV_SPEED), int(dy * MOV_SPEED))
+  # # old key sytem:
+  # if dx > thresh: 
+  #   action[pygame.K_RIGHT] = True
+  # elif dx < -thresh:
+  #   action[pygame.K_LEFT] = True
     
-  if dy > thresh: 
-    action[pygame.K_UP] = True
-  elif dy < -thresh:
-    action[pygame.K_DOWN] = True
+  # if dy > thresh: 
+  #   action[pygame.K_UP] = True
+  # elif dy < -thresh:
+  #   action[pygame.K_DOWN] = True
   
   
   
-  for key, (dx, dy) in MOVEMENT.items():
-    if action[key]:
-      agent.move_ip(dx, dy)
+  # for key, (dx, dy) in MOVEMENT.items():
+  #   if action[key]:
+  #     agent.move_ip(dx, dy)
       
   
   
@@ -337,6 +338,7 @@ def play_game(
   target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
 
   isRunning = True
+  model = MODEL_TYPES[moveAgent](loadModelFromFile)
 
   while isRunning:
     ## White Background
@@ -353,7 +355,6 @@ def play_game(
     
     print(f"Real Agent pos: {agent.x, agent.y} Target pos: {target.x, target.y}")
     
-    model = MODEL_TYPES[moveAgent](loadModelFromFile)
     
     match moveAgent:
       case "move_regression":
