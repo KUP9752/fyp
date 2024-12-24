@@ -8,4 +8,4 @@ type Action2 = tuple[int, int]
 ## Up, Down, Left, Right
 type Action4 = tuple[bool, bool, bool, bool]
 
-type Movement = dict[pygame.key, bool]
+type Movement = tuple[float, float]

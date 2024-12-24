@@ -8,7 +8,7 @@ import random
 import time
 from typing import Literal, Type, Callable, TypeVar
 
-from my_types import State, Action4, Movement
+from my_types import State, Action4, Movement, Action2
 
 
 SPEED = 2.0
@@ -28,7 +28,7 @@ MOVEMENT: dict = {
   }
 
 ## Movement Behaviour to be used by the 'learn_game' 
-def auto_policy(agent: pygame.Rect, target: pygame.Rect) -> Movement:
+def auto_policy(agent: pygame.Rect, target: pygame.Rect) -> Action2:
   dx = target.x - agent.x
   dy = target.y - agent.y
   mag = (dx**2 + dy**2)**0.5
@@ -41,12 +41,13 @@ def auto_policy(agent: pygame.Rect, target: pygame.Rect) -> Movement:
   dy = int(dy * MOV_SPEED)
   
   agent.move_ip(dx, dy)
-
-def human_interaction(agent: pygame.Rect, target: pygame.Rect) -> dict[pygame.key, bool]:
-  return pygame.key.get_pressed()
+  
+  return dx, dy
 
 ## File to save the demonstration data to train on
-def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] = auto_policy, n = 10) -> list[tuple[State, Action4]]:
+def learn_game(filepath: str = None,
+               moveAgent: Callable[[pygame.Rect, pygame.Rect], Action2] = auto_policy,
+               n = 10) -> list[tuple[State, Action4]]:
 
   pygame.init()
   clock = pygame.time.Clock()
@@ -61,11 +62,13 @@ def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] 
 
   isRunning = True
   
-  data: list[tuple[State, Action4]]= []
+  data: list[tuple[State, Action2]] = []
   
   targetCount = 1 ## one target at the start
   startTime = time.perf_counter()
 
+  frameCount
+  
   while isRunning:
     ## White Background
     screen.fill(Color("white"))
@@ -84,15 +87,8 @@ def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] 
     
     ## record the action given to the robot in this coord system
     state = agent.x, agent.y, target.x, target.y
-    action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
     
-    keys = agentMovement(state)
-    
-    for key, (dx, dy) in MOVEMENT.items():
-      if keys[key]:
-        action[key] = True
-        agent.move_ip(dx, dy) # this is a move 'in-place', doesn't alter the object
-    
+    action: Action2 = moveAgent(agent, target)
     
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
@@ -102,7 +98,7 @@ def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] 
     
       
     ## save the data from this frame  
-    data.append((state, tuple(action.values())))
+    data.append((state, action))
     
     ## Finish learning when n targets are reached
     if targetCount == n:
@@ -127,9 +123,9 @@ def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] 
 from torch_bc import AgentNetwork, AgentNetwork_Classification, AgentNetwork_Regression, CNN_Regression, PositionPredictor
 from torch import nn
 
-T = TypeVar("T")
 
-def move_arrowkeys(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork) -> None:
+
+def move_arrowkeys(agent: pygame.Rect, target: pygame.Rect) -> None:
   keys = pygame.key.get_pressed()
   
   for key, (dx, dy) in MOVEMENT.items():
@@ -226,14 +222,14 @@ def create_image_data(n: int, ssFolder: str) -> None:
     pygame.display.update()
     
     imageName = f"ss-{i}.png"
-    movement = auto_policy((agent.x, agent.y, target.x, target.y))
-    coords[imageName] = {
-      "agent_x": agent.x,
-      "agent_y": agent.y,
-      "target_x": target.x,
-      "target_y": target.y,
-      "movement": (movement[pygame.K_UP], movement[pygame.K_DOWN], movement[pygame.K_LEFT], movement[pygame.K_RIGHT])
-    }
+    auto_policy(agent, target)
+    # coords[imageName] = {
+    #   "agent_x": agent.x,
+    #   "agent_y": agent.y,
+    #   "target_x": target.x,
+    #   "target_y": target.y,
+    #   "movement": (movement[pygame.K_UP], movement[pygame.K_DOWN], movement[pygame.K_LEFT], movement[pygame.K_RIGHT])
+    # }
     pygame.image.save(screen, f"{ssFolder}/{imageName}")
     # pygame.time.wait(1000)
   
@@ -279,7 +275,7 @@ def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_R
   #     agent.move_ip(dx, dy)
       
   
-  
+T = TypeVar("T")
 def load_model(loadModelFromFile: str, 
                modelType: Type[T] = None,
                device: Literal["cpu", "cuda"] = "cpu"
@@ -367,7 +363,7 @@ import torch
 
 if __name__ == "__main__":
   print(f"'canvas' [main]")
-  create_image_data(1000, "./datasets/screenshots-1k")
+  # create_image_data(1000, "./datasets/screenshots-1k")
   # print(f"Up -> {pygame.K_UP}")
   # print(f"DOWN -> {pygame.K_DOWN}")
   # print(f"LEFT -> {pygame.K_LEFT}")
@@ -378,4 +374,4 @@ if __name__ == "__main__":
   #   model.load_state_dict(torch.load(f))
   #   model.eval() ## set to evaluation mode as the training is complete
   #   play_game(model)
-  # learn_game("10-targets.pkl", human_interaction, n=10)
+  learn_game("10-targets.pkl", auto_policy, n=10)
