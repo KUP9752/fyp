@@ -1,3 +1,4 @@
+import numpy as np
 import torch 
 import torch.nn as nn
 import torch.optim as optim
@@ -71,7 +72,7 @@ class PositionDataset(Dataset):
     imagePath = os.path.join(self.imagesDir, imageName)
     image = Image.open(imagePath)
     toExtract = ["agent_x", "agent_y", "target_x", "target_y"]
-    label = self.imageLabels.iloc[idx][toExtract]
+    label = label = self.imageLabels.loc[self.imageLabels.index[idx], toExtract].values.astype(np.float32)
     
     if self.transform:
       image = self.transform(image)
@@ -94,27 +95,48 @@ class PositionPredictor(nn.Module):
       transforms.ToTensor(),
     ])
     
+    # self.cnn = nn.Sequential(
+    #   nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1),
+    #   nn.ReLU(),
+    #   nn.MaxPool2d(kernel_size=2),
+    #   nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
+    #   nn.ReLU(),
+    #   nn.MaxPool2d(kernel_size=2),
+    #   nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
+    #   nn.ReLU(),
+    #   nn.AdaptiveAvgPool2d((4, 4))  # Reduce to fixed size
+    # )
+    # self.fc = nn.Sequential(
+    #   nn.Flatten(),
+    #   nn.Linear(64 * 4 * 4, 128),
+    #   nn.ReLU(),
+    #   nn.Linear(128, 4)  # Output 4 values: agent_x, agent_y, target_x, target_y
+    # )
     self.cnn = nn.Sequential(
-      nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1),
+      nn.Conv2d(in_channels=3, out_channels=16, kernel_size=5, stride=2, padding=2),  # 16 x 300 x 400
       nn.ReLU(),
-      nn.MaxPool2d(kernel_size=2),
-      nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
+      nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5, stride=2, padding=2), # 32 x 150 x 200
       nn.ReLU(),
-      nn.MaxPool2d(kernel_size=2),
-      nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
+      nn.Conv2d(in_channels=32, out_channels=64, kernel_size=5, stride=2, padding=2), # 64 x 75 x 100
       nn.ReLU(),
-      nn.AdaptiveAvgPool2d((4, 4))  # Reduce to fixed size
+      nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, padding=1), # 128 x 38 x 50
+      nn.ReLU()
     )
+        
+        # Fully connected layers (self.fc using nn.Sequential)
     self.fc = nn.Sequential(
       nn.Flatten(),
-      nn.Linear(64 * 4 * 4, 128),
+      nn.Linear(128 * 38 * 50, 1024),  # Flattened features
       nn.ReLU(),
-      nn.Linear(128, 4)  # Output 4 values: agent_x, agent_y, target_x, target_y
+      nn.Linear(1024, 256),
+      nn.ReLU(),
+      nn.Linear(256, 4),  # Output: agent_x, agent_y, target_x, target_y
     )
     
   def forward(self, x):
-    x_cnn = self.cnn(x)
-    return self.fc(x_cnn)
+    x = self.cnn(x)
+    # x = x.view(x_cnn.size(0), -1)  # Flatten
+    return self.fc(x)
   
   def transform_image(self, image):
     if self.transform:
@@ -162,7 +184,7 @@ class PositionPredictor(nn.Module):
         
       loss = runningLoss / len(loader)
       self.losses[epoch] = loss
-      printc(doPrints, f" [{epoch}/{self.epochs}] Loss: {loss}")
+      printc(True, f" [{epoch}/{self.epochs}] Loss: {loss}")
       
       
       
@@ -199,7 +221,7 @@ class MovementDataset(Dataset):
     imageName = self.imageLabels.iloc[idx].name
     imagePath = os.path.join(self.imagesDir, imageName)
     image = Image.open(imagePath)
-    label = self.imageLabels.iloc[idx]["movement"]
+    label = label = self.imageLabels.loc[self.imageLabels.index[idx], "movement"]
     
     
     if self.transform:
@@ -222,33 +244,43 @@ class CNN_Regression(nn.Module):
     self.transform = transforms.Compose([
       transforms.ToTensor(),
     ])
-    
-    self.cnn = nn.Sequential(
-      nn.Conv2d(in_channels=3, out_channels=16, kernel_size=5, stride=2, padding=2),  # 16 x 300 x 400
-      nn.ReLU(),
-      nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5, stride=2, padding=2), # 32 x 150 x 200
-      nn.ReLU(),
-      nn.Conv2d(in_channels=32, out_channels=64, kernel_size=5, stride=2, padding=2), # 64 x 75 x 100
-      nn.ReLU(),
-      nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, padding=1), # 128 x 38 x 50
-      nn.ReLU()
-    )
+    self.model = nn.Sequential(
+    nn.Conv2d(3, 16, kernel_size=3, stride=2),  # Conv1: 3 input channels (RGB), 16 output channels
+    nn.ReLU(),
+    nn.Conv2d(16, 32, kernel_size=3, stride=2),  # Conv2: 16 input channels, 32 output channels
+    nn.ReLU(),
+    nn.Flatten(),  # Flatten the output from Conv2 to pass to fully connected layers
+    nn.Linear(32 * 149 * 199, 128),  # Adjusted for the correct flattened size
+    nn.ReLU(),
+    nn.Linear(128, 2)  # Output layer with 2 values (e.g., dx, dy)
+  )
+    # self.cnn = nn.Sequential(
+    #   nn.Conv2d(in_channels=3, out_channels=16, kernel_size=5, stride=2, padding=2),  # 16 x 300 x 400
+    #   nn.ReLU(),
+    #   nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5, stride=2, padding=2), # 32 x 150 x 200
+    #   nn.ReLU(),
+    #   nn.Conv2d(in_channels=32, out_channels=64, kernel_size=5, stride=2, padding=2), # 64 x 75 x 100
+    #   nn.ReLU(),
+    #   nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, padding=1), # 128 x 38 x 50
+    #   nn.ReLU()
+    # )
         
-        # Fully connected layers (self.fc using nn.Sequential)
-    self.fc = nn.Sequential(
-      nn.Linear(128 * 38 * 50, 1024),  # Flattened features
-      nn.ReLU(),
-      nn.Linear(1024, 256),
-      nn.ReLU(),
-      nn.Linear(256, 2),  # Output: dx and dy
-      nn.Tanh()  # Ensure outputs are between -1 and 1
-    )
+    #     # Fully connected layers (self.fc using nn.Sequential)
+    # self.fc = nn.Sequential(
+    #   nn.Linear(128 * 38 * 50, 1024),  # Flattened features
+    #   nn.ReLU(),
+    #   nn.Linear(1024, 256),
+    #   nn.ReLU(),
+    #   nn.Linear(256, 2),  # Output: dx and dy
+    #   # nn.Tanh()  # Ensure outputs are between -1 and 1
+    # )
     
   def forward(self, x):
-    x = self.cnn(x)  # CNN feature extractor
-    x = x.view(x.size(0), -1)  # Flatten
-    x = self.fc(x)  # Fully connected layers
-    return x
+    # x = self.cnn(x)  # CNN feature extractor
+    # x = x.view(x.size(0), -1)  # Flatten
+    # x = self.fc(x)  # Fully connected layers
+    # return x
+    return self.model(x)
   
   def transform_image(self, image):
     if self.transform:
@@ -296,7 +328,7 @@ class CNN_Regression(nn.Module):
         
       loss = runningLoss / len(loader)
       self.losses[epoch] = loss
-      printc(doPrints, f" [{epoch}/{self.epochs}] Loss: {loss}")
+      printc(True, f" [{epoch}/{self.epochs}] Loss: {loss}")
       
       
       

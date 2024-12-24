@@ -29,10 +29,12 @@ def train(args):
   # points = int(len(data) * (size / 1000))  
   # samples = random.sample(data, points)
   
-  model = CNN_Regression().train_on_images(doPrints=False, 
-                                              imagesDir= dataPath, 
-                                              imageMovementsPath=coords, 
-                                              modelPath=modelPath)
+  model = CNN_Regression().train_on_images(
+    doPrints=False, 
+    imagesDir= dataPath, 
+    imageMovementsPath=coords, 
+    modelPath=modelPath
+    )
 
 
 if __name__ == "__main__":
