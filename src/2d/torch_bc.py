@@ -170,7 +170,6 @@ class MovementDataset(Dataset):
     print(f"{labelsPath = }")
     
     self.imageLabels = pd.read_pickle(labelsPath)
-    self.imageLabels["movement"] = self.imageLabels["movement"].apply(self.preprocess_to_movement)
     self.imageLabels
     self.transform = transform
     
@@ -186,7 +185,7 @@ class MovementDataset(Dataset):
     imageName = self.imageLabels.iloc[idx].name
     imagePath = os.path.join(self.imagesDir, imageName)
     image = Image.open(imagePath)
-    label = label = self.imageLabels.loc[self.imageLabels.index[idx], "movement"]
+    label = label = self.imageLabels.loc[self.imageLabels.index[idx], "action"]
     
     
     if self.transform:

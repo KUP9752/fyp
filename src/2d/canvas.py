@@ -67,8 +67,6 @@ def learn_game(filepath: str = None,
   targetCount = 1 ## one target at the start
   startTime = time.perf_counter()
 
-  frameCount
-  
   while isRunning:
     ## White Background
     screen.fill(Color("white"))
@@ -95,6 +93,8 @@ def learn_game(filepath: str = None,
       targetCount += 1
       target.x = random.randint(0, X_BOUND)
       target.y = random.randint(0, Y_BOUND)
+      # agent.x = random.randint(0, X_BOUND)
+      # agent.y = random.randint(0, Y_BOUND)
     
       
     ## save the data from this frame  
@@ -206,23 +206,56 @@ def create_image_data(n: int, ssFolder: str) -> None:
   pygame.display.set_caption("2D Canvas")
 
   coords: dict[str, Movement] = {}
-  for i in range(n):
+  clock = pygame.time.Clock()
+  isRunning = True
+  
+  agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+  target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+  
+  targetCount = 0
+  frameCount = 0
+  while isRunning:
     ## White Background
-    agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
-    target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
-    
     screen.fill(Color("white"))
-      
-          
+     
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+        isRunning = False
+      if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+        print(f"Agent(x={agent.x}, y={agent.y}) Target(x={target.x}, y={target.y})")
+        
+    
     ## Game Logic
     ## draw the squares, agend is BLUE, target is RED
     pygame.draw.rect(screen, Color("blue"), agent)
     pygame.draw.rect(screen, Color("red"), target)
     
-    pygame.display.update()
+    imageName = f"ss-{targetCount}-{frameCount}.png"
+    action: Action2 = auto_policy(agent, target)
+    coords[imageName] = {
+      "agent_x": agent.x,
+      "agent_y": agent.y,
+      "target_x": target.x,
+      "target_y": target.y,
+      "action": action
+    }
+    pygame.image.save(screen, f"{ssFolder}/{imageName}")
     
-    imageName = f"ss-{i}.png"
-    auto_policy(agent, target)
+    if agent.colliderect(target):
+      targetCount += 1
+      frameCount += 1
+      target.x = random.randint(0, X_BOUND)
+      target.y = random.randint(0, Y_BOUND)
+      # agent.x = random.randint(0, X_BOUND)
+      # agent.y = random.randint(0, Y_BOUND)
+    
+    if targetCount >= n:
+      isRunning = False
+      
+    frameCount += 1
+    pygame.display.update()
+    clock.tick(FPS)
+    # Old Action4 version
     # coords[imageName] = {
     #   "agent_x": agent.x,
     #   "agent_y": agent.y,
@@ -230,11 +263,10 @@ def create_image_data(n: int, ssFolder: str) -> None:
     #   "target_y": target.y,
     #   "movement": (movement[pygame.K_UP], movement[pygame.K_DOWN], movement[pygame.K_LEFT], movement[pygame.K_RIGHT])
     # }
-    pygame.image.save(screen, f"{ssFolder}/{imageName}")
     # pygame.time.wait(1000)
   
   df = pd.DataFrame.from_dict(coords, orient="index", columns=[
-    "agent_x", "agent_y", "target_x", "target_y", "movement"])
+    "agent_x", "agent_y", "target_x", "target_y", "action"])
   print(df)
   df.to_pickle(f"{ssFolder}/ss-info.pkl")
   pygame.quit()
@@ -363,7 +395,7 @@ import torch
 
 if __name__ == "__main__":
   print(f"'canvas' [main]")
-  # create_image_data(1000, "./datasets/screenshots-1k")
+  # create_image_data(10, "./datasets/screenshots-10")
   # print(f"Up -> {pygame.K_UP}")
   # print(f"DOWN -> {pygame.K_DOWN}")
   # print(f"LEFT -> {pygame.K_LEFT}")
@@ -374,4 +406,4 @@ if __name__ == "__main__":
   #   model.load_state_dict(torch.load(f))
   #   model.eval() ## set to evaluation mode as the training is complete
   #   play_game(model)
-  learn_game("10-targets.pkl", auto_policy, n=10)
+  learn_game("1k-targets.pkl", auto_policy, n=1000)
