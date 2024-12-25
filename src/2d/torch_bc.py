@@ -205,32 +205,28 @@ class CNN_Regression(nn.Module):
     self.epochs = epochs
     self.transform = transforms.Compose([
       transforms.ToTensor(),
+      transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
     ])
     
     ## adding dropout to decrease overfitting
     self.cnn = nn.Sequential(
-      nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1),
+      nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1),  # Input: (3, 600, 800)
       nn.ReLU(),
-      nn.BatchNorm2d(32),
-      nn.MaxPool2d(kernel_size=2, stride=2),
-      nn.Dropout(0.3),  
+      nn.MaxPool2d(2, 2),  # Output: (32, 300, 400)
       nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
       nn.ReLU(),
-      nn.BatchNorm2d(64),
-      nn.MaxPool2d(kernel_size=2, stride=2),
-      nn.Dropout(0.3),
-      nn.AdaptiveAvgPool2d((1, 1))
+      nn.MaxPool2d(2, 2),  # Output: (64, 150, 200)
+      nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+      nn.ReLU(),
+      nn.MaxPool2d(2, 2),  # Output: (128, 75, 100)
     )
-    ## Other chat gpt suggestions, 
     self.fc = nn.Sequential(
       nn.Flatten(),
-      nn.Linear(64, 128),
-      # nn.ReLU(),
-      # nn.Dropout(0.5),
-      # nn.Linear(512, 128),
-      # nn.ReLU(),
-      # nn.Dropout(0.5),
-      nn.Linear(128, 2)  # Output: dx and dy
+      nn.Linear(128 * 75 * 100, 128),
+      nn.ReLU(),
+      nn.Linear(128, 64),
+      nn.ReLU(),
+      nn.Linear(64, 2)  # Output: dx, dy
     )
 
     
