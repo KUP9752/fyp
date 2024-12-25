@@ -207,31 +207,36 @@ class CNN_Regression(nn.Module):
       transforms.ToTensor(),
     ])
     
+    ## GPT suggested model
     self.cnn = nn.Sequential(
-      nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1), # 3 channles RBG
-      nn.ReLU(),
-      nn.MaxPool2d(kernel_size=2, stride=2),  # Downsample 800x600 -> 400x300
-      nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1), 
-      nn.ReLU(),
-      nn.MaxPool2d(kernel_size=2, stride=2),  # Downsample 400x300 -> 200x150
-      nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1), 
-      nn.ReLU(),
-      nn.MaxPool2d(kernel_size=2, stride=2), # Downsample 200x150 -> 100x75
-      nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1), 
-      nn.ReLU(),
-      nn.MaxPool2d(kernel_size=2, stride=2),  # Downsample 100x75 -> 50x37
-    )
-    
+    nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1),
+    nn.ReLU(),
+    nn.BatchNorm2d(32),
+    nn.MaxPool2d(kernel_size=2, stride=2),
+    nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
+    nn.ReLU(),
+    nn.BatchNorm2d(64),
+    nn.MaxPool2d(kernel_size=2, stride=2),
+    nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+    nn.ReLU(),
+    nn.BatchNorm2d(128),
+    nn.MaxPool2d(kernel_size=2, stride=2),
+    nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
+    nn.ReLU(),
+    nn.BatchNorm2d(256),
+    nn.AdaptiveAvgPool2d((1, 1))  # Reduces to 256 x 1 x 1
+)
+
     self.fc = nn.Sequential(
-      nn.Flatten(),
-      nn.Linear(256 * 50 * 37, 512),
-      nn.ReLU(),
-      nn.Linear(512, 128),
-      nn.ReLU(),
-      nn.Linear(128, 32),  # Output: dx and dy
-      nn.ReLU(),
-      nn.Linear(32, 2)  # Output: dx and dy
+        nn.Flatten(),
+        nn.Linear(256, 512),
+        nn.ReLU(),
+        nn.Dropout(0.5),
+        nn.Linear(512, 128),
+        nn.ReLU(),
+        nn.Linear(128, 2)  # Output: dx and dy
     )
+
     
   def forward(self, x):
     x = self.cnn(x)  # CNN feature extractor
