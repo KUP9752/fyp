@@ -9,6 +9,7 @@ import pandas as pd
 from PIL import Image
 
 import os
+import random
 
 import pickle
 from tqdm import tqdm as progress
@@ -58,10 +59,11 @@ class AgentNetwork(nn.Module):
     
   
 class PositionDataset(Dataset):
-  def __init__(self, imagesDir: str, labelsPath: str, transform = None):
+  def __init__(self, imagesDir: str, labelsPath: str, frac:float = 1.0, transform = None):
     
     self.imagesDir = imagesDir
     self.imageLabels = pd.read_pickle(labelsPath)
+    self.imageLabels = self.imageLabels.sample(frac=frac)
     self.transform = transform
     
     raise ValueError(f"No Layers configured for this, not using this for now")
@@ -113,13 +115,14 @@ class PositionPredictor(nn.Module):
                       imageLabelsPath: str, # DataFrame image-name -> State
                       modelPath: str = None, 
                       overwriteDevice: Literal['cpu', 'cuda'] | None = None,
+                      sizeFrac: float = 1.0,
                       doPrints: bool = False) -> Self:
     if overwriteDevice:
       device = torch.device(overwriteDevice)
     else:
       device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    trainingData = PositionDataset(imagesDir, imageLabelsPath, transform=self.transform)
+    trainingData = PositionDataset(imagesDir, imageLabelsPath, frac = sizeFrac, transform=self.transform)
     loader = DataLoader(trainingData, batch_size=self.batchSize, shuffle=True)
     
     model = self.to(device)
@@ -164,13 +167,13 @@ class PositionPredictor(nn.Module):
     return model
   
 class MovementDataset(Dataset):
-  def __init__(self, imagesDir: str, labelsPath: str, transform = None):
+  def __init__(self, imagesDir: str, labelsPath: str, frac: float = 1.0, transform = None):
     
     self.imagesDir = imagesDir
     print(f"{labelsPath = }")
     
     self.imageLabels = pd.read_pickle(labelsPath)
-    self.imageLabels
+    self.imageLabels = self.imageLabels.sample(frac=frac)
     self.transform = transform
     
   def __len__(self):
@@ -245,13 +248,14 @@ class CNN_Regression(nn.Module):
                       imageLabelsPath: str, # DataFrame image-name -> State
                       modelPath: str = None, 
                       overwriteDevice: Literal['cpu', 'cuda'] | None = None,
+                      sizeFrac: float = 1.0,
                       doPrints: bool = False) -> Self:
     if overwriteDevice:
       device = torch.device(overwriteDevice)
     else:
       device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    trainingData = MovementDataset(imagesDir, imageLabelsPath, transform=self.transform)
+    trainingData = MovementDataset(imagesDir, imageLabelsPath, frac = sizeFrac, transform=self.transform)
     loader = DataLoader(trainingData, batch_size=self.batchSize, shuffle=True)
     
     model = self.to(device)
@@ -336,11 +340,15 @@ class AgentNetwork_Regression(AgentNetwork):
                          dataFilepath: str = None, 
                          data: list[tuple[State, Action2]] = None, 
                          overwriteDevice: Literal['cpu', 'cuda'] | None = None,
+                         sizeFrac: float = 1.0,
                          doPrints: bool = False) -> Self:
       
     data, device = super().training_init(data, dataFilepath, overwriteDevice)
     
-    printc(doPrints, f"Device to use: {device}")
+    print(f"Device to use: {device}")
+    
+    if sizeFrac < 1.0:
+      data = random.sample(data, int(sizeFrac * len(data)))
     
     states, actions = zip(*data) ## Action2 at this point
     
@@ -404,8 +412,12 @@ class AgentNetwork_Classification(AgentNetwork):
                          dataFilepath: str = None,
                          data: list[tuple[State,Action4]] = None,
                          epochs: int = 100,
+                         sizeFrac: float = 1.0,
                          overwriteDevice: Literal['cpu','cuda'] | None = None ) -> Self:
     data, device = super().training_init(data, dataFilepath, overwriteDevice)
+    
+    if sizeFrac < 1.0:
+      data = random.sample(data, int(sizeFrac * len(data)))
     
     states, actions = zip(*data)
       
