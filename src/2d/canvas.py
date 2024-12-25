@@ -269,9 +269,25 @@ def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_R
   pred = pred[0]
   print(f"pred: dx: {pred[0]} | dy: {pred[1]}")
   # map into key pairs
-  dx, dy = int(pred[0] * MOV_SPEED), int(pred[1] * MOV_SPEED)
-  
+  dx, dy = int(pred[0]), int(pred[1])
   agent.move_ip(dx, dy)
+  # action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
+  
+  # if dx > 0:
+  #   action[pygame.K_RIGHT] = True
+  # elif dx < 0:
+  #   action[pygame.K_LEFT] = True
+    
+  # if dy > 0:
+  #   action[pygame.K_DOWN] = True
+  # elif dy < 0:
+  #   action[pygame.K_UP] = True
+  
+  # for key, (dx, dy) in MOVEMENT.items():
+  #   if action[key]:
+  #     agent.move_ip(dx, dy)
+      
+  
   
 T = TypeVar("T")
 def load_model(loadModelFromFile: str, 
@@ -347,6 +363,7 @@ def play_game(
         # pygame.image.save(screen, "temp.png")
         # image = Image.open("temp.png")
         move_cnn(agent, target, image, model)
+        
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
       target.x = random.randint(0, X_BOUND)
@@ -354,6 +371,8 @@ def play_game(
     
     pygame.display.update()
     clock.tick(FPS)
+    
+    # pygame.time.wait(10000)   
 
   pygame.quit()
 
