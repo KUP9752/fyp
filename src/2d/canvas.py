@@ -263,13 +263,13 @@ def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_R
     ## moved the image tranformation to the model, I think this makes the most sense, coupling these things
     x = model.transform_image(image)
     x = x.unsqueeze(0) ## add the batch dimension to make [1,3,600,800], otherwise model complains
-    pred = model(x)[0]
+    pred = model(x)
   print(f"agent: ({agent.x}, {agent.y}) target: ({target.x}, {target.y})")
   print(f"{pred = }")
-  
+  pred = pred[0]
   print(f"pred: dx: {pred[0]} | dy: {pred[1]}")
   # map into key pairs
-  dx, dy = int(pred[0]), int(pred[1])
+  dx, dy = int(pred[0] * MOV_SPEED), int(pred[1] * MOV_SPEED)
   
   agent.move_ip(dx, dy)
   
@@ -344,7 +344,8 @@ def play_game(
         move_arrowkeys(agent, target, model)
       case "move_cnn":
         image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
-        image.save("temp.png")
+        # pygame.image.save(screen, "temp.png")
+        # image = Image.open("temp.png")
         move_cnn(agent, target, image, model)
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
@@ -361,7 +362,7 @@ import torch
 
 if __name__ == "__main__":
   print(f"'canvas' [main]")
-  # create_image_data(10, "./datasets/screenshots-10")
+  # create_image_data(10, "./datasets/temp")
   # print(f"Up -> {pygame.K_UP}")
   # print(f"DOWN -> {pygame.K_DOWN}")
   # print(f"LEFT -> {pygame.K_LEFT}")
