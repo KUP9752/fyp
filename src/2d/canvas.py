@@ -406,4 +406,4 @@ if __name__ == "__main__":
   #   model.load_state_dict(torch.load(f))
   #   model.eval() ## set to evaluation mode as the training is complete
   #   play_game(model)
-  learn_game("1k-targets.pkl", auto_policy, n=1000)
+  # learn_game("1k-targets.pkl", auto_policy, n=1000)
