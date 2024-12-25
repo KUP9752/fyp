@@ -19,7 +19,6 @@ def move(args):
 modelToClass = {
   "coord-class": AgentNetwork_Classification,
   "coord-regr": AgentNetwork_Regression,
-  "pos-pred": PositionPredictor,
   "cnn-regr": CNN_Regression
 }
 def train(args):
@@ -43,9 +42,10 @@ def train(args):
         modelPath=modelPath,
         overwriteDevice=overrideDevice
         )
-    case "pos-pred" | "cnn-regr": 
+    case "cnn-regr": 
       coords = f"{dataPath}/ss-info.pkl"
-      model = modelType(
+      model = CNN_Regression(
+        epochs=10,
         ).train_on_behaviour(
         doPrints=doPrints, 
         sizeFrac=frac,
@@ -54,7 +54,6 @@ def train(args):
         modelPath=modelPath,
         overwriteDevice=overrideDevice
         )
-
 
 
 
