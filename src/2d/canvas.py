@@ -269,7 +269,7 @@ def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_R
   pred = pred[0]
   print(f"pred: dx: {pred[0]} | dy: {pred[1]}")
   # map into key pairs
-  dx, dy = int(pred[0]), int(pred[1])
+  dx, dy = int(pred[0] * 100), int( - pred[1] * 100)
   agent.move_ip(dx, dy)
   # action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
   
@@ -292,13 +292,16 @@ def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_R
 T = TypeVar("T")
 def load_model(loadModelFromFile: str, 
                modelType: Type[T] = None,
-               device: Literal["cpu", "cuda"] = "cpu"
+               device: Literal["cpu", "cuda"] = None
                ) -> None:
   
   if modelType is None:
     raise ValueError("Must provide 'modelType' when loading model from file")
     
   print(f"Loading type {modelType}")
+  
+  if not device:
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     
   with open(loadModelFromFile, "rb") as f:
     model = modelType() ## initialise model class before loading weights
@@ -362,6 +365,7 @@ def play_game(
         image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
         # pygame.image.save(screen, "temp.png")
         # image = Image.open("temp.png")
+        image.save("temp.png")
         move_cnn(agent, target, image, model)
         
     ## When collided restart the target, so the game continuosly runs
