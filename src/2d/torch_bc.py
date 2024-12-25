@@ -108,9 +108,9 @@ class PositionPredictor(nn.Module):
       return self.transform(image)
     raise ValueError("No transform set, means model hasn't been trained yet")
   
-  def train_on_images(self, 
+  def train_on_behaviour(self, 
                       imagesDir: str, #directory of the images to train on
-                      imageCoordsPath: str, # DataFrame image-name -> State
+                      imageLabelsPath: str, # DataFrame image-name -> State
                       modelPath: str = None, 
                       overwriteDevice: Literal['cpu', 'cuda'] | None = None,
                       doPrints: bool = False) -> Self:
@@ -119,7 +119,7 @@ class PositionPredictor(nn.Module):
     else:
       device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    trainingData = PositionDataset(imagesDir, imageCoordsPath, transform=self.transform)
+    trainingData = PositionDataset(imagesDir, imageLabelsPath, transform=self.transform)
     loader = DataLoader(trainingData, batch_size=self.batchSize, shuffle=True)
     
     model = self.to(device)
@@ -176,16 +176,11 @@ class MovementDataset(Dataset):
   def __len__(self):
     return len(self.imageLabels)
   
-  def preprocess_to_movement(self, action: Action4) -> Action2:
-    ## (right - left, up - down) for (dx, dy)
-    
-    return (int(action[3]) - int(action[2]), int(action[0]) - int(action[1]))
-  
   def __getitem__(self, idx):
     imageName = self.imageLabels.iloc[idx].name
     imagePath = os.path.join(self.imagesDir, imageName)
     image = Image.open(imagePath)
-    label = label = self.imageLabels.loc[self.imageLabels.index[idx], "action"]
+    label = self.imageLabels.loc[self.imageLabels.index[idx], "action"]
     
     
     if self.transform:
@@ -245,9 +240,9 @@ class CNN_Regression(nn.Module):
       return self.transform(image)
     raise ValueError("No transform set, means model hasn't been trained yet")
   
-  def train_on_images(self, 
+  def train_on_behaviour(self, 
                       imagesDir: str, #directory of the images to train on
-                      imageMovementsPath: str, # DataFrame image-name -> State
+                      imageLabelsPath: str, # DataFrame image-name -> State
                       modelPath: str = None, 
                       overwriteDevice: Literal['cpu', 'cuda'] | None = None,
                       doPrints: bool = False) -> Self:
@@ -256,7 +251,7 @@ class CNN_Regression(nn.Module):
     else:
       device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    trainingData = MovementDataset(imagesDir, imageMovementsPath, transform=self.transform)
+    trainingData = MovementDataset(imagesDir, imageLabelsPath, transform=self.transform)
     loader = DataLoader(trainingData, batch_size=self.batchSize, shuffle=True)
     
     model = self.to(device)
@@ -330,27 +325,20 @@ class AgentNetwork_Regression(AgentNetwork):
     )
     
   
-  def preprocess_data(data: list[tuple[State, Action4]]) -> list[tuple[State, Action2]]:
-    ## (right - left, up - down) for (dx, dy)
+  # def preprocess_data(data: list[tuple[State, Action4]]) -> list[tuple[State, Action2]]:
+  #   ## (right - left, up - down) for (dx, dy)
     
-    return [(state, (int(action[3]) - int(action[2]), int(action[0]) - int(action[1]))) for state, action in data]
+  #   return [(state, (int(action[3]) - int(action[2]), int(action[0]) - int(action[1]))) for state, action in data]
   
   ## static method creates the model and trains it
   def train_on_behaviour(self, 
                          modelPath: str = None, 
                          dataFilepath: str = None, 
-                         data: list[tuple[State, Action4]] = None, 
+                         data: list[tuple[State, Action2]] = None, 
                          overwriteDevice: Literal['cpu', 'cuda'] | None = None,
                          doPrints: bool = False) -> Self:
       
-    ## !! Data is inherently of type list[tuple[State, Action4]] must be converted for this
-    
     data, device = super().training_init(data, dataFilepath, overwriteDevice)
-    
-    ## process data to be [(State, Action2)]
-    
-    data = AgentNetwork_Regression.preprocess_data(data)
-    
     
     printc(doPrints, f"Device to use: {device}")
     
