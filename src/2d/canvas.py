@@ -180,24 +180,9 @@ def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork
     print(f"{agent = }")
     
     ## map into key pairs
-    dx, dy = pred[0], pred[1]
+    dx, dy = int(pred[0]), int(pred[1])
+    agent.move_ip(dx, dy)
     
-    thresh = 0.3## threshold for the movement, 0.5 works well for 1k, 0.25 for 500, 0.05 for 250 otherwise they can get stuck
-    # old key sytem:
-    if dx > thresh: 
-      action[pygame.K_RIGHT] = True
-    elif dx < -thresh:
-      action[pygame.K_LEFT] = True
-      
-    if dy > thresh: 
-      action[pygame.K_UP] = True
-    elif dy < -thresh:
-      action[pygame.K_DOWN] = True
-    
-    for key, (dx, dy) in MOVEMENT.items():
-      if action[key]:
-        agent.move_ip(dx, dy)
-
 def create_image_data(n: int, ssFolder: str) -> None:
   pygame.init()
 
@@ -283,29 +268,10 @@ def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_R
   print(f"{pred = }")
   
   print(f"pred: dx: {pred[0]} | dy: {pred[1]}")
-  action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
-  ## map into key pairs
-  dx, dy = pred[0], pred[1]
+  # map into key pairs
+  dx, dy = int(pred[0]), int(pred[1])
   
-  thresh = 0.00## threshold for the movement, 0.5 works well for 1k, 0.25 for 500, 0.05 for 250 otherwise they can get stuck
-  agent.move_ip(int(dx * MOV_SPEED), int(dy * MOV_SPEED))
-  # # old key sytem:
-  # if dx > thresh: 
-  #   action[pygame.K_RIGHT] = True
-  # elif dx < -thresh:
-  #   action[pygame.K_LEFT] = True
-    
-  # if dy > thresh: 
-  #   action[pygame.K_UP] = True
-  # elif dy < -thresh:
-  #   action[pygame.K_DOWN] = True
-  
-  
-  
-  # for key, (dx, dy) in MOVEMENT.items():
-  #   if action[key]:
-  #     agent.move_ip(dx, dy)
-      
+  agent.move_ip(dx, dy)
   
 T = TypeVar("T")
 def load_model(loadModelFromFile: str, 

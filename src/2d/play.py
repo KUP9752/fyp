@@ -24,26 +24,35 @@ modelToClass = {
 }
 def train(args):
   dataPath = args.dataset
-  size = args.size # default to 1000
   modelPath = args.model_path
+  frac = args.size_fraction
+  overrideDevice = args.override_device
   modelType: AgentNetwork | PositionPredictor | CNN_Regression = modelToClass[args.model_type]
+  doPrints = args.do_prints
+  
   # samples = random.sample(data, points)
+  
+  print(f"Training a {modelType} model")
+  
   
   match args.model_type:
     case "coord-class" | "coord-regr":
       model = modelType().train_on_behaviour(
-        doPrints=False, 
+        doPrints=doPrints, 
         dataFilepath= dataPath, 
-        modelPath=modelPath
+        modelPath=modelPath,
+        overwriteDevice=overrideDevice
         )
     case "pos-pred" | "cnn-regr": 
       coords = f"{dataPath}/ss-info.pkl"
       model = modelType(
-        ).train_on_images(
-        doPrints=False, 
+        ).train_on_behaviour(
+        doPrints=doPrints, 
+        sizeFrac=frac,
         imagesDir= dataPath, 
-        imageMovementsPath=coords, 
-        modelPath=modelPath
+        imageLabelsPath=coords, 
+        modelPath=modelPath,
+        overwriteDevice=overrideDevice
         )
 
 
@@ -58,10 +67,10 @@ if __name__ == "__main__":
   ## Training
   trainParser = subparsers.add_parser("train",
                                       help="Whether the script should run in training mode or not [need to also provide size]")
-  trainParser.add_argument("-s", "--size", 
-                           default = 1000, 
-                           type=int, 
-                           help="Number of data the dataset should be trained on")
+  trainParser.add_argument("-s", "--size-fraction", 
+                           default = 1.0, 
+                           type=float, 
+                           help="Fraction of the dataset the model should be trained on")
   trainParser.add_argument("-m","--model-type", 
                            required=True, 
                            choices = MODELS,
@@ -74,7 +83,17 @@ if __name__ == "__main__":
                            required=True, 
                            type=str, 
                            help="filepath of where the model should be saved")
+  trainParser.add_argument("-od", "--override-device", 
+                           choices = ["cpu", "cuda", None],
+                           default = None,  
+                           type=str, 
+                           help="Force a device to be used")
+  trainParser.add_argument("-p", "--do-prints",
+                          action="store_true",
+                          help="Whether the model should print out training information"
+  )
   trainParser.set_defaults(func=train) ## call train()
+  
   ## Eval/Movement
   evalParser: ArgumentParser = subparsers.add_parser("move", aliases= ["eval"], 
                                                      help="Whether the script should run in evaluation mode or not")
