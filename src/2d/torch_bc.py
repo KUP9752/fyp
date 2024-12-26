@@ -210,23 +210,20 @@ class CNN_Regression(nn.Module):
     
     ## if this shit doenst work do one with kernelsize=3 as I used to do
     self.cnn = nn.Sequential(
-      nn.Conv2d(3, 32, kernel_size=5, stride=1, padding=2),
+      nn.Conv2d(3, 16, kernel_size=5, stride=2, padding=2),
       nn.ReLU(),
-      nn.MaxPool2d(2, 2),  # Output: (32, 300, 400)
-      nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2),
+      nn.Conv2d(16, 32, kernel_size=5, stride=2, padding=2),
       nn.ReLU(),
-      nn.MaxPool2d(2, 2),  # Output: (64, 150, 200)
-      nn.Conv2d(64, 128, kernel_size=5, stride=1, padding=2),
-      nn.ReLU(),
-      nn.MaxPool2d(2, 2),  # Output: (128, 75, 100)
+      # nn.Conv2d(32, 64, kernel_size=5, stride=2, padding=2),
+      # nn.ReLU(),
     )
     
     self.fc = nn.Sequential(
       nn.Flatten(),
-      nn.Linear(128 * 75 * 100, 512),
+      nn.Linear(32 * 200 * 150, 128),
+      # nn.Linear(64 * 100 * 75, 128),
+      # nn.Dropout(0.4),
       nn.ReLU(),
-      nn.Linear(512, 128),
-      nn.Dropout(0.4),
       nn.Linear(128, 2),
     )
 
