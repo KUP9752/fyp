@@ -14,7 +14,7 @@ from my_types import State, Action4, Movement, Action2
 SPEED = 2.0
 FPS = 60
 MOV_SPEED = 5
-BLOCK_SIZE = 20 # per side
+BLOCK_SIZE = 50 # per side
 
 WIDTH, HEIGHT = 800, 600
 X_BOUND = WIDTH - BLOCK_SIZE
@@ -183,6 +183,63 @@ def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork
     dx, dy = int(pred[0]), int(pred[1])
     agent.move_ip(dx, dy)
     
+def create_random_loc_image_data(n: int, ssFolder: str) -> None:
+  pygame.init()
+
+  ## Setup Screen
+  screen = pygame.display.set_mode((WIDTH, HEIGHT))
+  pygame.display.set_caption("2D Canvas")
+
+  coords: dict[str, Movement] = {}
+  clock = pygame.time.Clock()
+  isRunning = True
+  
+  i = 0
+  while i < n:
+    ## White Background
+    screen.fill(Color("white"))
+    agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+    target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+     
+    if agent.colliderect(target):
+      i -= 1
+      print(f"touching at {i}")
+      continue
+    
+    ## Game Logic
+    ## draw the squares, agend is BLUE, target is RED
+    pygame.draw.rect(screen, Color("blue"), agent)
+    pygame.draw.rect(screen, Color("red"), target)
+    
+    imageName = f"ss-{i}.png"
+    action: Action2 = auto_policy(agent, target)
+    coords[imageName] = {
+      "agent_x": agent.x,
+      "agent_y": agent.y,
+      "target_x": target.x,
+      "target_y": target.y,
+      "action": action
+    }
+    
+    
+    pygame.image.save(screen, f"{ssFolder}/{imageName}")
+    
+    if agent.colliderect(target):
+      target.x = random.randint(0, X_BOUND)
+      target.y = random.randint(0, Y_BOUND)
+      # agent.x = random.randint(0, X_BOUND)
+      # agent.y = random.randint(0, Y_BOUND)
+    
+    pygame.display.update()
+    i += 1
+    
+  df = pd.DataFrame.from_dict(coords, orient="index", columns=[
+    "agent_x", "agent_y", "target_x", "target_y", "action"])
+  print(df)
+  df.to_pickle(f"{ssFolder}/ss-info.pkl")
+  pygame.quit()
+  
+  
 def create_image_data(n: int, ssFolder: str) -> None:
   pygame.init()
 
@@ -236,7 +293,8 @@ def create_image_data(n: int, ssFolder: str) -> None:
     
     if targetCount >= n:
       isRunning = False
-      
+    
+    
     frameCount += 1
     pygame.display.update()
     clock.tick(FPS)
@@ -255,7 +313,6 @@ def create_image_data(n: int, ssFolder: str) -> None:
   print(df)
   df.to_pickle(f"{ssFolder}/ss-info.pkl")
   pygame.quit()
-  
     
 def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_Regression ) -> None:
   model.eval()
@@ -263,15 +320,19 @@ def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_R
     ## moved the image tranformation to the model, I think this makes the most sense, coupling these things
     x = model.transform_image(image)
     x = x.unsqueeze(0) ## add the batch dimension to make [1,3,600,800], otherwise model complains
-    pred = model(x)
+    pred = model(x)[0]
   print(f"agent: ({agent.x}, {agent.y}) target: ({target.x}, {target.y})")
   print(f"{pred = }")
-  pred = pred[0]
+  dx, dy = pred[0], pred[1]
   print(f"pred: dx: {pred[0]} | dy: {pred[1]}")
   # map into key pairs
-  dx, dy = int(pred[0] * 100), int( - pred[1] * 100)
+  dx, dy = int(pred[0] * 10), int(pred[1] * 10)
   agent.move_ip(dx, dy)
   # action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
+  # threshold = 0.1
+  
+  # dx = dx if abs(dx) > threshold else 0
+  # dy = dy if abs(dy) > threshold else 0
   
   # if dx > 0:
   #   action[pygame.K_RIGHT] = True
@@ -279,7 +340,7 @@ def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_R
   #   action[pygame.K_LEFT] = True
     
   # if dy > 0:
-  #   action[pygame.K_DOWN] = True
+  #   action[pygame.K_DOWN] = True 
   # elif dy < 0:
   #   action[pygame.K_UP] = True
   
@@ -385,7 +446,9 @@ import torch
 
 if __name__ == "__main__":
   print(f"'canvas' [main]")
-  # create_image_data(10, "./datasets/temp")
+  # create_image_data(100, "./datasets/screenshots-big-100")
+  create_random_loc_image_data(10000, "./datasets/screenshots-big-rand-10k")
+  
   # print(f"Up -> {pygame.K_UP}")
   # print(f"DOWN -> {pygame.K_DOWN}")
   # print(f"LEFT -> {pygame.K_LEFT}")
