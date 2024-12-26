@@ -208,6 +208,7 @@ class CNN_Regression(nn.Module):
       transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
     ])
     
+    ## if this shit doenst work do one with kernelsize=3 as I used to do
     self.cnn = nn.Sequential(
       nn.Conv2d(3, 32, kernel_size=5, stride=1, padding=2),
       nn.ReLU(),
@@ -260,6 +261,7 @@ class CNN_Regression(nn.Module):
     optimiser = optim.Adam(model.parameters(), lr = self.lr, weight_decay=1e-4)
     print(f"Using device: {device}")
     printc(doPrints, f"Training on {len(trainingData)} points")
+    printc(True, f"Training on {len(trainingData)} points")
     
     model.train()
     self.losses = [0 for _ in range(self.epochs)]
