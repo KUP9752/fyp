@@ -201,10 +201,11 @@ def create_random_loc_image_data(n: int, ssFolder: str) -> None:
     agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
     target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
      
-    if agent.colliderect(target):
-      i -= 1
-      print(f"touching at {i}")
-      continue
+    #  Not getting overlapping images might be hurting the model's ability to move when close to the target ,keep these in.
+    # if agent.colliderect(target):
+    #   i -= 1
+    #   print(f"touching at {i}")
+    #   continue
     
     ## Game Logic
     ## draw the squares, agend is BLUE, target is RED
