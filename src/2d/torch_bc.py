@@ -207,18 +207,19 @@ class CNN_Regression(nn.Module):
       transforms.ToTensor(),
       transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
     ])
-    
+    # 800 x 600
     self.cnn = nn.Sequential(
-      nn.Conv2d(3, 16, kernel_size=5, stride=2, padding=2),
+      nn.Conv2d(3, 16, kernel_size=5, stride=2, padding=2), # 400 x 300
       nn.ReLU(),
-      nn.Conv2d(16, 32, kernel_size=5, stride=2, padding=2),
+      nn.Conv2d(16, 32, kernel_size=5, stride=2, padding=2), # 200 x 150
+      nn.ReLU(),
+      nn.Conv2d(32, 64, kernel_size=5, stride=2, padding=2), # 100 x 75
       nn.ReLU(),
     )
     
     self.fc = nn.Sequential(
-      nn.AdaptiveAvgPool2d((1, 1)),
       nn.Flatten(),
-      nn.Linear(32, 128),
+      nn.Linear(64 * 100 * 75, 128),
       nn.ReLU(),
       nn.Linear(128, 2),
     )
