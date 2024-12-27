@@ -28,7 +28,7 @@ def train(args):
   overrideDevice = args.override_device
   modelType: AgentNetwork | PositionPredictor | CNN_Regression = modelToClass[args.model_type]
   doPrints = args.do_prints
-  
+  epochs = args.epochs
   # samples = random.sample(data, points)
   
   print(f"Training a {modelType} model")
@@ -45,7 +45,7 @@ def train(args):
     case "cnn-regr": 
       coords = f"{dataPath}/ss-info.pkl"
       model = CNN_Regression(
-        epochs=10,
+        epochs=epochs,
         ).train_on_behaviour(
         doPrints=doPrints, 
         sizeFrac=frac,
@@ -90,7 +90,11 @@ if __name__ == "__main__":
   trainParser.add_argument("-p", "--do-prints",
                           action="store_true",
                           help="Whether the model should print out training information"
-  )
+                          )
+  trainParser.add_argument("-e", "--epochs",
+                          type=int,
+                          default=10,
+                          help="How many epochs to run the model with")
   trainParser.set_defaults(func=train) ## call train()
   
   ## Eval/Movement
