@@ -216,8 +216,9 @@ class CNN_Regression(nn.Module):
     )
     
     self.fc = nn.Sequential(
+      nn.AdaptiveAvgPool2d((1, 1)),
       nn.Flatten(),
-      nn.Linear(32 * 200 * 150, 128),
+      nn.Linear(32, 128),
       nn.ReLU(),
       nn.Linear(128, 2),
     )
