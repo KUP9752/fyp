@@ -208,21 +208,16 @@ class CNN_Regression(nn.Module):
       transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
     ])
     
-    ## if this shit doenst work do one with kernelsize=3 as I used to do
     self.cnn = nn.Sequential(
       nn.Conv2d(3, 16, kernel_size=5, stride=2, padding=2),
       nn.ReLU(),
       nn.Conv2d(16, 32, kernel_size=5, stride=2, padding=2),
       nn.ReLU(),
-      # nn.Conv2d(32, 64, kernel_size=5, stride=2, padding=2),
-      # nn.ReLU(),
     )
     
     self.fc = nn.Sequential(
       nn.Flatten(),
       nn.Linear(32 * 200 * 150, 128),
-      # nn.Linear(64 * 100 * 75, 128),
-      # nn.Dropout(0.4),
       nn.ReLU(),
       nn.Linear(128, 2),
     )
