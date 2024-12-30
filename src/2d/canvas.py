@@ -194,48 +194,62 @@ def create_random_loc_image_data(n: int, ssFolder: str) -> None:
   clock = pygame.time.Clock()
   isRunning = True
   
-  i = 0
-  while i < n:
-    ## White Background
-    screen.fill(Color("white"))
-    agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
-    target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
-     
-    #  Not getting overlapping images might be hurting the model's ability to move when close to the target ,keep these in.
-    # if agent.colliderect(target):
-    #   i -= 1
-    #   print(f"touching at {i}")
-    #   continue
+  
+  def get_agent_with_phase_bounds(phase: int, target: pygame.Rect) -> pygame.Rect:
+    match close:
+      ## 1. within 1 rect of target
+      case 0:
+        x_low, x_high = target.x - BLOCK_SIZE, target.x + 2 * BLOCK_SIZE ## 2 because count from top left
+        y_low, y_high = target.y - BLOCK_SIZE, target.y + 2 * BLOCK_SIZE 
+      ## 2. Close, within 3 rects of target
+      case 1:
+        x_low, x_high = target.x - 3 * BLOCK_SIZE, target.x + 4 * BLOCK_SIZE ## 4 because count from top left
+        y_low, y_high = target.y - 3 * BLOCK_SIZE, target.y + 4 * BLOCK_SIZE
+      ## 3. entire canvas  
+      case 2:  
+        x_low, x_high, y_low, y_high = 0, X_BOUND, 0, Y_BOUND
+        
+    ## But also respect the bounds of the canvas
+    x_low = max(x_low, 0)
+    x_high = min(x_high, X_BOUND)
+    y_low = max(y_low, 0)
+    y_high = min(y_high, Y_BOUND)
+    return pygame.Rect(random.randint(x_low, x_high), random.randint(y_low, y_high), BLOCK_SIZE, BLOCK_SIZE)
+        
+  for close in range(0, 3):
+    for i in range(n): ## make n points for each closeness phase
+      ## White Background
+      screen.fill(Color("white"))
+      target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+      agent = get_agent_with_phase_bounds(close, target)
+      
+      #  Not getting overlapping images might be hurting the model's ability to move when close to the target ,keep these in.
+      # if agent.colliderect(target):
+      #   i -= 1
+      #   print(f"touching at {i}")
+      #   continue
+      
+      ## Game Logic
+      ## draw the squares, agend is BLUE, target is RED
+      pygame.draw.rect(screen, Color("blue"), agent)
+      pygame.draw.rect(screen, Color("red"), target)
+      
+      imageName = f"ss-{i}-close-{close}.png"
+      action: Action2 = auto_policy(agent, target)
+      coords[imageName] = {
+        "agent_x": agent.x,
+        "agent_y": agent.y,
+        "target_x": target.x,
+        "target_y": target.y,
+        "action": action,
+        "closeness": close
+      }
+      
+      pygame.display.update()
+      
+      pygame.image.save(screen, f"{ssFolder}/{imageName}")
     
-    ## Game Logic
-    ## draw the squares, agend is BLUE, target is RED
-    pygame.draw.rect(screen, Color("blue"), agent)
-    pygame.draw.rect(screen, Color("red"), target)
-    
-    imageName = f"ss-{i}.png"
-    action: Action2 = auto_policy(agent, target)
-    coords[imageName] = {
-      "agent_x": agent.x,
-      "agent_y": agent.y,
-      "target_x": target.x,
-      "target_y": target.y,
-      "action": action
-    }
-    
-    
-    pygame.image.save(screen, f"{ssFolder}/{imageName}")
-    
-    if agent.colliderect(target):
-      target.x = random.randint(0, X_BOUND)
-      target.y = random.randint(0, Y_BOUND)
-      # agent.x = random.randint(0, X_BOUND)
-      # agent.y = random.randint(0, Y_BOUND)
-    
-    pygame.display.update()
-    i += 1
-    
-  df = pd.DataFrame.from_dict(coords, orient="index", columns=[
-    "agent_x", "agent_y", "target_x", "target_y", "action"])
+  df = pd.DataFrame.from_dict(coords, orient="index", columns=["agent_x", "agent_y", "target_x", "target_y", "action", "closeness"])
   print(df)
   df.to_pickle(f"{ssFolder}/ss-info.pkl")
   pygame.quit()
@@ -315,6 +329,7 @@ def create_image_data(n: int, ssFolder: str) -> None:
   df.to_pickle(f"{ssFolder}/ss-info.pkl")
   pygame.quit()
     
+      
 def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_Regression ) -> None:
   model.eval()
   with torch.no_grad():
@@ -329,26 +344,40 @@ def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_R
   # map into key pairs
   dx, dy = int(pred[0] * 10), int(pred[1] * 10)
   agent.move_ip(dx, dy)
-  # action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
-  # threshold = 0.1
   
-  # dx = dx if abs(dx) > threshold else 0
-  # dy = dy if abs(dy) > threshold else 0
+def move_cnn_buttons(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_Regression ) -> None:
+  model.eval()
+  with torch.no_grad():
+    ## moved the image tranformation to the model, I think this makes the most sense, coupling these things
+    x = model.transform_image(image)
+    x = x.unsqueeze(0) ## add the batch dimension to make [1,3,600,800], otherwise model complains
+    pred = model(x)[0]
+  print(f"agent: ({agent.x}, {agent.y}) target: ({target.x}, {target.y})")
+  print(f"{pred = }")
+  dx, dy = pred[0], pred[1]
+  print(f"pred: dx: {pred[0]} | dy: {pred[1]}")
   
-  # if dx > 0:
-  #   action[pygame.K_RIGHT] = True
-  # elif dx < 0:
-  #   action[pygame.K_LEFT] = True
+  # map into key pairs
+  action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
+  threshold = 0
+  
+  dx = dx if abs(dx) > threshold else 0
+  dy = dy if abs(dy) > threshold else 0
+  
+  if dx > 0:
+    action[pygame.K_RIGHT] = True
+  elif dx < 0:
+    action[pygame.K_LEFT] = True
     
-  # if dy > 0:
-  #   action[pygame.K_DOWN] = True 
-  # elif dy < 0:
-  #   action[pygame.K_UP] = True
+  if dy > 0:
+    action[pygame.K_DOWN] = True 
+  elif dy < 0:
+    action[pygame.K_UP] = True
   
-  # for key, (dx, dy) in MOVEMENT.items():
-  #   if action[key]:
-  #     agent.move_ip(dx, dy)
-      
+  for key, (dx, dy) in MOVEMENT.items():
+    if action[key]:
+      agent.move_ip(dx, dy)
+  
   
   
 T = TypeVar("T")
@@ -375,10 +404,11 @@ MODEL_TYPES = {
   "move_regression": lambda s: load_model(s, modelType=AgentNetwork_Regression),
   "move_classification": lambda s: load_model(s, modelType=AgentNetwork_Classification),
   "move_cnn": lambda s: load_model(s, modelType=CNN_Regression),
+  "move_cnn_buttons": lambda s: load_model(s, modelType=CNN_Regression),
   "move_arrowkeys": lambda s: None
 }
       
-MOVES= ["auto_policy", "move_regression", "move_classification", "move_arrowkeys", "move_cnn"]
+MOVES= ["auto_policy", "move_regression", "move_classification", "move_arrowkeys", "move_cnn", "move_cnn_buttons"]
 def play_game(
               moveAgent: Literal["auto_policy", "move_regression", "move_classification", "move_arrowkeys", "move_cnn"],
               loadModelFromFile: str = None, 
@@ -429,6 +459,11 @@ def play_game(
         # image = Image.open("temp.png")
         image.save("temp.png")
         move_cnn(agent, target, image, model)
+      case "move_cnn_buttons":
+        image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
+        image.save("temp.png")
+        move_cnn_buttons(agent, target, image, model)
+      
         
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
@@ -448,7 +483,7 @@ import torch
 if __name__ == "__main__":
   print(f"'canvas' [main]")
   # create_image_data(100, "./datasets/screenshots-big-100")
-  create_random_loc_image_data(10000, "./datasets/screenshots-big-rand-10k")
+  create_random_loc_image_data(10_000, "./datasets/screenshots-rand-10k-withcols-closeness")
   
   # print(f"Up -> {pygame.K_UP}")
   # print(f"DOWN -> {pygame.K_DOWN}")
