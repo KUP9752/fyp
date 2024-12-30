@@ -165,15 +165,25 @@ class PositionPredictor(nn.Module):
     self.loss = runningLoss
     
     return model
-  
+
+
 class MovementDataset(Dataset):
-  def __init__(self, imagesDir: str, labelsPath: str, frac: float = 1.0, transform = None):
+  def __init__(self, imagesDir: str, labelsPath: str, frac: float = 1.0, transform = None, closeness: dict[int, float] = False):
+    ## if closeness is not None, balance the data according to closeness column values
     
     self.imagesDir = imagesDir
     print(f"{labelsPath = }")
     
-    self.imageLabels = pd.read_pickle(labelsPath)
-    self.imageLabels = self.imageLabels.sample(frac=frac)
+    data = pd.read_pickle(labelsPath)
+    
+    ## if a closeness to weights is given
+    if closeness:
+      parts = []
+      gs = [data[data["closeness"] == c].sample(frac=frac) for c, frac in closeness.items()]
+      self.imageLabels = pd.concat(gs)
+    else:
+      self.imageLabels = self.imageLabels.sample(frac=frac)
+        
     self.transform = transform
     
   def __len__(self):
@@ -209,18 +219,18 @@ class CNN_Regression(nn.Module):
     ])
     # 800 x 600
     self.cnn = nn.Sequential(
-      nn.Conv2d(3, 16, kernel_size=3, stride=2, padding=2), # 400 x 300
+      nn.Conv2d(3, 16, kernel_size=5, stride=2, padding=2), # 400 x 300
       nn.ReLU(),
-      nn.Conv2d(16, 32, kernel_size=3, stride=2, padding=2), # 200 x 150
+      nn.Conv2d(16, 32, kernel_size=5, stride=2, padding=2), # 200 x 150
       nn.ReLU(),
-      # nn.Conv2d(32, 64, kernel_size=5, stride=2, padding=2), # 100 x 75
-      # nn.ReLU(),
+      nn.Conv2d(32, 64, kernel_size=5, stride=2, padding=2), # 100 x 75
+      nn.ReLU(),
     )
     
     self.fc = nn.Sequential(
       nn.Flatten(),
-      # nn.Linear(64 * 100 * 75, 128),
-      nn.Linear(982528, 128), ## no idea why this size ngl
+      nn.Linear(64 * 100 * 75, 128),
+      # nn.Linear(982528, 128), ## no idea why this size ngl
       # nn.Linear(32 * 200 * 150, 128),
       nn.ReLU(),
       nn.Linear(128, 2), #( dx, dy)
@@ -250,7 +260,14 @@ class CNN_Regression(nn.Module):
     else:
       device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    trainingData = MovementDataset(imagesDir, imageLabelsPath, frac = sizeFrac, transform=self.transform)
+    ## closeWeights: {closeness: weight}
+    closeWeights = {
+      0: 0.25,
+      1: 0.25,
+      2: 1.0,
+    }
+    
+    trainingData = MovementDataset(imagesDir, imageLabelsPath, frac = sizeFrac, transform=self.transform, closeness=closeWeights)
     loader = DataLoader(trainingData, batch_size=self.batchSize, shuffle=True)
     
     model = self.to(device)
