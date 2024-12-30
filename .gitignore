@@ -3,4 +3,7 @@
 **/demonstration*
 **/__pycache__*
 
+
+## src/2d
 src/2d/datasets/screenshots*
+src/2d/models/old-models
