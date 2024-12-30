@@ -1,15 +1,20 @@
 import pygame
 from pygame.color import Color
+from PIL import Image
 
+import pandas as pd
 import pickle
 import random
 import time
-from typing import Type, Callable, TypeVar
+from typing import Literal, Type, Callable, TypeVar
 
-from my_types import State, Action4, Movement
+from my_types import State, Action4, Movement, Action2
 
+
+SPEED = 2.0
+FPS = 60
 MOV_SPEED = 5
-BLOCK_SIZE = 20 # per side
+BLOCK_SIZE = 50 # per side
 
 WIDTH, HEIGHT = 800, 600
 X_BOUND = WIDTH - BLOCK_SIZE
@@ -23,44 +28,26 @@ MOVEMENT: dict = {
   }
 
 ## Movement Behaviour to be used by the 'learn_game' 
-def auto_policy(state: State) -> Movement:
-  agent_x, agent_y,target_x, target_y = state
+def auto_policy(agent: pygame.Rect, target: pygame.Rect) -> Action2:
+  dx = target.x - agent.x
+  dy = target.y - agent.y
+  mag = (dx**2 + dy**2)**0.5
   
-  movement = {
-    pygame.K_UP: False,
-    pygame.K_DOWN: False,
-    pygame.K_LEFT: False,
-    pygame.K_RIGHT: False
-  }
+  if mag > 0:
+    dx /= mag
+    dy /= mag    
   
-  ## To remove the jitter adjust the boundary of the condition
-  match agent_x:
-    case _ if agent_x >= target_x and agent_x < target_x + BLOCK_SIZE:
-      movement[pygame.K_LEFT] = False
-      movement[pygame.K_RIGHT] = False
-    case _ if agent_x >= target_x + BLOCK_SIZE:
-      movement[pygame.K_LEFT] = True
-    case _ if agent_x < target_x:
-      movement[pygame.K_RIGHT] = True
-      
-  match agent_y:
-    case _ if agent_y >= target_y and agent_y < target_y + BLOCK_SIZE:
-      movement[pygame.K_UP] = False
-      movement[pygame.K_DOWN] = False
-    case _ if agent_y >= target_y + BLOCK_SIZE:
-      movement[pygame.K_UP] = True
-    case _ if agent_y < target_y:
-      movement[pygame.K_DOWN] = True
-      
+  dx = int(dx * MOV_SPEED)
+  dy = int(dy * MOV_SPEED)
   
-    
-  return movement
-
-def human_interaction(state: State) -> Movement:
-  return pygame.key.get_pressed()
+  agent.move_ip(dx, dy)
+  
+  return dx, dy
 
 ## File to save the demonstration data to train on
-def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] = auto_policy, n = 10) -> list[tuple[State, Action4]]:
+def learn_game(filepath: str = None,
+               moveAgent: Callable[[pygame.Rect, pygame.Rect], Action2] = auto_policy,
+               n = 10) -> list[tuple[State, Action4]]:
 
   pygame.init()
   clock = pygame.time.Clock()
@@ -75,7 +62,7 @@ def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] 
 
   isRunning = True
   
-  data: list[tuple[State, Action4]]= []
+  data: list[tuple[State, Action2]] = []
   
   targetCount = 1 ## one target at the start
   startTime = time.perf_counter()
@@ -98,32 +85,27 @@ def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] 
     
     ## record the action given to the robot in this coord system
     state = agent.x, agent.y, target.x, target.y
-    action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
     
-    keys = agentMovement(state)
-    
-    for key, (dx, dy) in MOVEMENT.items():
-      if keys[key]:
-        action[key] = True
-        agent.move_ip(dx, dy) # this is a move 'in-place', doesn't alter the object
-    
+    action: Action2 = moveAgent(agent, target)
     
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
       targetCount += 1
       target.x = random.randint(0, X_BOUND)
       target.y = random.randint(0, Y_BOUND)
+      # agent.x = random.randint(0, X_BOUND)
+      # agent.y = random.randint(0, Y_BOUND)
     
       
     ## save the data from this frame  
-    data.append((state, tuple(action.values())))
+    data.append((state, action))
     
     ## Finish learning when n targets are reached
     if targetCount == n:
       isRunning = False
     
     pygame.display.update()
-    clock.tick(60)
+    clock.tick(FPS)
 
   pygame.quit()
   
@@ -138,12 +120,12 @@ def learn_game(filepath: str = None, agentMovement: Callable[[State], Movement] 
       
   return data
   
-from torch_bc import AgentNetwork, AgentNetwork_Classification, AgentNetwork_Regression
+from torch_bc import AgentNetwork, AgentNetwork_Classification, AgentNetwork_Regression, CNN_Regression, PositionPredictor
 from torch import nn
 
-T = TypeVar("T")
 
-def move_arrowkeys(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork) -> None:
+
+def move_arrowkeys(agent: pygame.Rect, target: pygame.Rect) -> None:
   keys = pygame.key.get_pressed()
   
   for key, (dx, dy) in MOVEMENT.items():
@@ -151,12 +133,12 @@ def move_arrowkeys(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork)
       agent.move_ip(dx, dy)
   
   
-  
 def move_classification(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork_Classification) -> None:
   state = agent.x, agent.y, target.x, target.y
   state = torch.tensor(state, dtype=torch.float32)
   action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
   
+  model.eval()
   with torch.no_grad():
     pred = model(state) ## currently returns 4 floats, do some post processing
     ## if below a certain threshold reject it
@@ -188,7 +170,9 @@ def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork
   state = agent.x, agent.y, target.x, target.y
   state = torch.tensor(state, dtype=torch.float32)
   action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
+  print(f"{state = }")
   
+  model.eval()
   with torch.no_grad():
     pred = model(state) 
     print(f"{pred = }")
@@ -196,46 +180,245 @@ def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork
     print(f"{agent = }")
     
     ## map into key pairs
-    dx, dy = pred[0], pred[1]
+    dx, dy = int(pred[0]), int(pred[1])
+    agent.move_ip(dx, dy)
     
-    thresh = 0.05## threshold for the movement, 0.5 works well for 1k, 0.25 for 500, 0.05 for 250 otherwise they can get stuck
-    # old key sytem:
-    if dx > thresh: 
-      action[pygame.K_RIGHT] = True
-    elif dx < -thresh:
-      action[pygame.K_LEFT] = True
-      
-    if dy > thresh: 
-      action[pygame.K_UP] = True
-    elif dy < -thresh:
-      action[pygame.K_DOWN] = True
-    
-    for key, (dx, dy) in MOVEMENT.items():
-      if action[key]:
-        agent.move_ip(dx, dy)
+def create_random_loc_image_data(n: int, ssFolder: str) -> None:
+  pygame.init()
 
-def play_game(
-              move_agent: Callable[[pygame.Rect, pygame.Rect, AgentNetwork], None],
-              model: AgentNetwork = None, 
-              loadModelFromFile: str = None, 
-              modelType: Type[T] = None, 
-            ) -> None:
-  if not model and not loadModelFromFile:
-    raise ValueError("Must provide either 'model' or 'loadModelFromFile', loadModelFromFile takes priority if provided !!modelType must be also provided!!")
+  ## Setup Screen
+  screen = pygame.display.set_mode((WIDTH, HEIGHT))
+  pygame.display.set_caption("2D Canvas")
+
+  coords: dict[str, Movement] = {}
+  clock = pygame.time.Clock()
+  isRunning = True
   
-  if loadModelFromFile:
-    if modelType is None:
-      raise ValueError("Must provide 'modelType' when loading model from file")
+  
+  def get_agent_with_phase_bounds(phase: int, target: pygame.Rect) -> pygame.Rect:
+    match close:
+      ## 1. within 1 rect of target
+      case 0:
+        x_low, x_high = target.x - BLOCK_SIZE, target.x + 2 * BLOCK_SIZE ## 2 because count from top left
+        y_low, y_high = target.y - BLOCK_SIZE, target.y + 2 * BLOCK_SIZE 
+      ## 2. Close, within 3 rects of target
+      case 1:
+        x_low, x_high = target.x - 3 * BLOCK_SIZE, target.x + 4 * BLOCK_SIZE ## 4 because count from top left
+        y_low, y_high = target.y - 3 * BLOCK_SIZE, target.y + 4 * BLOCK_SIZE
+      ## 3. entire canvas  
+      case 2:  
+        x_low, x_high, y_low, y_high = 0, X_BOUND, 0, Y_BOUND
+        
+    ## But also respect the bounds of the canvas
+    x_low = max(x_low, 0)
+    x_high = min(x_high, X_BOUND)
+    y_low = max(y_low, 0)
+    y_high = min(y_high, Y_BOUND)
+    return pygame.Rect(random.randint(x_low, x_high), random.randint(y_low, y_high), BLOCK_SIZE, BLOCK_SIZE)
+        
+  for close in range(0, 3):
+    for i in range(n): ## make n points for each closeness phase
+      ## White Background
+      screen.fill(Color("white"))
+      target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+      agent = get_agent_with_phase_bounds(close, target)
+      
+      #  Not getting overlapping images might be hurting the model's ability to move when close to the target ,keep these in.
+      # if agent.colliderect(target):
+      #   i -= 1
+      #   print(f"touching at {i}")
+      #   continue
+      
+      ## Game Logic
+      ## draw the squares, agend is BLUE, target is RED
+      pygame.draw.rect(screen, Color("blue"), agent)
+      pygame.draw.rect(screen, Color("red"), target)
+      
+      imageName = f"ss-{i}-close-{close}.png"
+      action: Action2 = auto_policy(agent, target)
+      coords[imageName] = {
+        "agent_x": agent.x,
+        "agent_y": agent.y,
+        "target_x": target.x,
+        "target_y": target.y,
+        "action": action,
+        "closeness": close
+      }
+      
+      pygame.display.update()
+      
+      pygame.image.save(screen, f"{ssFolder}/{imageName}")
     
-    with open(loadModelFromFile, "rb") as f:
-      model = modelType() ## initialise model class before loading weights
-      model.load_state_dict(torch.load(f))
+  df = pd.DataFrame.from_dict(coords, orient="index", columns=["agent_x", "agent_y", "target_x", "target_y", "action", "closeness"])
+  print(df)
+  df.to_pickle(f"{ssFolder}/ss-info.pkl")
+  pygame.quit()
   
+  
+def create_image_data(n: int, ssFolder: str) -> None:
+  pygame.init()
+
+  ## Setup Screen
+  screen = pygame.display.set_mode((WIDTH, HEIGHT))
+  pygame.display.set_caption("2D Canvas")
+
+  coords: dict[str, Movement] = {}
+  clock = pygame.time.Clock()
+  isRunning = True
+  
+  agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+  target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+  
+  targetCount = 0
+  frameCount = 0
+  while isRunning:
+    ## White Background
+    screen.fill(Color("white"))
+     
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+        isRunning = False
+      if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+        print(f"Agent(x={agent.x}, y={agent.y}) Target(x={target.x}, y={target.y})")
+        
+    
+    ## Game Logic
+    ## draw the squares, agend is BLUE, target is RED
+    pygame.draw.rect(screen, Color("blue"), agent)
+    pygame.draw.rect(screen, Color("red"), target)
+    
+    imageName = f"ss-{targetCount}-{frameCount}.png"
+    action: Action2 = auto_policy(agent, target)
+    coords[imageName] = {
+      "agent_x": agent.x,
+      "agent_y": agent.y,
+      "target_x": target.x,
+      "target_y": target.y,
+      "action": action
+    }
+    pygame.image.save(screen, f"{ssFolder}/{imageName}")
+    
+    if agent.colliderect(target):
+      targetCount += 1
+      frameCount += 1
+      target.x = random.randint(0, X_BOUND)
+      target.y = random.randint(0, Y_BOUND)
+      # agent.x = random.randint(0, X_BOUND)
+      # agent.y = random.randint(0, Y_BOUND)
+    
+    if targetCount >= n:
+      isRunning = False
+    
+    
+    frameCount += 1
+    pygame.display.update()
+    clock.tick(FPS)
+    # Old Action4 version
+    # coords[imageName] = {
+    #   "agent_x": agent.x,
+    #   "agent_y": agent.y,
+    #   "target_x": target.x,
+    #   "target_y": target.y,
+    #   "movement": (movement[pygame.K_UP], movement[pygame.K_DOWN], movement[pygame.K_LEFT], movement[pygame.K_RIGHT])
+    # }
+    # pygame.time.wait(1000)
+  
+  df = pd.DataFrame.from_dict(coords, orient="index", columns=[
+    "agent_x", "agent_y", "target_x", "target_y", "action"])
+  print(df)
+  df.to_pickle(f"{ssFolder}/ss-info.pkl")
+  pygame.quit()
+    
+      
+def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_Regression ) -> None:
+  model.eval()
+  with torch.no_grad():
+    ## moved the image tranformation to the model, I think this makes the most sense, coupling these things
+    x = model.transform_image(image)
+    x = x.unsqueeze(0) ## add the batch dimension to make [1,3,600,800], otherwise model complains
+    pred = model(x)[0]
+  print(f"agent: ({agent.x}, {agent.y}) target: ({target.x}, {target.y})")
+  print(f"{pred = }")
+  dx, dy = pred[0], pred[1]
+  print(f"pred: dx: {pred[0]} | dy: {pred[1]}")
+  # map into key pairs
+  dx, dy = int(pred[0] * 10), int(pred[1] * 10)
+  agent.move_ip(dx, dy)
+  
+def move_cnn_buttons(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_Regression ) -> None:
+  model.eval()
+  with torch.no_grad():
+    ## moved the image tranformation to the model, I think this makes the most sense, coupling these things
+    x = model.transform_image(image)
+    x = x.unsqueeze(0) ## add the batch dimension to make [1,3,600,800], otherwise model complains
+    pred = model(x)[0]
+  print(f"agent: ({agent.x}, {agent.y}) target: ({target.x}, {target.y})")
+  print(f"{pred = }")
+  dx, dy = pred[0], pred[1]
+  print(f"pred: dx: {pred[0]} | dy: {pred[1]}")
+  
+  # map into key pairs
+  action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
+  threshold = 0
+  
+  dx = dx if abs(dx) > threshold else 0
+  dy = dy if abs(dy) > threshold else 0
+  
+  if dx > 0:
+    action[pygame.K_RIGHT] = True
+  elif dx < 0:
+    action[pygame.K_LEFT] = True
+    
+  if dy > 0:
+    action[pygame.K_DOWN] = True 
+  elif dy < 0:
+    action[pygame.K_UP] = True
+  
+  for key, (dx, dy) in MOVEMENT.items():
+    if action[key]:
+      agent.move_ip(dx, dy)
+  
+  
+  
+T = TypeVar("T")
+def load_model(loadModelFromFile: str, 
+               modelType: Type[T] = None,
+               device: Literal["cpu", "cuda"] = None
+               ) -> None:
+  
+  if modelType is None:
+    raise ValueError("Must provide 'modelType' when loading model from file")
+    
+  print(f"Loading type {modelType}")
+  
+  if not device:
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    
+  with open(loadModelFromFile, "rb") as f:
+    model = modelType() ## initialise model class before loading weights
+    model.load_state_dict(torch.load(f, map_location=torch.device(device)))
+    return model
+      
+MODEL_TYPES = {
+  "auto_policy": lambda s: None,
+  "move_regression": lambda s: load_model(s, modelType=AgentNetwork_Regression),
+  "move_classification": lambda s: load_model(s, modelType=AgentNetwork_Classification),
+  "move_cnn": lambda s: load_model(s, modelType=CNN_Regression),
+  "move_cnn_buttons": lambda s: load_model(s, modelType=CNN_Regression),
+  "move_arrowkeys": lambda s: None
+}
+      
+MOVES= ["auto_policy", "move_regression", "move_classification", "move_arrowkeys", "move_cnn", "move_cnn_buttons"]
+def play_game(
+              moveAgent: Literal["auto_policy", "move_regression", "move_classification", "move_arrowkeys", "move_cnn"],
+              loadModelFromFile: str = None, 
+            ) -> None:
+  if not loadModelFromFile:
+    raise ValueError("Must provide 'loadModelFromFile'")
   pygame.init()
   clock = pygame.time.Clock()
 
   ## Setup Screen
-  WIDTH, HEIGHT = 800, 600
   screen = pygame.display.set_mode((WIDTH, HEIGHT))
   pygame.display.set_caption("2D Canvas")
 
@@ -243,6 +426,8 @@ def play_game(
   target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
 
   isRunning = True
+  
+  model = MODEL_TYPES[moveAgent](loadModelFromFile)
 
   while isRunning:
     ## White Background
@@ -257,15 +442,38 @@ def play_game(
     pygame.draw.rect(screen, Color("blue"), agent)
     pygame.draw.rect(screen, Color("red"), target)
     
-    move_agent(agent, target, model)
+    # print(f"Real Agent pos: {agent.x, agent.y} Target pos: {target.x, target.y}")
     
+    match moveAgent:
+      case "auto_policy":
+        auto_policy(agent, target)
+      case "move_regression":
+        move_regression(agent, target, model)
+      case "move_classification":
+        move_classification(agent, target, model)
+      case "move_arrowkeys":
+        move_arrowkeys(agent, target, model)
+      case "move_cnn":
+        image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
+        # pygame.image.save(screen, "temp.png")
+        # image = Image.open("temp.png")
+        image.save("temp.png")
+        move_cnn(agent, target, image, model)
+      case "move_cnn_buttons":
+        image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
+        image.save("temp.png")
+        move_cnn_buttons(agent, target, image, model)
+      
+        
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
       target.x = random.randint(0, X_BOUND)
       target.y = random.randint(0, Y_BOUND)
     
     pygame.display.update()
-    clock.tick(60)
+    clock.tick(FPS)
+    
+    # pygame.time.wait(10000)   
 
   pygame.quit()
 
@@ -274,9 +482,17 @@ import torch
 
 if __name__ == "__main__":
   print(f"'canvas' [main]")
+  # create_image_data(100, "./datasets/screenshots-big-100")
+  create_random_loc_image_data(10_000, "./datasets/screenshots-rand-10k-withcols-closeness")
+  
+  # print(f"Up -> {pygame.K_UP}")
+  # print(f"DOWN -> {pygame.K_DOWN}")
+  # print(f"LEFT -> {pygame.K_LEFT}")
+  # print(f"RIGHT -> {pygame.K_RIGHT}")
+  
   # with open("agent-network-1k.pth", "rb") as f:
   #   model = AgentNetwork(4, 4)
   #   model.load_state_dict(torch.load(f))
   #   model.eval() ## set to evaluation mode as the training is complete
   #   play_game(model)
-  # learn_game("10-targets.pkl", human_interaction, n=10)
+  # learn_game("1k-targets.pkl", auto_policy, n=1000)

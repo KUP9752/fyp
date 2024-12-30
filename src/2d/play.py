@@ -1,37 +1,117 @@
-from canvas import learn_game, play_game, human_interaction, move_arrowkeys, move_regression, move_classification
-from torch_bc import AgentNetwork_Classification, AgentNetwork_Regression
+from canvas import play_game, MOVES
+from torch_bc import AgentNetwork, AgentNetwork_Classification, AgentNetwork_Regression, PositionPredictor, CNN_Regression
 import pickle
 import random
 from argparse import ArgumentParser
 
 
+def move(args):
+  ## extract args
+  moveFunc = args.movement
+  modelPath = args.model_path
+  
+  print(f"{moveFunc = }")
+  print(f"{modelPath = }")
+  play_game(moveAgent=moveFunc, 
+            loadModelFromFile=modelPath)
+
+
+modelToClass = {
+  "coord-class": AgentNetwork_Classification,
+  "coord-regr": AgentNetwork_Regression,
+  "cnn-regr": CNN_Regression
+}
+def train(args):
+  dataPath = args.dataset
+  modelPath = args.model_path
+  frac = args.size_fraction
+  overrideDevice = args.override_device
+  modelType: AgentNetwork | PositionPredictor | CNN_Regression = modelToClass[args.model_type]
+  doPrints = args.do_prints
+  epochs = args.epochs
+  # samples = random.sample(data, points)
+  
+  print(f"Training a {modelType} model")
+  
+  
+  match args.model_type:
+    case "coord-class" | "coord-regr":
+      model = modelType().train_on_behaviour(
+        doPrints=doPrints, 
+        dataFilepath= dataPath, 
+        modelPath=modelPath,
+        overwriteDevice=overrideDevice
+        )
+    case "cnn-regr": 
+      coords = f"{dataPath}/ss-info.pkl"
+      model = CNN_Regression(
+        epochs=epochs,
+        ).train_on_behaviour(
+        doPrints=doPrints, 
+        sizeFrac=frac,
+        imagesDir= dataPath, 
+        imageLabelsPath=coords, 
+        modelPath=modelPath,
+        overwriteDevice=overrideDevice
+        )
+
+
+
+MODELS = [ "coord-class", "coord-regr", "pos-pred", "cnn-regr"]
 if __name__ == "__main__":
   # trainingData = learn_game(agentMovement = human_interaction, n = 10)
   parser = ArgumentParser()
-  parser.add_argument_group
-  parser.add_argument("-t", "--train", default = False, action="store_true", help="Whether the script should run in training mode or not [need to also provide size]")
-  parser.add_argument("-m", "--model-path", required=True, type=str, help="File path of the model to load")
-  parser.add_argument("-s", "--size", default = 1000, type=int, help="Number of data the dataset should be trained on")
-  parser.add_argument("--dataset", type=str, default="./datasets/1k-targets.pkl", help="path of the dataset to train on")  
+  subparsers = parser.add_subparsers(required=True, help="sub-command help")
+  
+  ## Training
+  trainParser = subparsers.add_parser("train",
+                                      help="Whether the script should run in training mode or not [need to also provide size]")
+  trainParser.add_argument("-s", "--size-fraction", 
+                           default = 1.0, 
+                           type=float, 
+                           help="Fraction of the dataset the model should be trained on")
+  trainParser.add_argument("-m","--model-type", 
+                           required=True, 
+                           choices = MODELS,
+                           help="path of the dataset to train on")  
+  trainParser.add_argument("-d","--dataset", 
+                           type=str, 
+                           required=True, 
+                           help="path of the dataset to train on")  
+  trainParser.add_argument("-f", "--model-path", 
+                           required=True, 
+                           type=str, 
+                           help="filepath of where the model should be saved")
+  trainParser.add_argument("-od", "--override-device", 
+                           choices = ["cpu", "cuda", None],
+                           default = None,  
+                           type=str, 
+                           help="Force a device to be used")
+  trainParser.add_argument("-p", "--do-prints",
+                          action="store_true",
+                          help="Whether the model should print out training information"
+                          )
+  trainParser.add_argument("-e", "--epochs",
+                          type=int,
+                          default=10,
+                          help="How many epochs to run the model with")
+  trainParser.set_defaults(func=train) ## call train()
+  
+  ## Eval/Movement
+  evalParser: ArgumentParser = subparsers.add_parser("move", aliases= ["eval"], 
+                                                     help="Whether the script should run in evaluation mode or not")
+  evalParser.add_argument("-m", "--movement", required=True, choices=MOVES)
+  evalParser.add_argument("-f", "--model-path", 
+                           required=True, 
+                           type=str, 
+                           help="File path of the model to load")
+  evalParser.set_defaults(func=move) ## call move()
+  
+  
+  
   args = parser.parse_args()
   
+  args.func(args)
   
-  isTraining = args.train
-  size = args.size # default to 1000
-  # modelName = f"regression-{"1k" if size == 1000 else size}.pth"
-  # modelPath = f"{args.model_path}/{modelName}"
-  modelPath = args.model_path
-  
-  if isTraining:
-    with open(args.dataset, "rb") as f:
-      data = pickle.load(f)
-    
-    points = int(len(data) * (size / 1000))  
-    samples = random.sample(data, points)
-    
-    model = AgentNetwork_Regression().train_on_behaviour(data=samples, modelPath=modelPath, overwriteDevice="cpu")
-  else:
-    play_game(move_agent=move_regression, modelType=AgentNetwork_Regression, loadModelFromFile=modelPath)
-    
     
     
