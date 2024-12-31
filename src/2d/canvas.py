@@ -49,7 +49,7 @@ def auto_policy(agent: pygame.Rect, target: pygame.Rect) -> Action2:
   dx = int(dx * MOV_SPEED)
   dy = int(dy * MOV_SPEED)
   
-  move_ip_clamped(agent, dx, dy)
+  # move_ip_clamped(agent, dx, dy)
   
   return dx, dy
 
@@ -152,16 +152,24 @@ from torch_bc import AgentNetwork, AgentNetwork_Classification, AgentNetwork_Reg
 from torch import nn
 
 
+## Movement helper to map back to buttons
+def _move_buttons(action: dict[pygame.key, bool]) -> Action2:
+  dx, dy = 0, 0
+  for key, (cx, cy) in MOVEMENT.items():
+    if action[key]:
+      dx += cx
+      dy += cy
+      
+  return dx, dy
 
-def move_arrowkeys(agent: pygame.Rect, target: pygame.Rect) -> None:
+
+def move_arrowkeys(agent: pygame.Rect, target: pygame.Rect) -> Action2:
   keys = pygame.key.get_pressed()
   
-  for key, (dx, dy) in MOVEMENT.items():
-    if keys[key]:
-      move_ip_clamped(agent, dx, dy)
+  return _move_buttons(keys)
   
   
-def move_classification(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork_Classification) -> None:
+def move_classification(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork_Classification) -> Action2:
   state = agent.x, agent.y, target.x, target.y
   state = torch.tensor(state, dtype=torch.float32)
   action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
@@ -190,14 +198,11 @@ def move_classification(agent: pygame.Rect, target: pygame.Rect, model: AgentNet
     elif pred[3] > pred[2]:
       action[pygame.K_RIGHT] = True
   
-  for key, (dx, dy) in MOVEMENT.items():
-    if action[key]:
-      move_ip_clamped(agent, dx, dy)
+  return _move_buttons(action)
 
-def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork_Regression) -> None:
+def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork_Regression) -> Action2:
   state = agent.x, agent.y, target.x, target.y
   state = torch.tensor(state, dtype=torch.float32)
-  action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
   print(f"{state = }")
   
   model.eval()
@@ -209,7 +214,7 @@ def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork
     
     ## map into key pairs
     dx, dy = int(pred[0]), int(pred[1])
-    move_ip_clamped(agent, dx, dy)
+  return dy, dx
     
 def create_random_loc_image_data(n: int, ssFolder: str) -> None:
   pygame.init()
@@ -358,7 +363,7 @@ def create_image_data(n: int, ssFolder: str) -> None:
   pygame.quit()
     
       
-def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_Regression ) -> None:
+def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_Regression ) -> Action2:
   model.eval()
   with torch.no_grad():
     ## moved the image tranformation to the model, I think this makes the most sense, coupling these things
@@ -370,9 +375,8 @@ def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_R
   print(f"pred: dx: {dx} | dy: {dy}")
   # map into key pairs
   dx, dy = int(pred[0] * 10), int(pred[1] * 10)
-  move_ip_clamped(agent, dx, dy)
-  
-def move_cnn_buttons(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_Regression ) -> None:
+  return dx, dy
+def move_cnn_buttons(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_Regression ) -> Action2:
   model.eval()
   with torch.no_grad():
     ## moved the image tranformation to the model, I think this makes the most sense, coupling these things
@@ -380,8 +384,8 @@ def move_cnn_buttons(agent: pygame.Rect, target: pygame.Rect, image: Image, mode
     x = x.unsqueeze(0) ## add the batch dimension to make [1,3,600,800], otherwise model complains
     pred = model(x)[0]
   print(f"agent: ({agent.x}, {agent.y}) target: ({target.x}, {target.y})")
-  print(f"pred: dx: {dx} | dy: {dy}")
   dx, dy = pred[0], pred[1]
+  print(f"pred: dx: {dx} | dy: {dy}")
   
   # map into key pairs
   action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
@@ -400,10 +404,7 @@ def move_cnn_buttons(agent: pygame.Rect, target: pygame.Rect, image: Image, mode
   elif dy < 0:
     action[pygame.K_UP] = True
   
-  for key, (dx, dy) in MOVEMENT.items():
-    if action[key]:
-      move_ip_clamped(agent, dx, dy)
-  
+  return _move_buttons(action)  
   
   
 T = TypeVar("T")
@@ -450,7 +451,7 @@ def play_game(
 
   agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
   target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
-  obstacles = generate_obstacles(5, agent, target)
+  obstacles = generate_obstacles(0, agent, target)
 
   isRunning = True
   
@@ -474,28 +475,30 @@ def play_game(
     
     match moveAgent:
       case "auto_policy":
-        auto_policy(agent, target)
+        dx, dy = auto_policy(agent, target)
       case "move_regression":
-        move_regression(agent, target, model)
+        dx, dy = move_regression(agent, target, model)
       case "move_classification":
-        move_classification(agent, target, model)
+        dx, dy = move_classification(agent, target, model)
       case "move_arrowkeys":
-        move_arrowkeys(agent, target)
+        dx, dy = move_arrowkeys(agent, target)
       case "move_cnn":
         image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
         # pygame.image.save(screen, "temp.png")
         # image = Image.open("temp.png")
         # image.save("temp.png")
-        move_cnn(agent, target, image, model)
+        dx, dy = move_cnn(agent, target, image, model)
       case "move_cnn_buttons":
         image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
-        move_cnn_buttons(agent, target, image, model)
+        dx, dy = move_cnn_buttons(agent, target, image, model)
       
+    move_ip_clamped(agent, dx, dy)
     
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
       target.x = random.randint(0, X_BOUND)
       target.y = random.randint(0, Y_BOUND)
+      obstacles = generate_obstacles(0, agent, target)
     
     pygame.display.update()
     clock.tick(FPS)
