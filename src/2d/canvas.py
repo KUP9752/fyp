@@ -36,6 +36,35 @@ def move_ip_clamped(rect: pygame.Rect, dx: int, dy: int) -> None:
   rect.move_ip(dx, dy)
   rect.clamp_ip(0, 0, WIDTH, HEIGHT)
 
+## Restrictive movement with obstaclles
+def move_ip_obs(rect: pygame.Rect, dx: int, dy: int, obstacles: list[pygame.Rect]) -> None:
+  
+
+  
+  clone = rect.move(dx, dy)
+  
+  collides = clone.collidelistall(obstacles)
+  for i in collides:
+    obs = obstacles[i]
+    
+    if dx > 0:
+      if rect.right <= obs.left:
+        clone.right = obs.left
+    elif dx < 0:
+      if rect.left >= obs.right:
+        clone.left = obs.right
+    if dy > 0:
+      ## strict top
+      if rect.bottom <= obs.top:
+        clone.bottom = obs.top
+    elif dy < 0:
+      ## strict bottom
+      if rect.top >= obs.bottom:
+        clone.top = obs.bottom
+          
+  clone.clamp_ip(0, 0, WIDTH, HEIGHT)
+  rect.x, rect.y = clone.x, clone.y
+
 ## Movement Behaviour to be used by the 'learn_game' 
 def auto_policy(agent: pygame.Rect, target: pygame.Rect) -> Action2:
   dx = target.x - agent.x
@@ -448,10 +477,12 @@ def play_game(
   ## Setup Screen
   screen = pygame.display.set_mode((WIDTH, HEIGHT))
   pygame.display.set_caption("2D Canvas")
+  
+  obsCount = 5
 
   agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
   target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
-  obstacles = generate_obstacles(0, agent, target)
+  obstacles = generate_obstacles(obsCount, agent, target)
 
   isRunning = True
   
@@ -467,10 +498,10 @@ def play_game(
           
     ## Game Logic
     ## draw the squares, agend is BLUE, target is RED
-    pygame.draw.rect(screen, Color("blue"), agent)
-    pygame.draw.rect(screen, Color("red"), target)
     for obs in obstacles:
       pygame.draw.rect(screen, Color("black"), obs)
+    pygame.draw.rect(screen, Color("blue"), agent)
+    pygame.draw.rect(screen, Color("red"), target)
     # print(f"Real Agent pos: {agent.x, agent.y} Target pos: {target.x, target.y}")
     
     match moveAgent:
@@ -492,13 +523,13 @@ def play_game(
         image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
         dx, dy = move_cnn_buttons(agent, target, image, model)
       
-    move_ip_clamped(agent, dx, dy)
+    move_ip_obs(agent, dx, dy, obstacles)
     
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
       target.x = random.randint(0, X_BOUND)
       target.y = random.randint(0, Y_BOUND)
-      obstacles = generate_obstacles(0, agent, target)
+      obstacles = generate_obstacles(obsCount, agent, target)
     
     pygame.display.update()
     clock.tick(FPS)
