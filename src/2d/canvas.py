@@ -27,6 +27,12 @@ MOVEMENT: dict = {
     pygame.K_RIGHT: (MOV_SPEED, 0)
   }
 
+
+## Clamped Movement
+def move_ip_clamped(rect: pygame.Rect, dx: int, dy: int) -> None:
+  rect.move_ip(dx, dy)
+  rect.clamp_ip(0, 0, WIDTH, HEIGHT)
+
 ## Movement Behaviour to be used by the 'learn_game' 
 def auto_policy(agent: pygame.Rect, target: pygame.Rect) -> Action2:
   dx = target.x - agent.x
@@ -40,7 +46,7 @@ def auto_policy(agent: pygame.Rect, target: pygame.Rect) -> Action2:
   dx = int(dx * MOV_SPEED)
   dy = int(dy * MOV_SPEED)
   
-  agent.move_ip(dx, dy)
+  move_ip_clamped(agent, dx, dy)
   
   return dx, dy
 
@@ -130,7 +136,7 @@ def move_arrowkeys(agent: pygame.Rect, target: pygame.Rect) -> None:
   
   for key, (dx, dy) in MOVEMENT.items():
     if keys[key]:
-      agent.move_ip(dx, dy)
+      move_ip_clamped(agent, dx, dy)
   
   
 def move_classification(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork_Classification) -> None:
@@ -164,7 +170,7 @@ def move_classification(agent: pygame.Rect, target: pygame.Rect, model: AgentNet
   
   for key, (dx, dy) in MOVEMENT.items():
     if action[key]:
-      agent.move_ip(dx, dy)
+      move_ip_clamped(agent, dx, dy)
 
 def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork_Regression) -> None:
   state = agent.x, agent.y, target.x, target.y
@@ -181,7 +187,7 @@ def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork
     
     ## map into key pairs
     dx, dy = int(pred[0]), int(pred[1])
-    agent.move_ip(dx, dy)
+    move_ip_clamped(agent, dx, dy)
     
 def create_random_loc_image_data(n: int, ssFolder: str) -> None:
   pygame.init()
@@ -343,7 +349,7 @@ def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_R
   print(f"pred: dx: {pred[0]} | dy: {pred[1]}")
   # map into key pairs
   dx, dy = int(pred[0] * 10), int(pred[1] * 10)
-  agent.move_ip(dx, dy)
+  move_ip_clamped(agent, dx, dy)
   
 def move_cnn_buttons(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_Regression ) -> None:
   model.eval()
@@ -376,7 +382,7 @@ def move_cnn_buttons(agent: pygame.Rect, target: pygame.Rect, image: Image, mode
   
   for key, (dx, dy) in MOVEMENT.items():
     if action[key]:
-      agent.move_ip(dx, dy)
+      move_ip_clamped(agent, dx, dy)
   
   
   
@@ -452,7 +458,7 @@ def play_game(
       case "move_classification":
         move_classification(agent, target, model)
       case "move_arrowkeys":
-        move_arrowkeys(agent, target, model)
+        move_arrowkeys(agent, target)
       case "move_cnn":
         image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
         # pygame.image.save(screen, "temp.png")
@@ -464,7 +470,7 @@ def play_game(
         image.save("temp.png")
         move_cnn_buttons(agent, target, image, model)
       
-        
+    
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
       target.x = random.randint(0, X_BOUND)
