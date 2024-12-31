@@ -16,6 +16,9 @@ FPS = 60
 MOV_SPEED = 5
 BLOCK_SIZE = 50 # per side
 
+OBS_MAX_SIZE = 500 # per side
+OBS_MIN_SIZE = 50 # per side
+
 WIDTH, HEIGHT = 800, 600
 X_BOUND = WIDTH - BLOCK_SIZE
 Y_BOUND = HEIGHT - BLOCK_SIZE
@@ -50,6 +53,25 @@ def auto_policy(agent: pygame.Rect, target: pygame.Rect) -> Action2:
   
   return dx, dy
 
+
+## Generate obstacles
+def generate_obstacles(n: int, agent: pygame.Rect, target: pygame.Rect) -> list[pygame.Rect]:
+  obstacles = []
+  i = 0
+  while i < n:
+    w = random.randint(OBS_MIN_SIZE, OBS_MAX_SIZE )
+    h = random.randint(OBS_MIN_SIZE, OBS_MAX_SIZE )
+    
+    x = random.randint(0, WIDTH - w)
+    y = random.randint(0, HEIGHT - h)
+    
+    obs = pygame.Rect(x, y, w, h)
+    if obs.collidelistall([agent, target, * obstacles]):
+      continue
+    obstacles.append(obs)
+    i += 1
+  return obstacles
+
 ## File to save the demonstration data to train on
 def learn_game(filepath: str = None,
                moveAgent: Callable[[pygame.Rect, pygame.Rect], Action2] = auto_policy,
@@ -75,7 +97,7 @@ def learn_game(filepath: str = None,
 
   while isRunning:
     ## White Background
-    screen.fill(Color("white"))
+    screen .fill(Color("white"))
       
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
@@ -428,6 +450,7 @@ def play_game(
 
   agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
   target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+  obstacles = generate_obstacles(5, agent, target)
 
   isRunning = True
   
@@ -445,7 +468,8 @@ def play_game(
     ## draw the squares, agend is BLUE, target is RED
     pygame.draw.rect(screen, Color("blue"), agent)
     pygame.draw.rect(screen, Color("red"), target)
-    
+    for obs in obstacles:
+      pygame.draw.rect(screen, Color("black"), obs)
     # print(f"Real Agent pos: {agent.x, agent.y} Target pos: {target.x, target.y}")
     
     match moveAgent:
