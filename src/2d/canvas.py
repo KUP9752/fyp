@@ -344,9 +344,8 @@ def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_R
     x = x.unsqueeze(0) ## add the batch dimension to make [1,3,600,800], otherwise model complains
     pred = model(x)[0]
   print(f"agent: ({agent.x}, {agent.y}) target: ({target.x}, {target.y})")
-  print(f"{pred = }")
   dx, dy = pred[0], pred[1]
-  print(f"pred: dx: {pred[0]} | dy: {pred[1]}")
+  print(f"pred: dx: {dx} | dy: {dy}")
   # map into key pairs
   dx, dy = int(pred[0] * 10), int(pred[1] * 10)
   move_ip_clamped(agent, dx, dy)
@@ -359,9 +358,8 @@ def move_cnn_buttons(agent: pygame.Rect, target: pygame.Rect, image: Image, mode
     x = x.unsqueeze(0) ## add the batch dimension to make [1,3,600,800], otherwise model complains
     pred = model(x)[0]
   print(f"agent: ({agent.x}, {agent.y}) target: ({target.x}, {target.y})")
-  print(f"{pred = }")
+  print(f"pred: dx: {dx} | dy: {dy}")
   dx, dy = pred[0], pred[1]
-  print(f"pred: dx: {pred[0]} | dy: {pred[1]}")
   
   # map into key pairs
   action = {pygame.K_UP: False, pygame.K_DOWN: False, pygame.K_LEFT: False, pygame.K_RIGHT:  False }
