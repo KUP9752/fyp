@@ -461,11 +461,10 @@ def play_game(
         image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
         # pygame.image.save(screen, "temp.png")
         # image = Image.open("temp.png")
-        image.save("temp.png")
+        # image.save("temp.png")
         move_cnn(agent, target, image, model)
       case "move_cnn_buttons":
         image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
-        image.save("temp.png")
         move_cnn_buttons(agent, target, image, model)
       
     
