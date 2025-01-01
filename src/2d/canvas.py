@@ -80,30 +80,22 @@ def auto_policy(agent: pygame.Rect, target: pygame.Rect) -> Action2:
   
   return dx, dy
 
-## Generate and verify
-# def generate_and_validate_obstacles(n: int, agent: pygame.Rect, target: pygame.Rect) -> list[pygame.Rect]:
-#   obstacles = generate_obstacles(n, agent, target)
-#   while not verify_obstacles(agent, target, obstacles):
-#     obstacles = generate_obstacles(n, agent, target)
-#   return obstacles
-
-# ## Generate obstacles
-# def generate_obstacles(n: int, agent: pygame.Rect, target: pygame.Rect) -> list[pygame.Rect]:
-#   obstacles = []
-#   i = 0
-#   while i < n:
-#     w = random.randint(OBS_MIN_SIZE, OBS_MAX_SIZE )
-#     h = random.randint(OBS_MIN_SIZE, OBS_MAX_SIZE )
-    
-#     x = random.randint(0, WIDTH - w)
-#     y = random.randint(0, HEIGHT - h)
-    
-#     obs = pygame.Rect(x, y, w, h)
-#     if obs.collidelistall([agent, target, *obstacles]):
-#       continue
-#     obstacles.append(obs)
-#     i += 1
-#   return obstacles
+## With obstacles
+def auto_policy_obstacles(agent: pygame.Rect, target: pygame.Rect, obstacles: list[pygame.Rect]) -> Action2:
+  dx = target.x - agent.x
+  dy = target.y - agent.y
+  mag = (dx**2 + dy**2)**0.5
+  
+  if mag > 0:
+    dx /= mag
+    dy /= mag    
+  
+  dx = int(dx * MOV_SPEED)
+  dy = int(dy * MOV_SPEED)
+  
+  # move_ip_clamped(agent, dx, dy)
+  
+  return dx, dy
 
 def generate_obstacles(agent: pygame.Rect, target: pygame.Rect) -> list[pygame.Rect]:
   gridSize = BLOCK_SIZE * 2 ## NOTE: could be changed to change the finness of the grid and the obstacles
@@ -458,6 +450,8 @@ def move_cnn(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_R
   # map into key pairs
   dx, dy = int(pred[0] * 10), int(pred[1] * 10)
   return dx, dy
+
+
 def move_cnn_buttons(agent: pygame.Rect, target: pygame.Rect, image: Image, model: CNN_Regression ) -> Action2:
   model.eval()
   with torch.no_grad():
