@@ -39,8 +39,6 @@ def move_ip_clamped(rect: pygame.Rect, dx: int, dy: int) -> None:
 ## Restrictive movement with obstaclles
 def move_ip_obs(rect: pygame.Rect, dx: int, dy: int, obstacles: list[pygame.Rect]) -> None:
   
-
-  
   clone = rect.move(dx, dy)
   
   collides = clone.collidelistall(obstacles)
@@ -82,24 +80,79 @@ def auto_policy(agent: pygame.Rect, target: pygame.Rect) -> Action2:
   
   return dx, dy
 
+## Generate and verify
+# def generate_and_validate_obstacles(n: int, agent: pygame.Rect, target: pygame.Rect) -> list[pygame.Rect]:
+#   obstacles = generate_obstacles(n, agent, target)
+#   while not verify_obstacles(agent, target, obstacles):
+#     obstacles = generate_obstacles(n, agent, target)
+#   return obstacles
 
-## Generate obstacles
-def generate_obstacles(n: int, agent: pygame.Rect, target: pygame.Rect) -> list[pygame.Rect]:
+# ## Generate obstacles
+# def generate_obstacles(n: int, agent: pygame.Rect, target: pygame.Rect) -> list[pygame.Rect]:
+#   obstacles = []
+#   i = 0
+#   while i < n:
+#     w = random.randint(OBS_MIN_SIZE, OBS_MAX_SIZE )
+#     h = random.randint(OBS_MIN_SIZE, OBS_MAX_SIZE )
+    
+#     x = random.randint(0, WIDTH - w)
+#     y = random.randint(0, HEIGHT - h)
+    
+#     obs = pygame.Rect(x, y, w, h)
+#     if obs.collidelistall([agent, target, *obstacles]):
+#       continue
+#     obstacles.append(obs)
+#     i += 1
+#   return obstacles
+
+def generate_obstacles(agent: pygame.Rect, target: pygame.Rect) -> list[pygame.Rect]:
+  gridSize = BLOCK_SIZE * 2 ## NOTE: could be changed to change the finness of the grid and the obstacles
+  cols, rows = WIDTH // gridSize, HEIGHT // gridSize
+  
+  pathGrid = [[0 for _ in range(cols)] for _ in range(rows)] 
+  
+  start = (agent.x // gridSize, agent.y // gridSize)
+  goal = (target.x // gridSize, target.y // gridSize)
+  
+  curr = start
+  
+  while curr != goal:
+    x, y = curr
+    pathGrid[y][x] = 1
+    weights = [0.1, 0.1, 0.1, 0.1] ##
+    gx, gy = goal
+    
+    dx, dy = gx - x, gy - y## negative dx goal is left, positive dy goal is above
+    
+    if dx > 0:
+      weights[3] = abs(dx) / (abs(dx) + abs(dy))
+    if dx < 0:
+      weights[2] = abs(dx) / (abs(dx) + abs(dy))
+    if dy > 0:
+      weights[1] = abs(dy) / (abs(dx) + abs(dy))
+    if dy < 0:
+      weights[0] = abs(dy) / (abs(dx) + abs(dy))
+      
+    curr = random.choices([(x, max(y - 1, 0)), (x, min(y + 1, rows - 1)), (max(x - 1, 0), y), (min(x + 1, cols - 1), y)], weights=weights, k=1)[0]
+    
   obstacles = []
-  i = 0
-  while i < n:
-    w = random.randint(OBS_MIN_SIZE, OBS_MAX_SIZE )
-    h = random.randint(OBS_MIN_SIZE, OBS_MAX_SIZE )
-    
-    x = random.randint(0, WIDTH - w)
-    y = random.randint(0, HEIGHT - h)
-    
-    obs = pygame.Rect(x, y, w, h)
-    if obs.collidelistall([agent, target, * obstacles]):
-      continue
-    obstacles.append(obs)
-    i += 1
+  from pprint import pprint
+  pprint(pathGrid)
+  for i in range(rows):
+    for j in range(cols):
+      if pathGrid[i][j] == 0:
+        prob = 50
+        ## the chosen path is just around this block
+        if pathGrid[i][min(j + 1, cols - 1)] or pathGrid[i][max(j - 1, 0)] or pathGrid[min(i + 1, rows - 1)][j] or pathGrid[max(i - 1, 0)][j]:
+          prob  = 70
+        
+        if prob >= random.randint(0, 100):
+          obs = pygame.Rect(j * gridSize, i * gridSize, gridSize, gridSize)
+          if obs.collidelistall([agent, target]):
+            continue
+          obstacles.append(obs)
   return obstacles
+  
 
 ## File to save the demonstration data to train on
 def learn_game(filepath: str = None,
@@ -478,12 +531,12 @@ def play_game(
   screen = pygame.display.set_mode((WIDTH, HEIGHT))
   pygame.display.set_caption("2D Canvas")
   
-  obsCount = 5
+  # obsCount = 5
 
   agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
   target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
-  obstacles = generate_obstacles(obsCount, agent, target)
-
+  obstacles = generate_obstacles(agent, target)
+  
   isRunning = True
   
   model = MODEL_TYPES[moveAgent](loadModelFromFile)
@@ -529,7 +582,7 @@ def play_game(
     if agent.colliderect(target):
       target.x = random.randint(0, X_BOUND)
       target.y = random.randint(0, Y_BOUND)
-      obstacles = generate_obstacles(obsCount, agent, target)
+      obstacles = generate_obstacles(agent, target)
     
     pygame.display.update()
     clock.tick(FPS)
@@ -544,8 +597,7 @@ import torch
 if __name__ == "__main__":
   print(f"'canvas' [main]")
   # create_image_data(100, "./datasets/screenshots-big-100")
-  create_random_loc_image_data(10_000, "./datasets/screenshots-rand-10k-withcols-closeness")
-  
+  # create_random_loc_image_data(10_000, "./datasets/screenshots-rand-10k-withcols-closeness")
   # print(f"Up -> {pygame.K_UP}")
   # print(f"DOWN -> {pygame.K_DOWN}")
   # print(f"LEFT -> {pygame.K_LEFT}")
