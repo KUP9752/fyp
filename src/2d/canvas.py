@@ -2,6 +2,7 @@ import pygame
 from pygame.color import Color
 from PIL import Image
 
+import heapq
 import pandas as pd
 import pickle
 import random
@@ -36,9 +37,33 @@ def move_ip_clamped(rect: pygame.Rect, dx: int, dy: int) -> None:
   rect.move_ip(dx, dy)
   rect.clamp_ip(0, 0, WIDTH, HEIGHT)
 
+
+## Non-in-place movement
+def move_obs(rect: pygame.Rect, dx: int, dy: int, obstacles: list[pygame.Rect]) -> pygame.Rect:
+  clone = rect.move(dx, dy)
+  
+  collides = clone.collidelistall(obstacles)
+  for i in collides:
+    obs = obstacles[i]
+    
+    if dx > 0:
+      if rect.right <= obs.left:
+        clone.right = obs.left
+    elif dx < 0:
+      if rect.left >= obs.right:
+        clone.left = obs.right
+    if dy > 0:
+      ## strict top
+      if rect.bottom <= obs.top:
+        clone.bottom = obs.top
+    elif dy < 0:
+      ## strict bottom
+      if rect.top >= obs.bottom:
+        clone.top = obs.bottom
+          
+  return clone.clamp(0, 0, WIDTH, HEIGHT)
 ## Restrictive movement with obstaclles
 def move_ip_obs(rect: pygame.Rect, dx: int, dy: int, obstacles: list[pygame.Rect]) -> None:
-  
   clone = rect.move(dx, dy)
   
   collides = clone.collidelistall(obstacles)
@@ -80,22 +105,67 @@ def auto_policy(agent: pygame.Rect, target: pygame.Rect) -> Action2:
   
   return dx, dy
 
+
 ## With obstacles
 def auto_policy_obstacles(agent: pygame.Rect, target: pygame.Rect, obstacles: list[pygame.Rect]) -> Action2:
-  dx = target.x - agent.x
-  dy = target.y - agent.y
-  mag = (dx**2 + dy**2)**0.5
+  ## Manhattan heuristic
+  def heuristic(robot: tuple[int, int], goal: tuple[int, int], penalty: int = 0) -> int:
+    from math import sqrt
+    return sqrt((robot[0] - goal[0])**2 + (robot[1] - goal[1])**2) + penalty
+    
+    
+  stepSize = MOV_SPEED
   
-  if mag > 0:
-    dx /= mag
-    dy /= mag    
+  directions = [
+    (0, stepSize), (stepSize, 0), (0, -stepSize), (-stepSize, 0),
+    (stepSize, stepSize), (stepSize, -stepSize), (-stepSize, stepSize), (-stepSize, -stepSize)
+  ] 
   
-  dx = int(dx * MOV_SPEED)
-  dy = int(dy * MOV_SPEED)
+  open_set = []
+  start = agent.x, agent.y
+  goal = target.x, target.y
+  heapq.heappush(open_set, (0, start))
   
-  # move_ip_clamped(agent, dx, dy)
+  ## (x, y) -> (x, y), (dx, dy) coordinate we came from + the step that got us here
+  cameFrom: dict[tuple[int, int], tuple[tuple[int, int], tuple[int, int]]] = {}
+  g_score = {start: 0}
+  f_score = {start: heuristic(start, goal)}
   
-  return dx, dy
+  clone = agent.copy() ## essentially a copy
+  
+  while open_set:
+    _, current = heapq.heappop(open_set)
+    clone.x, clone.y = current
+    if clone.colliderect(target):
+      # Reconstruct the path
+      path = []
+      while current in cameFrom:
+        x, y = current
+        current = cameFrom[current]
+        path.append((x - current[0], y - current[1]))  # Add the step that got us here
+      # path.append(start)
+      return path[::-1] if path else [(0,0)]  # Reverse the path, if no path then we must already be on the target
+    
+    isValidMove = False
+    for dx, dy in directions:
+      neighbour = clone.move(dx, dy)
+      n_coords = neighbour.x, neighbour.y
+      # Check if neighbor is within bounds
+      if neighbour.collidelistall(obstacles):
+        
+        continue
+      
+      tentative_g_score = g_score[current] + 1  # Cost of moving to a neighbor
+      if n_coords not in g_score or tentative_g_score < g_score[n_coords]:
+        # Update scores and add to the open set
+        cameFrom[n_coords] = current
+        g_score[n_coords] = tentative_g_score
+        f_score[n_coords] = tentative_g_score + heuristic(n_coords, goal)
+        heapq.heappush(open_set, (f_score[n_coords], n_coords))
+        
+  raise ValueError("No path found, but a path exists!")
+
+
 
 def generate_obstacles(agent: pygame.Rect, target: pygame.Rect) -> list[pygame.Rect]:
   gridSize = BLOCK_SIZE * 2 ## NOTE: could be changed to change the finness of the grid and the obstacles
@@ -128,6 +198,7 @@ def generate_obstacles(agent: pygame.Rect, target: pygame.Rect) -> list[pygame.R
     curr = random.choices([(x, max(y - 1, 0)), (x, min(y + 1, rows - 1)), (max(x - 1, 0), y), (min(x + 1, cols - 1), y)], weights=weights, k=1)[0]
     
   obstacles = []
+  print(f"Traced Path:")
   from pprint import pprint
   pprint(pathGrid)
   for i in range(rows):
@@ -483,6 +554,62 @@ def move_cnn_buttons(agent: pygame.Rect, target: pygame.Rect, image: Image, mode
   return _move_buttons(action)  
   
   
+  
+# Works slightly different than play game, so delegate here when playing the game with "auto_policy_obs"
+def _auto_obs_game() -> None:
+  pygame.init()
+  clock = pygame.time.Clock()
+  
+   ## Setup Screen
+  screen = pygame.display.set_mode((WIDTH, HEIGHT))
+  pygame.display.set_caption("2D Canvas")
+  bg = pygame.Surface((WIDTH, HEIGHT))
+  bg.fill(Color("white"))
+  
+  agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+  target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+  obstacles = generate_obstacles(agent, target)
+  # obs = obstacles[0]
+  # obs.unionall_ip(obstacles[1:])
+  
+  isRunning = True
+  
+  while isRunning:
+    # for obs in obstacles:
+    #   pygame.draw.rect(screen, Color("black"), obs)
+    # pygame.draw.rect(screen, Color("blue"), agent)
+    # pygame.draw.rect(screen, Color("red"), target)
+    # pygame.display.update()
+    
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+        isRunning = False
+        
+    screen.blit(bg, (0, 0))
+    for obs in obstacles:
+      pygame.draw.rect(screen, Color("black"), obs)
+    pygame.draw.rect(screen, Color("blue"), agent)
+    pygame.draw.rect(screen, Color("red"), target)
+    
+    dx, dy = auto_policy_obstacles(agent, target, obstacles)[0]
+    move_ip_obs(agent, dx, dy, obstacles)
+    # for dx, dy in auto_policy_obstacles(agent, target, obstacles):
+    #   move_ip_obs(agent, dx, dy, obstacles)
+    #   pygame.display.update()
+    #   clock.tick(60)
+      
+    if agent.colliderect(target):
+      target.x = random.randint(0, X_BOUND)
+      target.y = random.randint(0, Y_BOUND)
+      obstacles = generate_obstacles(agent, target)
+      
+    pygame.display.update()
+    clock.tick(60)
+        
+    
+  pygame.quit()
+  
+  
 T = TypeVar("T")
 def load_model(loadModelFromFile: str, 
                modelType: Type[T] = None,
@@ -501,9 +628,10 @@ def load_model(loadModelFromFile: str,
     model = modelType() ## initialise model class before loading weights
     model.load_state_dict(torch.load(f, map_location=torch.device(device)))
     return model
-      
+
 MODEL_TYPES = {
   "auto_policy": lambda s: None,
+  "auto_policy_obs": lambda s: None,
   "move_regression": lambda s: load_model(s, modelType=AgentNetwork_Regression),
   "move_classification": lambda s: load_model(s, modelType=AgentNetwork_Classification),
   "move_cnn": lambda s: load_model(s, modelType=CNN_Regression),
@@ -511,22 +639,26 @@ MODEL_TYPES = {
   "move_arrowkeys": lambda s: None
 }
       
-MOVES= ["auto_policy", "move_regression", "move_classification", "move_arrowkeys", "move_cnn", "move_cnn_buttons"]
+MOVES= ["auto_policy", "auto_policy_obs", "move_regression", "move_classification", "move_arrowkeys", "move_cnn", "move_cnn_buttons"]
 def play_game(
-              moveAgent: Literal["auto_policy", "move_regression", "move_classification", "move_arrowkeys", "move_cnn"],
+              moveAgent: Literal["auto_policy","auto_policy_obs", "move_regression", "move_classification", "move_arrowkeys", "move_cnn"],
               loadModelFromFile: str = None, 
             ) -> None:
+  if moveAgent == "auto_policy_obs":
+    return _auto_obs_game()
   if not loadModelFromFile:
     raise ValueError("Must provide 'loadModelFromFile'")
+  
+  
   pygame.init()
   clock = pygame.time.Clock()
 
   ## Setup Screen
   screen = pygame.display.set_mode((WIDTH, HEIGHT))
+  bg = pygame.Surface((WIDTH, HEIGHT))
+  bg.fill(Color("white"))
   pygame.display.set_caption("2D Canvas")
   
-  # obsCount = 5
-
   agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
   target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
   obstacles = generate_obstacles(agent, target)
@@ -536,8 +668,12 @@ def play_game(
   model = MODEL_TYPES[moveAgent](loadModelFromFile)
 
   while isRunning:
-    ## White Background
-    screen.fill(Color("white"))
+    ## White Background and Display
+    screen.blit(bg, (0, 0))
+    for obs in obstacles:
+      pygame.draw.rect(screen, Color("black"), obs)
+    pygame.draw.rect(screen, Color("blue"), agent)
+    pygame.draw.rect(screen, Color("red"), target)
       
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
@@ -545,15 +681,13 @@ def play_game(
           
     ## Game Logic
     ## draw the squares, agend is BLUE, target is RED
-    for obs in obstacles:
-      pygame.draw.rect(screen, Color("black"), obs)
-    pygame.draw.rect(screen, Color("blue"), agent)
-    pygame.draw.rect(screen, Color("red"), target)
     # print(f"Real Agent pos: {agent.x, agent.y} Target pos: {target.x, target.y}")
-    
+      
     match moveAgent:
       case "auto_policy":
         dx, dy = auto_policy(agent, target)
+      ## Slighlty special case, stop the frame by frame movement and move the agent until meeting target
+      # case "auto_policy_obs":
       case "move_regression":
         dx, dy = move_regression(agent, target, model)
       case "move_classification":
@@ -569,8 +703,9 @@ def play_game(
       case "move_cnn_buttons":
         image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
         dx, dy = move_cnn_buttons(agent, target, image, model)
-      
+    
     move_ip_obs(agent, dx, dy, obstacles)
+    
     
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
@@ -580,8 +715,10 @@ def play_game(
     
     pygame.display.update()
     clock.tick(FPS)
+    # isRunning = False
+    # pygame.image.save(screen, "temp.png")
     
-    # pygame.time.wait(10000)   
+    # pygame.time.wait(100000)   
 
   pygame.quit()
 
