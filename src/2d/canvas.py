@@ -198,9 +198,9 @@ def generate_obstacles(agent: pygame.Rect, target: pygame.Rect) -> list[pygame.R
     curr = random.choices([(x, max(y - 1, 0)), (x, min(y + 1, rows - 1)), (max(x - 1, 0), y), (min(x + 1, cols - 1), y)], weights=weights, k=1)[0]
     
   obstacles = []
-  print(f"Traced Path:")
-  from pprint import pprint
-  pprint(pathGrid)
+  # print(f"Traced Path:")
+  # from pprint import pprint
+  # pprint(pathGrid)
   for i in range(rows):
     for j in range(cols):
       if pathGrid[i][j] == 0:
@@ -581,9 +581,9 @@ def _auto_obs_game() -> None:
     # pygame.draw.rect(screen, Color("red"), target)
     # pygame.display.update()
     
-    for event in pygame.event.get():
-      if event.type == pygame.QUIT:
-        isRunning = False
+    # for event in pygame.event.get():
+    #   if event.type == pygame.QUIT:
+    #     isRunning = False
         
     screen.blit(bg, (0, 0))
     for obs in obstacles:
@@ -591,20 +591,32 @@ def _auto_obs_game() -> None:
     pygame.draw.rect(screen, Color("blue"), agent)
     pygame.draw.rect(screen, Color("red"), target)
     
-    dx, dy = auto_policy_obstacles(agent, target, obstacles)[0]
-    move_ip_obs(agent, dx, dy, obstacles)
-    # for dx, dy in auto_policy_obstacles(agent, target, obstacles):
-    #   move_ip_obs(agent, dx, dy, obstacles)
-    #   pygame.display.update()
-    #   clock.tick(60)
+    for dx, dy in auto_policy_obstacles(agent, target, obstacles):
+      
+      for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+          isRunning = False
+          
+      screen.blit(bg, (0, 0))
+      for obs in obstacles:
+        pygame.draw.rect(screen, Color("black"), obs)
+      pygame.draw.rect(screen, Color("red"), target)
+          
+      move_ip_obs(agent, dx, dy, obstacles)
+      
+      pygame.draw.rect(screen, Color("blue"), agent)
+      pygame.display.update()
+      
+      clock.tick(60)
       
     if agent.colliderect(target):
       target.x = random.randint(0, X_BOUND)
       target.y = random.randint(0, Y_BOUND)
       obstacles = generate_obstacles(agent, target)
-      
-    pygame.display.update()
-    clock.tick(60)
+    else:
+      raise ValueError("Agent should always collide with target, given the path!")
+    # pygame.display.update()
+    # clock.tick(60)
         
     
   pygame.quit()
