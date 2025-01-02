@@ -8,6 +8,7 @@ from torchvision import transforms
 import pandas as pd
 from PIL import Image
 
+import re
 import os
 import random
 
@@ -168,23 +169,43 @@ class PositionPredictor(nn.Module):
 
 
 class MovementDataset(Dataset):
-  def __init__(self, imagesDir: str, labelsPath: str, frac: float = 1.0, transform = None, closeness: dict[int, float] = False):
-    ## if closeness is not None, balance the data according to closeness column values
+  def __init__(self, imagesDir: str,
+    labelsPath: str,
+    frac: float = 1.0,
+    transform = None,
+    closeness: dict[int, float] = False,
+    N: int = 1000,
+    preserveMovementSequences: bool = False
+  ):
     
+    self.transform = transform
     self.imagesDir = imagesDir
     print(f"{labelsPath = }")
-    
     data = pd.read_pickle(labelsPath)
     
-    ## if a closeness to weights is given
-    if closeness:
-      parts = []
-      gs = [data[data["closeness"] == c].sample(frac=frac) for c, frac in closeness.items()]
-      self.imageLabels = pd.concat(gs)
-    else:
-      self.imageLabels = self.imageLabels.sample(frac=frac)
+    ## if closeness is not None, balance the data according to closeness column values
+    if preserveMovementSequences:
+      if closeness:
+        ## index is the first number, [0] is the string being searched
+        data["imageNo"] = data.index.map(lambda s: int(re.search(r"ss-(\d+)-close-(\d+)-seq-(\d+).png", s)[1])) 
         
-    self.transform = transform
+        ## if a closeness to weights is given
+        if closeness:
+          ## sample the indices as a fraction of the total given by the percentage, N = 1k by default
+          sampledIndices = {c : np.random.choice(np.arange(0, 1000), size=int(frac * N)) for c, frac in closeness.items()}
+          gs = [data[(data["closeness"] == c) & (data["imageNo"].isin(sampledIndices[c]))] for c, _ in closeness.items()]
+          self.imageLabels = pd.concat(gs)
+        else:
+          ## automatically preserves the sequences as everything is kept.
+          self.imageLabels = self.imageLabels.sample(frac=frac)
+    else:
+      ## if a closeness to weights is given
+      if closeness:
+        gs = [data[data["closeness"] == c].sample(frac=frac) for c, frac in closeness.items()]
+        self.imageLabels = pd.concat(gs)
+      else:
+        self.imageLabels = self.imageLabels.sample(frac=frac)
+        
     
   def __len__(self):
     return len(self.imageLabels)
@@ -195,12 +216,11 @@ class MovementDataset(Dataset):
     image = Image.open(imagePath)
     label = self.imageLabels.loc[self.imageLabels.index[idx], "action"]
     
-    
     if self.transform:
       image = self.transform(image)
       
     return image, torch.tensor(label, dtype=torch.float32)
-    
+
 class CNN_Regression(nn.Module):
   def __init__(self, 
                lossFunc = nn.MSELoss(),
@@ -302,12 +322,24 @@ class CNN_Regression(nn.Module):
     
     ## closeWeights: {closeness: weight}
     closeWeights = {
-      0: 1.0,
-      1: 1.0,
-      2: 1.0,
+      0: 0.1,
+      1: 0.1,
+      2: 0.1,
+      3: 0.2,
+      4: 0.2, 
+      5: 0.5, 
     }
     
-    trainingData = MovementDataset(imagesDir, imageLabelsPath, frac = sizeFrac, transform=self.transform, closeness=closeWeights)
+    # python play.py train -m cnn-regr -d ./datasets/screenshots-obs-seq-1k-withcols-closeness  -f .\models\closeness-3conv-k5s2p2-obs\1-1-1weights -e 20
+    
+    trainingData = MovementDataset(imagesDir,
+      imageLabelsPath,
+      frac = sizeFrac,
+      transform=self.transform,
+      closeness=closeWeights,
+      preserveMovementSequences=True
+    )
+    
     loader = DataLoader(trainingData, batch_size=self.batchSize, shuffle=True)
     
     model = self.to(device)
