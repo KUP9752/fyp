@@ -38,56 +38,43 @@ def move_ip_clamped(rect: pygame.Rect, dx: int, dy: int) -> None:
   rect.clamp_ip(0, 0, WIDTH, HEIGHT)
 
 
-## Non-in-place movement
+## Restrictive movement with obstaclles, return new rect
 def move_obs(rect: pygame.Rect, dx: int, dy: int, obstacles: list[pygame.Rect]) -> pygame.Rect:
+  ## separate the movement planes, if moving left would collide but moving up wouldn't maybe I can allow that movement?
+  movedX = rect.move(dx, 0)
+  movedY = rect.move(0, dy)
   
-  clone = rect.move(dx, dy)
-  
-  collides = clone.collidelistall(obstacles)
-  for i in collides:
+  for i in movedX.collidelistall(obstacles):
     obs = obstacles[i]
-    
     if dx > 0:
       if rect.right <= obs.left:
-        clone.right = obs.left
+        movedX.right = obs.left
     elif dx < 0:
       if rect.left >= obs.right:
-        clone.left = obs.right
-        
+        movedX.left = obs.right
+    
+  for i in movedY.collidelistall(obstacles):
+    obs = obstacles[i]
     if dy > 0:
       ## strict top
       if rect.bottom <= obs.top:
-        clone.bottom = obs.top
+        movedY.bottom = obs.top
     elif dy < 0:
       ## strict bottom
       if rect.top >= obs.bottom:
-        clone.top = obs.bottom
+        movedY.top = obs.bottom
           
-  return clone.clamp(0, 0, WIDTH, HEIGHT)
-## Restrictive movement with obstaclles
+  moved = movedX.clamp(0, 0, WIDTH, HEIGHT)
+  movedY = movedY.clamp(0, 0, WIDTH, HEIGHT)
+  
+  moved.top = movedY.top
+  moved.bottom = movedY.bottom
+  
+  return moved
+  
+## Restrictive movement with obstaclles, in-place
 def move_obs_ip(rect: pygame.Rect, dx: int, dy: int, obstacles: list[pygame.Rect]) -> None:
-  clone = rect.move(dx, dy)
-  
-  collides = clone.collidelistall(obstacles)
-  for i in collides:
-    obs = obstacles[i]
-    
-    if dx > 0:
-      if rect.right <= obs.left:
-        clone.right = obs.left
-    elif dx < 0:
-      if rect.left >= obs.right:
-        clone.left = obs.right
-    if dy > 0:
-      ## strict top
-      if rect.bottom <= obs.top:
-        clone.bottom = obs.top
-    elif dy < 0:
-      ## strict bottom
-      if rect.top >= obs.bottom:
-        clone.top = obs.bottom
-          
-  clone.clamp_ip(0, 0, WIDTH, HEIGHT)
+  clone = move_obs(rect, dx, dy, obstacles)
   rect.x, rect.y = clone.x, clone.y
 
 ## Movement Behaviour to be used by the 'learn_game' 
