@@ -1,8 +1,6 @@
 from canvas import play_game, MOVES
-from torch_bc import AgentNetwork, AgentNetwork_Classification, AgentNetwork_Regression, PositionPredictor, CNN_Regression
-import pickle
-import random
 from argparse import ArgumentParser
+from torch_bc import AgentNetwork, AgentNetwork_Classification, AgentNetwork_Regression, PositionPredictor, CNN_Regression
 
 
 def move(args):
