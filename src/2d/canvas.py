@@ -40,6 +40,7 @@ def move_ip_clamped(rect: pygame.Rect, dx: int, dy: int) -> None:
 
 ## Non-in-place movement
 def move_obs(rect: pygame.Rect, dx: int, dy: int, obstacles: list[pygame.Rect]) -> pygame.Rect:
+  
   clone = rect.move(dx, dy)
   
   collides = clone.collidelistall(obstacles)
@@ -52,6 +53,7 @@ def move_obs(rect: pygame.Rect, dx: int, dy: int, obstacles: list[pygame.Rect]) 
     elif dx < 0:
       if rect.left >= obs.right:
         clone.left = obs.right
+        
     if dy > 0:
       ## strict top
       if rect.bottom <= obs.top:
@@ -63,7 +65,7 @@ def move_obs(rect: pygame.Rect, dx: int, dy: int, obstacles: list[pygame.Rect]) 
           
   return clone.clamp(0, 0, WIDTH, HEIGHT)
 ## Restrictive movement with obstaclles
-def move_ip_obs(rect: pygame.Rect, dx: int, dy: int, obstacles: list[pygame.Rect]) -> None:
+def move_obs_ip(rect: pygame.Rect, dx: int, dy: int, obstacles: list[pygame.Rect]) -> None:
   clone = rect.move(dx, dy)
   
   collides = clone.collidelistall(obstacles)
@@ -366,7 +368,11 @@ def create_random_loc_image_data(n: int, ssFolder: str) -> None:
 
   ## Setup Screen
   screen = pygame.display.set_mode((WIDTH, HEIGHT))
+  bg = pygame.Surface((WIDTH, HEIGHT))
+  bg.fill(Color("white"))
   pygame.display.set_caption("2D Canvas")
+
+
 
   coords: dict[str, Movement] = {}
   clock = pygame.time.Clock()
@@ -383,8 +389,17 @@ def create_random_loc_image_data(n: int, ssFolder: str) -> None:
       case 1:
         x_low, x_high = target.x - 3 * BLOCK_SIZE, target.x + 4 * BLOCK_SIZE ## 4 because count from top left
         y_low, y_high = target.y - 3 * BLOCK_SIZE, target.y + 4 * BLOCK_SIZE
+      case 2:
+        x_low, x_high = target.x - 5 * BLOCK_SIZE, target.x + 6 * BLOCK_SIZE ## 6 because count from top left
+        y_low, y_high = target.y - 5 * BLOCK_SIZE, target.y + 6 * BLOCK_SIZE
+      case 3:
+        x_low, x_high = target.x - 7 * BLOCK_SIZE, target.x + 8 * BLOCK_SIZE ## 8 because count from top left
+        y_low, y_high = target.y - 7 * BLOCK_SIZE, target.y + 8 * BLOCK_SIZE
+      case 4:
+        x_low, x_high = target.x - 9 * BLOCK_SIZE, target.x + 10 * BLOCK_SIZE ## 10 because count from top left
+        y_low, y_high = target.y - 9 * BLOCK_SIZE, target.y + 10 * BLOCK_SIZE
       ## 3. entire canvas  
-      case 2:  
+      case 5:  
         x_low, x_high, y_low, y_high = 0, X_BOUND, 0, Y_BOUND
         
     ## But also respect the bounds of the canvas
@@ -393,39 +408,53 @@ def create_random_loc_image_data(n: int, ssFolder: str) -> None:
     y_low = max(y_low, 0)
     y_high = min(y_high, Y_BOUND)
     return pygame.Rect(random.randint(x_low, x_high), random.randint(y_low, y_high), BLOCK_SIZE, BLOCK_SIZE)
+  try:     
+    for close in range(0, 6):
+      for i in range(n): ## make n points for each closeness phase
+        ## White Background
+        screen.blit(bg, (0, 0))
+        target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+        agent = get_agent_with_phase_bounds(close, target)
+        obstacles = generate_obstacles(agent, target)
         
-  for close in range(0, 3):
-    for i in range(n): ## make n points for each closeness phase
-      ## White Background
-      screen.fill(Color("white"))
-      target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
-      agent = get_agent_with_phase_bounds(close, target)
-      
-      #  Not getting overlapping images might be hurting the model's ability to move when close to the target ,keep these in.
-      # if agent.colliderect(target):
-      #   i -= 1
-      #   print(f"touching at {i}")
-      #   continue
-      
-      ## Game Logic
-      ## draw the squares, agend is BLUE, target is RED
-      pygame.draw.rect(screen, Color("blue"), agent)
-      pygame.draw.rect(screen, Color("red"), target)
-      
-      imageName = f"ss-{i}-close-{close}.png"
-      action: Action2 = auto_policy(agent, target)
-      coords[imageName] = {
-        "agent_x": agent.x,
-        "agent_y": agent.y,
-        "target_x": target.x,
-        "target_y": target.y,
-        "action": action,
-        "closeness": close
-      }
-      
-      pygame.display.update()
-      
-      pygame.image.save(screen, f"{ssFolder}/{imageName}")
+        for obs in obstacles:
+          pygame.draw.rect(screen, Color("black"), obs)
+        pygame.draw.rect(screen, Color("blue"), agent)
+        pygame.draw.rect(screen, Color("red"), target)
+        
+        ## addition for 'auto_policy_obs'
+        for seq, action in enumerate(auto_policy_obstacles(agent, target, obstacles)):
+          for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+              isRunning = False
+            
+          screen.blit(bg, (0, 0))
+          for obs in obstacles:
+            pygame.draw.rect(screen, Color("black"), obs)
+          pygame.draw.rect(screen, Color("red"), target)
+          
+          dx, dy = action
+          
+          pygame.draw.rect(screen, Color("blue"), agent)
+          
+          imageName = f"ss-{i}-close-{close}-seq-{seq}.png"
+          coords[imageName] = {
+            "agent_x": agent.x,
+            "agent_y": agent.y,
+            "target_x": target.x,
+            "target_y": target.y,
+            "action": action,
+            "closeness": close
+          }
+          
+          pygame.display.update()
+          
+          pygame.image.save(screen, f"{ssFolder}/{imageName}")
+          
+          move_obs_ip(agent, dx, dy, obstacles) ## move last, so the image before is saved with the action to get here
+          # clock.tick(60)
+  except:
+    print(f"Error at {i} for closeness {close}, saving the rest (I hope")
     
   df = pd.DataFrame.from_dict(coords, orient="index", columns=["agent_x", "agent_y", "target_x", "target_y", "action", "closeness"])
   print(df)
@@ -602,7 +631,7 @@ def _auto_obs_game() -> None:
         pygame.draw.rect(screen, Color("black"), obs)
       pygame.draw.rect(screen, Color("red"), target)
           
-      move_ip_obs(agent, dx, dy, obstacles)
+      move_obs_ip(agent, dx, dy, obstacles)
       
       pygame.draw.rect(screen, Color("blue"), agent)
       pygame.display.update()
@@ -648,13 +677,30 @@ MODEL_TYPES = {
   "move_classification": lambda s: load_model(s, modelType=AgentNetwork_Classification),
   "move_cnn": lambda s: load_model(s, modelType=CNN_Regression),
   "move_cnn_buttons": lambda s: load_model(s, modelType=CNN_Regression),
+  # "move_cnn_obs": lambda s: load_model(s, modelType=CNN_Regression),
   "move_arrowkeys": lambda s: None
 }
       
-MOVES= ["auto_policy", "auto_policy_obs", "move_regression", "move_classification", "move_arrowkeys", "move_cnn", "move_cnn_buttons"]
+MOVES= ["auto_policy",
+ "auto_policy_obs",
+ "move_regression",
+ "move_classification",
+ "move_arrowkeys",
+ "move_cnn",
+ "move_cnn_buttons",
+ ]
 def play_game(
-              moveAgent: Literal["auto_policy","auto_policy_obs", "move_regression", "move_classification", "move_arrowkeys", "move_cnn"],
-              loadModelFromFile: str = None, 
+              moveAgent: Literal[
+                "auto_policy",
+                "auto_policy_obs",
+                "move_regression",
+                "move_classification",
+                "move_arrowkeys",
+                "move_cnn",
+                "move_cnn_buttons",
+                ## same as moves, but 'Literal' does not accept vars
+                ],
+              loadModelFromFile: str = None,
             ) -> None:
   if moveAgent == "auto_policy_obs":
     return _auto_obs_game()
@@ -716,7 +762,7 @@ def play_game(
         image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
         dx, dy = move_cnn_buttons(agent, target, image, model)
     
-    move_ip_obs(agent, dx, dy, obstacles)
+    move_obs_ip(agent, dx, dy, obstacles)
     
     
     ## When collided restart the target, so the game continuosly runs
@@ -740,7 +786,8 @@ import torch
 if __name__ == "__main__":
   print(f"'canvas' [main]")
   # create_image_data(100, "./datasets/screenshots-big-100")
-  # create_random_loc_image_data(10_000, "./datasets/screenshots-rand-10k-withcols-closeness")
+  create_random_loc_image_data(1000, "./datasets/screenshots-obs-seq-1k-withcols-closeness")
+  create_random_loc_image_data(10000, "./datasets/screenshots-obs-seq-10k-withcols-closeness")
   # print(f"Up -> {pygame.K_UP}")
   # print(f"DOWN -> {pygame.K_DOWN}")
   # print(f"LEFT -> {pygame.K_LEFT}")
