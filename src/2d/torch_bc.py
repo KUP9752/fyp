@@ -168,6 +168,197 @@ class PositionPredictor(nn.Module):
     return model
 
 
+class SequentialDataset(Dataset):
+  def __init__(self, imagesDir: str,
+    nFrames: int,
+    labelsPath: str,
+    frac: float = 1.0,
+    transform = None,
+    closeness: dict[int, float] = False,
+    N: int = 1000,
+  ):
+    self.nFrames = nFrames
+    self.transform = transform
+    self.imagesDir = imagesDir
+    print(f"{labelsPath = }")
+    data = pd.read_pickle(labelsPath)
+    
+    ## if closeness is not None, balance the data according to closeness column values
+    if closeness:
+      ## index is the first number, [0] is the string being searched
+      data["imageNo"] = data.index.map(lambda s: int(re.search(r"ss-(\d+)-close-(\d+)-seq-(\d+).png", s)[1])) 
+      
+      ## if a closeness to weights is given
+      if closeness:
+        ## sample the indices as a fraction of the total given by the percentage, N = 1k by default
+        sampledIndices = {c : np.random.choice(np.arange(0, 1000), size=int(frac * N)) for c, frac in closeness.items()}
+        gs = [data[(data["closeness"] == c) & (data["imageNo"].isin(sampledIndices[c]))] for c, _ in closeness.items()]
+        self.imageLabels = pd.concat(gs)
+      else:
+        ## TODO this is wrong, beacuse we frac
+        ## automatically preserves the sequences as everything is kept.
+        self.imageLabels = self.imageLabels.sample(frac=frac)
+        
+    
+  def __len__(self):
+    return len(self.imageLabels)
+  
+  def __getitem__(self, idx):
+    imageName = self.imageLabels.iloc[idx].name
+    s = re.search(re.search(r"ss-(\d+)-close-(\d+)-seq-(\d+).png", imageName)) 
+    index = int(s[1])
+    closeness = int(s[2])
+    
+    ## get all the images with this index:
+    seq = self.imageLabels[self.imageLabels.index.str.contains(f"ss-{index}-close-{closeness}-seq-")]
+    ## assuming this gets the values sequentially, choose consequitve `nFrames` of them
+    
+    ## if sequence is shorter than chosen frames take it all and pad with 0 tensors.
+    if len(seq) < self.nFrames:
+      chosen = seq
+
+    else:
+      i = random.randint(0, len(seq) - self.nFrames)
+      chosen = chosen[i: i + self.nFrames]
+    
+    images = [Image.open(os.path.join(self.imagesDir, imageName)) for imageName in chosen.index]
+    ## NOTE: sequence to one, [images] -> Action2, or seq-seq: [images] -> [Action2] currently seq-one
+    label = chosen.loc[chosen.index[-1], "action"]
+    images = [self.transform(image) for image in images] if self.transform else images
+    
+    nMissing = self.nFrames - len(images)
+    if nMissing > 0:
+      ## leave the zeros_like at the front
+      images = [torch.zeros_like(images[0]) for _ in range(nMissing)] + images
+    
+    
+    return images, torch.tensor(label, dtype=torch.float32)
+
+
+class CNN_RegressionSequences(nn.Module):
+  def __init__(self, 
+               nFrames: int,
+               lossFunc = nn.MSELoss(),
+               lr: float = 0.001,
+               epochs: int = 100,
+               batchSize: int = 32):
+    super(CNN_Regression, self).__init__()
+    self.losses = None
+    self.lossFunc = lossFunc
+    self.batchSize = batchSize
+    self.lr = lr
+    self.epochs = epochs
+    self.transform = transforms.Compose([
+      transforms.ToTensor(),
+      transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
+    ])
+    
+    
+    self.cnn = nn.Sequential(
+      nn.Conv2d(3 * nFrames, 16, kernel_size=5, stride=2, padding=2), # 400 x 300
+      nn.ReLU(),
+      nn.Conv2d(16, 32, kernel_size=5, stride=2, padding=2), # 200 x 150
+      nn.ReLU(),
+      nn.Conv2d(32, 64, kernel_size=5, stride=2, padding=2), # 100 x 75
+      nn.ReLU(),
+    )
+    
+    flattenedSize = 64 * (800 // (2**3)) * (600 // (2**3)) #  Width and height divided by stride (2^3 = 8)
+    
+    self.fc = nn.Sequential(
+      nn.Flatten(),
+      nn.Linear(flattenedSize, 128),
+      # nn.Linear(32 * 200 * 150, 128),
+      nn.ReLU(),
+      nn.Linear(128, 2), #( dx, dy)
+    )
+    
+  def forward(self, x):
+    x = self.cnn(x)  # CNN feature extractor
+    x = self.fc(x)  # Fully connected layers
+    return x
+  
+  def transform_image(self, image):
+    if self.transform:
+      return self.transform(image)
+    raise ValueError("No transform set, means model hasn't been trained yet")
+  
+  def train_on_behaviour(self, 
+                      imagesDir: str, #directory of the images to train on
+                      imageLabelsPath: str, # DataFrame image-name -> State
+                      modelPath: str = None, 
+                      overwriteDevice: Literal['cpu', 'cuda'] | None = None,
+                      sizeFrac: float = 1.0,
+                      doPrints: bool = False) -> Self:
+    if overwriteDevice:
+      device = torch.device(overwriteDevice)
+    else:
+      device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    ## closeWeights: {closeness: weight}
+    closeWeights = {
+      0: 0.1,
+      1: 0.1,
+      2: 0.1,
+      3: 0.2,
+      4: 0.2, 
+      5: 0.5, 
+    }
+    
+    # python play.py train -m cnn-regr -d ./datasets/screenshots-obs-seq-1k-withcols-closeness  -f .\models\closeness-3conv-k5s2p2-obs\1-1-1weights -e 20
+    
+    trainingData = SequentialDataset(imagesDir,
+      imageLabelsPath,
+      frac = sizeFrac,
+      transform=self.transform,
+      closeness=closeWeights,
+      preserveMovementSequences=True
+    )
+    ## NOTE: not shuffling does not seem to work at all, will try again? shuffling needs a betgteer combination of fractions
+    loader = DataLoader(trainingData, batch_size=self.batchSize, shuffle=True)
+    
+    model = self.to(device)
+    optimiser = optim.Adam(model.parameters(), lr = self.lr, weight_decay=1e-4)
+    print(f"Using device: {device}")
+    printc(doPrints, f"Training on {len(trainingData)} points")
+    printc(True, f"Training on {len(trainingData)} points")
+    
+    model.train()
+    self.losses = [0 for _ in range(self.epochs)]
+    
+    for epoch in progress(range(self.epochs)):
+      runningLoss = 0
+      for images, labels in loader:
+        printc(doPrints, f"images shape: {images.shape}")
+        printc(doPrints, f"labels shape: {labels.shape}")
+        
+        images, labels = images.to(device), labels.to(device)
+        
+        optimiser.zero_grad()
+        predActions = model(images)
+        printc(doPrints, f"predActions shape: {predActions.shape}")
+        
+        loss = self.lossFunc(predActions, labels)
+        loss.backward()
+        optimiser.step()
+        runningLoss += loss.item()
+        
+      loss = runningLoss / len(loader)
+      self.losses[epoch] = loss
+      printc(True, f" [{epoch}/{self.epochs}] Loss: {loss}")
+      
+      
+      
+    printc(doPrints, f"Done training!")
+    
+    if modelPath:
+      printc(doPrints, f"Saving...")
+      torch.save(self.state_dict(), f"{modelPath}")
+      printc(doPrints, f"Saved!")
+    self.loss = runningLoss
+    
+    return model
+    
 class MovementDataset(Dataset):
   def __init__(self, imagesDir: str,
     labelsPath: str,
@@ -220,7 +411,6 @@ class MovementDataset(Dataset):
       image = self.transform(image)
       
     return image, torch.tensor(label, dtype=torch.float32)
-
 class CNN_Regression(nn.Module):
   def __init__(self, 
                lossFunc = nn.MSELoss(),
@@ -339,7 +529,7 @@ class CNN_Regression(nn.Module):
       closeness=closeWeights,
       preserveMovementSequences=True
     )
-    
+    ## NOTE: not shuffling does not seem to work at all, will try again? shuffling needs a betgteer combination of fractions
     loader = DataLoader(trainingData, batch_size=self.batchSize, shuffle=True)
     
     model = self.to(device)
