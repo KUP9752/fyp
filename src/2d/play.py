@@ -1,6 +1,6 @@
 from canvas import play_game, MOVES
 from argparse import ArgumentParser
-from torch_bc import AgentNetwork, AgentNetwork_Classification, AgentNetwork_Regression, PositionPredictor, CNN_Regression
+from torch_bc import AgentNetwork, AgentNetwork_Classification, AgentNetwork_Regression, PositionPredictor, CNN_Regression, CNN_RegressionSequences
 
 
 def move(args):
@@ -17,14 +17,17 @@ def move(args):
 modelToClass = {
   "coord-class": AgentNetwork_Classification,
   "coord-regr": AgentNetwork_Regression,
-  "cnn-regr": CNN_Regression
+  "cnn-regr": CNN_Regression,
+  "cnn-regr-seq-1": CNN_RegressionSequences,
+  "cnn-regr-seq-seq": None,
 }
 def train(args):
   dataPath = args.dataset
   modelPath = args.model_path
   frac = args.size_fraction
   overrideDevice = args.override_device
-  modelType: AgentNetwork | PositionPredictor | CNN_Regression = modelToClass[args.model_type]
+  modelType: AgentNetwork | PositionPredictor | CNN_Regression | CNN_RegressionSequences \
+    = modelToClass[args.model_type]
   doPrints = args.do_prints
   epochs = args.epochs
   # samples = random.sample(data, points)
@@ -52,10 +55,25 @@ def train(args):
         modelPath=modelPath,
         overwriteDevice=overrideDevice
         )
+    case "cnn-regr-seq-1": 
+      coords = f"{dataPath}/ss-info.pkl"
+      model = CNN_RegressionSequences(
+        nFrames= 10,
+        epochs=epochs,
+        ).train_on_behaviour(
+        doPrints=doPrints, 
+        sizeFrac=frac,
+        imagesDir= dataPath, 
+        imageLabelsPath=coords, 
+        modelPath=modelPath,
+        overwriteDevice=overrideDevice
+        )
+    case _:
+      raise ValueError(f"Model type {args.model_type} not supported")
 
 
 
-MODELS = [ "coord-class", "coord-regr", "pos-pred", "cnn-regr"]
+
 if __name__ == "__main__":
   # trainingData = learn_game(agentMovement = human_interaction, n = 10)
   parser = ArgumentParser()
@@ -70,7 +88,7 @@ if __name__ == "__main__":
                            help="Fraction of the dataset the model should be trained on")
   trainParser.add_argument("-m","--model-type", 
                            required=True, 
-                           choices = MODELS,
+                           choices = modelToClass.keys(),
                            help="path of the dataset to train on")  
   trainParser.add_argument("-d","--dataset", 
                            type=str, 

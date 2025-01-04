@@ -169,7 +169,8 @@ class PositionPredictor(nn.Module):
 
 
 class SequentialDataset(Dataset):
-  def __init__(self, imagesDir: str,
+  def __init__(self, 
+    imagesDir: str,
     nFrames: int,
     labelsPath: str,
     frac: float = 1.0,
@@ -189,23 +190,22 @@ class SequentialDataset(Dataset):
       data["imageNo"] = data.index.map(lambda s: int(re.search(r"ss-(\d+)-close-(\d+)-seq-(\d+).png", s)[1])) 
       
       ## if a closeness to weights is given
-      if closeness:
-        ## sample the indices as a fraction of the total given by the percentage, N = 1k by default
-        sampledIndices = {c : np.random.choice(np.arange(0, 1000), size=int(frac * N)) for c, frac in closeness.items()}
-        gs = [data[(data["closeness"] == c) & (data["imageNo"].isin(sampledIndices[c]))] for c, _ in closeness.items()]
-        self.imageLabels = pd.concat(gs)
-      else:
-        ## TODO this is wrong, beacuse we frac
-        ## automatically preserves the sequences as everything is kept.
-        self.imageLabels = self.imageLabels.sample(frac=frac)
+      ## sample the indices as a fraction of the total given by the percentage, N = 1k by default
+      sampledIndices = {c : np.random.choice(np.arange(0, 1000), size=int(frac * N)) for c, frac in closeness.items()}
+      gs = [data[(data["closeness"] == c) & (data["imageNo"].isin(sampledIndices[c]))] for c, _ in closeness.items()]
+      self.imageLabels = pd.concat(gs)
+    else:
+      ## TODO this is wrong, beacuse we frac
+      ## automatically preserves the sequences as everything is kept.
+      self.imageLabels = self.imageLabels.sample(frac=frac)
         
     
   def __len__(self):
     return len(self.imageLabels)
   
   def __getitem__(self, idx):
-    imageName = self.imageLabels.iloc[idx].name
-    s = re.search(re.search(r"ss-(\d+)-close-(\d+)-seq-(\d+).png", imageName)) 
+    idxName = self.imageLabels.iloc[idx].name
+    s = re.search(r"ss-(\d+)-close-(\d+)-seq-(\d+).png", idxName)
     index = int(s[1])
     closeness = int(s[2])
     
@@ -219,7 +219,7 @@ class SequentialDataset(Dataset):
 
     else:
       i = random.randint(0, len(seq) - self.nFrames)
-      chosen = chosen[i: i + self.nFrames]
+      chosen = seq[i: i + self.nFrames]
     
     images = [Image.open(os.path.join(self.imagesDir, imageName)) for imageName in chosen.index]
     ## NOTE: sequence to one, [images] -> Action2, or seq-seq: [images] -> [Action2] currently seq-one
@@ -232,7 +232,7 @@ class SequentialDataset(Dataset):
       images = [torch.zeros_like(images[0]) for _ in range(nMissing)] + images
     
     
-    return images, torch.tensor(label, dtype=torch.float32)
+    return torch.cat(images), torch.tensor(label, dtype=torch.float32)
 
 
 class CNN_RegressionSequences(nn.Module):
@@ -242,7 +242,7 @@ class CNN_RegressionSequences(nn.Module):
                lr: float = 0.001,
                epochs: int = 100,
                batchSize: int = 32):
-    super(CNN_Regression, self).__init__()
+    super(CNN_RegressionSequences, self).__init__()
     self.losses = None
     self.lossFunc = lossFunc
     self.batchSize = batchSize
@@ -253,7 +253,7 @@ class CNN_RegressionSequences(nn.Module):
       transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
     ])
     
-    
+    self.nFrames = nFrames
     self.cnn = nn.Sequential(
       nn.Conv2d(3 * nFrames, 16, kernel_size=5, stride=2, padding=2), # 400 x 300
       nn.ReLU(),
@@ -297,22 +297,24 @@ class CNN_RegressionSequences(nn.Module):
     
     ## closeWeights: {closeness: weight}
     closeWeights = {
-      0: 0.1,
-      1: 0.1,
-      2: 0.1,
-      3: 0.2,
-      4: 0.2, 
-      5: 0.5, 
+      0: 0.0,
+      1: 0.0,
+      2: 0.0,
+      3: 0.3,
+      4: 0.3, 
+      5: 0.6, 
     }
     
     # python play.py train -m cnn-regr -d ./datasets/screenshots-obs-seq-1k-withcols-closeness  -f .\models\closeness-3conv-k5s2p2-obs\1-1-1weights -e 20
     
-    trainingData = SequentialDataset(imagesDir,
+    trainingData = SequentialDataset(
+      imagesDir,
+      self.nFrames,
       imageLabelsPath,
       frac = sizeFrac,
+      N = 1000,
       transform=self.transform,
       closeness=closeWeights,
-      preserveMovementSequences=True
     )
     ## NOTE: not shuffling does not seem to work at all, will try again? shuffling needs a betgteer combination of fractions
     loader = DataLoader(trainingData, batch_size=self.batchSize, shuffle=True)
@@ -512,9 +514,9 @@ class CNN_Regression(nn.Module):
     
     ## closeWeights: {closeness: weight}
     closeWeights = {
-      0: 0.1,
-      1: 0.1,
-      2: 0.1,
+      0: 0.0,
+      1: 0.0,
+      2: 0.0,
       3: 0.2,
       4: 0.2, 
       5: 0.5, 
