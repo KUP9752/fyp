@@ -282,7 +282,7 @@ def learn_game(filepath: str = None,
       
   return data
   
-from torch_bc import AgentNetwork, AgentNetwork_Classification, AgentNetwork_Regression, CNN_Regression, PositionPredictor
+from torch_bc import AgentNetwork, AgentNetwork_Classification, AgentNetwork_Regression, CNN_Regression, CNN_RegressionSequences, PositionPredictor
 from torch import nn
 
 
@@ -569,7 +569,24 @@ def move_cnn_buttons(agent: pygame.Rect, target: pygame.Rect, image: Image, mode
   
   return _move_buttons(action)  
   
-  
+def move_cnn_seq(agent: pygame.Rect, target: pygame.Rect, images: list[Image], model: CNN_RegressionSequences):
+   ## should be at least one frame to infer from
+  if len(images) < 1: 
+    raise ValueError("No Frame information")
+  model.eval()
+  with torch.no_grad():
+    xs = [model.transform(image) for image in images]
+    ## fill in missing, same as the dataset `__getitem__`
+    images = [torch.zeros_like(xs[0]) for _ in range(model.nFrames - len(xs))] + xs
+    xs = torch.cat(images) 
+    xs = xs.unsqueeze(0)
+    pred = model(xs)[0]
+  print(f"agent: ({agent.x}, {agent.y}) target: ({target.x}, {target.y})")
+  dx, dy = pred[0], pred[1]
+  print(f"pred: dx: {dx} | dy: {dy}")
+  # map into key pairs
+  dx, dy = int(pred[0] * 10), int(pred[1] * 10)
+  return dx, dy
   
 # Works slightly different than play game, so delegate here when playing the game with "auto_policy_obs"
 def _auto_obs_game() -> None:
@@ -641,7 +658,8 @@ def _auto_obs_game() -> None:
 T = TypeVar("T")
 def load_model(loadModelFromFile: str, 
                modelType: Type[T] = None,
-               device: Literal["cpu", "cuda"] = None
+               device: Literal["cpu", "cuda"] = None,
+               **modelArgs,
                ) -> None:
   
   if modelType is None:
@@ -653,7 +671,7 @@ def load_model(loadModelFromFile: str,
     device = "cuda" if torch.cuda.is_available() else "cpu"
     
   with open(loadModelFromFile, "rb") as f:
-    model = modelType() ## initialise model class before loading weights
+    model = modelType(**modelArgs) ## initialise model class before loading weights
     model.load_state_dict(torch.load(f, map_location=torch.device(device)))
     return model
 
@@ -665,16 +683,19 @@ MODEL_TYPES = {
   "move_cnn": lambda s: load_model(s, modelType=CNN_Regression),
   "move_cnn_buttons": lambda s: load_model(s, modelType=CNN_Regression),
   # "move_cnn_obs": lambda s: load_model(s, modelType=CNN_Regression),
-  "move_arrowkeys": lambda s: None
+  "move_arrowkeys": lambda s: None,
+  "move_cnn_seq": lambda s: load_model(s, modelType=CNN_RegressionSequences, nFrames=10)
 }
       
-MOVES= ["auto_policy",
- "auto_policy_obs",
- "move_regression",
- "move_classification",
- "move_arrowkeys",
- "move_cnn",
- "move_cnn_buttons",
+MOVES= [
+  "auto_policy",
+  "auto_policy_obs",
+  "move_regression",
+  "move_classification",
+  "move_arrowkeys",
+  "move_cnn",
+  "move_cnn_buttons",
+  "move_cnn_seq"
  ]
 def play_game(
               moveAgent: Literal[
@@ -711,7 +732,7 @@ def play_game(
   isRunning = True
   
   model = MODEL_TYPES[moveAgent](loadModelFromFile)
-
+  lastFrames = []
   while isRunning:
     ## White Background and Display
     screen.blit(bg, (0, 0))
@@ -748,10 +769,16 @@ def play_game(
       case "move_cnn_buttons":
         image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
         dx, dy = move_cnn_buttons(agent, target, image, model)
+      case "move_cnn_seq":
+        image = Image.frombytes(mode="RGB", size=(WIDTH, HEIGHT), data=pygame.image.tobytes(screen, "RGB"))
+        lastFrames.append(image)
+        model: CNN_RegressionSequences = model ## at this point we know the type and can cast
+        lastFrames = lastFrames[-model.nFrames:] ## take only the last nFrames many, rest can be discarded free the space
+        dx, dy = move_cnn_seq(agent, target, lastFrames, model)
     
     move_obs_ip(agent, dx, dy, obstacles)
     
-    
+    print(f"{len(lastFrames) = }")
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
       target.x = random.randint(0, X_BOUND)
