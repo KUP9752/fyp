@@ -413,12 +413,14 @@ class MovementDataset(Dataset):
       image = self.transform(image)
       
     return image, torch.tensor(label, dtype=torch.float32)
+  
 class CNN_Regression(nn.Module):
   def __init__(self, 
                lossFunc = nn.MSELoss(),
                lr: float = 0.001,
                epochs: int = 100,
-               batchSize: int = 32):
+               batchSize: int = 32,
+               smallSize: bool = False):
     super(CNN_Regression, self).__init__()
     self.losses = None
     self.lossFunc = lossFunc
@@ -430,7 +432,6 @@ class CNN_Regression(nn.Module):
       transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
     ])
     
-    
     self.cnn = nn.Sequential(
       nn.Conv2d(3, 16, kernel_size=5, stride=2, padding=2), # 400 x 300
       nn.ReLU(),
@@ -440,10 +441,23 @@ class CNN_Regression(nn.Module):
       nn.ReLU(),
     )
     
+    ## For 20x20 boxes
+    if smallSize:
+      print("SMAALL SIZE")
+      self.cnn.append(
+        nn.Conv2d(64, 128, kernel_size=5, stride=2, padding=2), # 50 x 37
+    
+      )
+      self.cnn.append(
+        nn.ReLU()
+      )
+    
+    flattenedSize = 243200 if smallSize else (64 * 100 * 75)
+    
     self.fc = nn.Sequential(
       nn.Flatten(),
-      nn.Linear(64 * 100 * 75, 128),
-      # nn.Linear(32 * 200 * 150, 128),
+      nn.Linear(flattenedSize, 128),
+      # nn.Linear(64 * 100 * 75, 128),
       nn.ReLU(),
       nn.Linear(128, 2), #( dx, dy)
     )

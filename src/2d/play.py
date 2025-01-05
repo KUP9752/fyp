@@ -1,17 +1,24 @@
 from canvas import play_game, MOVES
 from argparse import ArgumentParser
 from torch_bc import AgentNetwork, AgentNetwork_Classification, AgentNetwork_Regression, PositionPredictor, CNN_Regression, CNN_RegressionSequences
-
+from canvas import LARGE_BLOCK_SIZE
 
 def move(args):
   ## extract args
   moveFunc = args.movement
   modelPath = args.model_path
+  usingObs = args.using_obs # if args.using_obs else False
+  blockSize = 20 if args.small_block else 50
+  print(f"{args.small_block = }")
+  print(f"{blockSize =}")
+  
   
   print(f"{moveFunc = }")
   print(f"{modelPath = }")
   play_game(moveAgent=moveFunc, 
-            loadModelFromFile=modelPath)
+            loadModelFromFile=modelPath,
+            isUsingObs = usingObs, 
+            blockSize = blockSize)
 
 
 modelToClass = {
@@ -121,6 +128,13 @@ if __name__ == "__main__":
                            required=True, 
                            type=str, 
                            help="File path of the model to load")
+  evalParser.add_argument("-o", "--using-obs",
+                          action="store_true",
+                          help="Whether the movement should generate obstacles in the movement"
+                          )
+  evalParser.add_argument("-sb", "--small-block", 
+                          action="store_true",
+                          help="Block size for the agent and the target blocks")
   evalParser.set_defaults(func=move) ## call move()
   
   

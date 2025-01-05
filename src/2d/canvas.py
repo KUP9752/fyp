@@ -15,14 +15,12 @@ from my_types import State, Action4, Movement, Action2
 SPEED = 2.0
 FPS = 60
 MOV_SPEED = 5
-BLOCK_SIZE = 50 # per side
+LARGE_BLOCK_SIZE = 50 # per side
 
 OBS_MAX_SIZE = 500 # per side
 OBS_MIN_SIZE = 50 # per side
 
 WIDTH, HEIGHT = 800, 600
-X_BOUND = WIDTH - BLOCK_SIZE
-Y_BOUND = HEIGHT - BLOCK_SIZE
 
 MOVEMENT: dict = {
     pygame.K_UP: (0, -MOV_SPEED),
@@ -156,8 +154,8 @@ def auto_policy_obstacles(agent: pygame.Rect, target: pygame.Rect, obstacles: li
 
 
 
-def generate_obstacles(agent: pygame.Rect, target: pygame.Rect) -> list[pygame.Rect]:
-  gridSize = BLOCK_SIZE * 2 ## NOTE: could be changed to change the finness of the grid and the obstacles
+def generate_obstacles(agent: pygame.Rect, target: pygame.Rect, blockSize: int = LARGE_BLOCK_SIZE) -> list[pygame.Rect]:
+  gridSize = blockSize * 2 ## NOTE: could be changed to change the finness of the grid and the obstacles
   cols, rows = WIDTH // gridSize, HEIGHT // gridSize
   
   pathGrid = [[0 for _ in range(cols)] for _ in range(rows)] 
@@ -209,7 +207,8 @@ def generate_obstacles(agent: pygame.Rect, target: pygame.Rect) -> list[pygame.R
 ## File to save the demonstration data to train on
 def learn_game(filepath: str = None,
                moveAgent: Callable[[pygame.Rect, pygame.Rect], Action2] = auto_policy,
-               n = 10) -> list[tuple[State, Action4]]:
+               n = 10,
+               blockSize: int = LARGE_BLOCK_SIZE) -> list[tuple[State, Action4]]:
 
   pygame.init()
   clock = pygame.time.Clock()
@@ -218,8 +217,12 @@ def learn_game(filepath: str = None,
   screen = pygame.display.set_mode((WIDTH, HEIGHT))
   pygame.display.set_caption("2D Canvas")
 
-  agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
-  target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+  xBound = WIDTH - blockSize
+  yBound = HEIGHT - blockSize
+  
+
+  agent = pygame.Rect(random.randint(0, xBound), random.randint(0, yBound), blockSize, blockSize)
+  target = pygame.Rect(random.randint(0, xBound), random.randint(0, yBound), blockSize, blockSize)
 
 
   isRunning = True
@@ -253,10 +256,10 @@ def learn_game(filepath: str = None,
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
       targetCount += 1
-      target.x = random.randint(0, X_BOUND)
-      target.y = random.randint(0, Y_BOUND)
-      # agent.x = random.randint(0, X_BOUND)
-      # agent.y = random.randint(0, Y_BOUND)
+      target.x = random.randint(0, xBound)
+      target.y = random.randint(0, yBound)
+      # agent.x = random.randint(0, xBound)
+      # agent.y = random.randint(0, yBound)
     
       
     ## save the data from this frame  
@@ -350,9 +353,12 @@ def move_regression(agent: pygame.Rect, target: pygame.Rect, model: AgentNetwork
     dx, dy = int(pred[0]), int(pred[1])
   return dy, dx
     
-def create_random_loc_image_data(n: int, ssFolder: str) -> None:
+def create_random_loc_image_data(n: int, ssFolder: str, blockSize: int = LARGE_BLOCK_SIZE) -> None:
   pygame.init()
 
+
+  xBound = WIDTH - blockSize
+  yBound = HEIGHT - blockSize
   ## Setup Screen
   screen = pygame.display.set_mode((WIDTH, HEIGHT))
   bg = pygame.Surface((WIDTH, HEIGHT))
@@ -367,40 +373,41 @@ def create_random_loc_image_data(n: int, ssFolder: str) -> None:
   
   
   def get_agent_with_phase_bounds(phase: int, target: pygame.Rect) -> pygame.Rect:
+    
     match close:
       ## 1. within 1 rect of target
       case 0:
-        x_low, x_high = target.x - BLOCK_SIZE, target.x + 2 * BLOCK_SIZE ## 2 because count from top left
-        y_low, y_high = target.y - BLOCK_SIZE, target.y + 2 * BLOCK_SIZE 
+        x_low, x_high = target.x - blockSize, target.x + 2 * blockSize ## 2 because count from top left
+        y_low, y_high = target.y - blockSize, target.y + 2 * blockSize 
       ## 2. Close, within 3 rects of target
       case 1:
-        x_low, x_high = target.x - 3 * BLOCK_SIZE, target.x + 4 * BLOCK_SIZE ## 4 because count from top left
-        y_low, y_high = target.y - 3 * BLOCK_SIZE, target.y + 4 * BLOCK_SIZE
+        x_low, x_high = target.x - 3 * blockSize, target.x + 4 * blockSize ## 4 because count from top left
+        y_low, y_high = target.y - 3 * blockSize, target.y + 4 * blockSize
       case 2:
-        x_low, x_high = target.x - 5 * BLOCK_SIZE, target.x + 6 * BLOCK_SIZE ## 6 because count from top left
-        y_low, y_high = target.y - 5 * BLOCK_SIZE, target.y + 6 * BLOCK_SIZE
+        x_low, x_high = target.x - 5 * blockSize, target.x + 6 * blockSize ## 6 because count from top left
+        y_low, y_high = target.y - 5 * blockSize, target.y + 6 * blockSize
       case 3:
-        x_low, x_high = target.x - 7 * BLOCK_SIZE, target.x + 8 * BLOCK_SIZE ## 8 because count from top left
-        y_low, y_high = target.y - 7 * BLOCK_SIZE, target.y + 8 * BLOCK_SIZE
+        x_low, x_high = target.x - 7 * blockSize, target.x + 8 * blockSize ## 8 because count from top left
+        y_low, y_high = target.y - 7 * blockSize, target.y + 8 * blockSize
       case 4:
-        x_low, x_high = target.x - 9 * BLOCK_SIZE, target.x + 10 * BLOCK_SIZE ## 10 because count from top left
-        y_low, y_high = target.y - 9 * BLOCK_SIZE, target.y + 10 * BLOCK_SIZE
+        x_low, x_high = target.x - 9 * blockSize, target.x + 10 * blockSize ## 10 because count from top left
+        y_low, y_high = target.y - 9 * blockSize, target.y + 10 * blockSize
       ## 3. entire canvas  
       case 5:  
-        x_low, x_high, y_low, y_high = 0, X_BOUND, 0, Y_BOUND
+        x_low, x_high, y_low, y_high = 0, xBound, 0, yBound
         
     ## But also respect the bounds of the canvas
     x_low = max(x_low, 0)
-    x_high = min(x_high, X_BOUND)
+    x_high = min(x_high, xBound)
     y_low = max(y_low, 0)
-    y_high = min(y_high, Y_BOUND)
-    return pygame.Rect(random.randint(x_low, x_high), random.randint(y_low, y_high), BLOCK_SIZE, BLOCK_SIZE)
+    y_high = min(y_high, yBound)
+    return pygame.Rect(random.randint(x_low, x_high), random.randint(y_low, y_high), blockSize, blockSize)
   try:     
     for close in range(0, 6):
       for i in range(n): ## make n points for each closeness phase
         ## White Background
         screen.blit(bg, (0, 0))
-        target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+        target = pygame.Rect(random.randint(0, xBound), random.randint(0, yBound), blockSize, blockSize)
         agent = get_agent_with_phase_bounds(close, target)
         obstacles = generate_obstacles(agent, target)
         
@@ -449,7 +456,10 @@ def create_random_loc_image_data(n: int, ssFolder: str) -> None:
   pygame.quit()
   
   
-def create_image_data(n: int, ssFolder: str) -> None:
+def create_image_data(n: int, ssFolder: str, blockSize: int = LARGE_BLOCK_SIZE) -> None:
+  xBound = WIDTH - blockSize
+  yBound = HEIGHT - blockSize
+  
   pygame.init()
 
   ## Setup Screen
@@ -460,8 +470,8 @@ def create_image_data(n: int, ssFolder: str) -> None:
   clock = pygame.time.Clock()
   isRunning = True
   
-  agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
-  target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+  agent = pygame.Rect(random.randint(0, xBound), random.randint(0, yBound), blockSize, blockSize)
+  target = pygame.Rect(random.randint(0, xBound), random.randint(0, yBound), blockSize, blockSize)
   
   targetCount = 0
   frameCount = 0
@@ -495,10 +505,10 @@ def create_image_data(n: int, ssFolder: str) -> None:
     if agent.colliderect(target):
       targetCount += 1
       frameCount += 1
-      target.x = random.randint(0, X_BOUND)
-      target.y = random.randint(0, Y_BOUND)
-      # agent.x = random.randint(0, X_BOUND)
-      # agent.y = random.randint(0, Y_BOUND)
+      target.x = random.randint(0, xBound)
+      target.y = random.randint(0, yBound)
+      # agent.x = random.randint(0, xBound)
+      # agent.y = random.randint(0, yBound)
     
     if targetCount >= n:
       isRunning = False
@@ -589,7 +599,11 @@ def move_cnn_seq(agent: pygame.Rect, target: pygame.Rect, images: list[Image], m
   return dx, dy
   
 # Works slightly different than play game, so delegate here when playing the game with "auto_policy_obs"
-def _auto_obs_game() -> None:
+def _auto_obs_game(blockSize: int = LARGE_BLOCK_SIZE) -> None:
+  
+  xBound = WIDTH - blockSize
+  yBound = HEIGHT - blockSize
+  
   pygame.init()
   clock = pygame.time.Clock()
   
@@ -599,8 +613,8 @@ def _auto_obs_game() -> None:
   bg = pygame.Surface((WIDTH, HEIGHT))
   bg.fill(Color("white"))
   
-  agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
-  target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
+  agent = pygame.Rect(random.randint(0, xBound), random.randint(0, yBound), blockSize, blockSize)
+  target = pygame.Rect(random.randint(0, xBound), random.randint(0, yBound), blockSize, blockSize)
   obstacles = generate_obstacles(agent, target)
   # obs = obstacles[0]
   # obs.unionall_ip(obstacles[1:])
@@ -609,8 +623,8 @@ def _auto_obs_game() -> None:
   
   while isRunning:
     # for obs in obstacles:
-    #   pygame.draw.rect(screen, Color("black"), obs)
-    # pygame.draw.rect(screen, Color("blue"), agent)
+    #   pygame.draw.rect(screen, Color("black"), obs), 
+    # pygame.draw.rect(screen, Color("blue"), agent), 
     # pygame.draw.rect(screen, Color("red"), target)
     # pygame.display.update()
     
@@ -643,8 +657,8 @@ def _auto_obs_game() -> None:
       clock.tick(60)
       
     if agent.colliderect(target):
-      target.x = random.randint(0, X_BOUND)
-      target.y = random.randint(0, Y_BOUND)
+      target.x = random.randint(0, xBound)
+      target.y = random.randint(0, yBound)
       obstacles = generate_obstacles(agent, target)
     else:
       raise ValueError("Agent should always collide with target, given the path!")
@@ -676,15 +690,15 @@ def load_model(loadModelFromFile: str,
     return model
 
 MODEL_TYPES = {
-  "auto_policy": lambda s: None,
-  "auto_policy_obs": lambda s: None,
-  "move_regression": lambda s: load_model(s, modelType=AgentNetwork_Regression),
-  "move_classification": lambda s: load_model(s, modelType=AgentNetwork_Classification),
-  "move_cnn": lambda s: load_model(s, modelType=CNN_Regression),
-  "move_cnn_buttons": lambda s: load_model(s, modelType=CNN_Regression),
-  # "move_cnn_obs": lambda s: load_model(s, modelType=CNN_Regression),
-  "move_arrowkeys": lambda s: None,
-  "move_cnn_seq": lambda s: load_model(s, modelType=CNN_RegressionSequences, nFrames=10)
+  "auto_policy": lambda s, blockSize: None,
+  "auto_policy_obs": lambda s, blockSize: None,
+  "move_regression": lambda s, blockSize: load_model(s, modelType=AgentNetwork_Regression),
+  "move_classification": lambda s, blockSize: load_model(s, modelType=AgentNetwork_Classification),
+  "move_cnn": lambda s, blockSize: load_model(s, modelType=CNN_Regression, smallSize = blockSize != LARGE_BLOCK_SIZE),
+  "move_cnn_buttons": lambda s, blockSize: load_model(s, modelType=CNN_Regression, smallSize = blockSize != LARGE_BLOCK_SIZE),
+  # "move_cnn_obs": lambda s, blockSize: load_model(s, modelType=CNN_Regression),
+  "move_arrowkeys": lambda s, blockSize: None,
+  "move_cnn_seq": lambda s, blockSize: load_model(s, modelType=CNN_RegressionSequences, nFrames=10)
 }
       
 MOVES= [
@@ -706,15 +720,21 @@ def play_game(
                 "move_arrowkeys",
                 "move_cnn",
                 "move_cnn_buttons",
+                "move_cnn_seq"
                 ## same as moves, but 'Literal' does not accept vars
                 ],
               loadModelFromFile: str = None,
+              blockSize: int = LARGE_BLOCK_SIZE,
+              isUsingObs: bool = False,
             ) -> None:
   if moveAgent == "auto_policy_obs":
     return _auto_obs_game()
   if not loadModelFromFile:
     raise ValueError("Must provide 'loadModelFromFile'")
   
+  
+  xBound = WIDTH - blockSize
+  yBound = HEIGHT - blockSize
   
   pygame.init()
   clock = pygame.time.Clock()
@@ -725,13 +745,14 @@ def play_game(
   bg.fill(Color("white"))
   pygame.display.set_caption("2D Canvas")
   
-  agent = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
-  target = pygame.Rect(random.randint(0, X_BOUND), random.randint(0, Y_BOUND), BLOCK_SIZE, BLOCK_SIZE)
-  obstacles = generate_obstacles(agent, target)
+  agent = pygame.Rect(random.randint(0, xBound), random.randint(0, yBound), blockSize, blockSize)
+  target = pygame.Rect(random.randint(0, xBound), random.randint(0, yBound), blockSize, blockSize)
+  obstacles = generate_obstacles(agent, target) if isUsingObs else []
   
   isRunning = True
+  print(f"Block size in 'play_game' =  {blockSize}")
   
-  model = MODEL_TYPES[moveAgent](loadModelFromFile)
+  model = MODEL_TYPES[moveAgent](loadModelFromFile, blockSize)
   lastFrames = []
   while isRunning:
     ## White Background and Display
@@ -781,9 +802,9 @@ def play_game(
     print(f"{len(lastFrames) = }")
     ## When collided restart the target, so the game continuosly runs
     if agent.colliderect(target):
-      target.x = random.randint(0, X_BOUND)
-      target.y = random.randint(0, Y_BOUND)
-      obstacles = generate_obstacles(agent, target)
+      target.x = random.randint(0, xBound)
+      target.y = random.randint(0, yBound)
+      obstacles = generate_obstacles(agent, target) if isUsingObs else []
     
     pygame.display.update()
     clock.tick(FPS)
