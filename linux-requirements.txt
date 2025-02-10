@@ -28,7 +28,6 @@ pycparser==2.22
 pygame==2.6.1
 pyquaternion==0.9.9
 PyRep @ git+https://github.com/stepjam/PyRep.git@8f420be8064b1970aae18a9cfbc978dfb15747ef
-rlbench @ git+https://github.com/stepjam/RLBench.git@b80e51feb3694d9959cb8c0408cd385001b01382
 scipy==1.15.0
 setuptools==75.8.0
 sympy==1.13.1
