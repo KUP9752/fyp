@@ -1,0 +1,4 @@
+[submodule "src/3d/manipulator-learning"]
+	path = src/3d/manipulator-learning
+	url = https://github.com/utiasSTARS/manipulator-learning.git
+	branch = master
