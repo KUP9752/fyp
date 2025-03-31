@@ -21,6 +21,10 @@ import torch.optim as optim
 
 from tqdm import tqdm as progress
 
+SEED = 42
+torch.manual_seed(SEED)
+np.random.seed(SEED)
+
 class PolicyWrist(nn.Module):
   def __init__(self, action_shape):
     super(PolicyWrist, self).__init__()
@@ -79,14 +83,17 @@ class PolicyWrist(nn.Module):
       running_loss = 0
       ## picks one, currently only considering one demo
       obs_batch = np.random.choice(demos, replace = False) 
-      print(f"{len(obs_batch) = }")
-      
-      print(f"{obs_batch = } | {type(obs_batch) = }")
       
       inputs, labels = zip(
-        *[(obs.wrist_rgb, obs.joint_velocities) for obs in obs_batch]
+        *[(obs.wrist_rgb, np.append(obs.joint_velocities, obs.gripper_open)) for obs in obs_batch]
       )
-      print(f"{inputs[46] = }")
+      
+      inputs = torch.tensor(inputs, dtype = torch.float32)
+      inputs = torch.permute(inputs, (0, 3, 1, 2)) ## batch, 64, 64, 3  -> batch, 3, 64, 64
+      
+      labels = torch.tensor(labels, dtype = torch.float32)
+      
+      
     #   print(f"{inputs = } | {type(inputs) = } | {len(inputs) = }")
     #   print(f"{labels = }")
       
@@ -112,19 +119,34 @@ class Agent(object):
 
     def ingest(self, demos: list[Demo]):
       self.policy.train_policy(demos)
-
+      
     def act(self, obs:  Observation):
       # arm = np.random.normal(0.0, 0.1, size=(self.action_shape[0] - 1,))
       # gripper = [1.0]  # Always open
       # return np.concatenate([arm, gripper], axis=-1)
       self.policy.eval()
+      torch_obs = torch.tensor(obs.wrist_rgb, dtype=torch.float32)
+      print(f"{torch_obs.shape = }")
+      torch_obs = torch_obs.permute(2, 0, 1)
+      print(f"{torch_obs.shape = }")
+      torch_obs = torch_obs.unsqueeze(0)
+      print(f"{torch_obs.shape = }")
       with torch.no_grad():
-        pred = self.policy(obs.wrist_rgb)
+        pred = self.policy(torch_obs)
+      return pred
         
-
+    def save_model(self, model_name: str):
+      torch.save(self.policy.state_dict(), f'{model_name}.pth')
+      print(f"Saved Model under '{model_name}.pth'")
+      
+      
+    def load_model(self, model_name: str):
+      self.policy.load_state_dict(torch.load(f'{model_name}.pth'))  
 
 #%%
+# Create Environment and Set Model Name
 # To use 'saved' demos, set the path below, and set live_demos=False
+model_name = "reach-1-demo"
 live_demos = True
 DATASET = '' if live_demos else 'PATH/TO/YOUR/DATASET'
 
@@ -132,7 +154,7 @@ obs_config = ObservationConfig()
 obs_config.set_all(True)
 cam_config = CameraConfig(rgb=True, depth=False, mask=False,
                               render_mode=RenderMode.OPENGL,
-                              image_size=(64, 64))
+                    image_size=(64, 64))
 nocam_config = CameraConfig(rgb=False, depth=False, mask=False,
                           render_mode=RenderMode.OPENGL)
 obs_config.right_shoulder_camera = nocam_config
@@ -146,19 +168,24 @@ obs_config.wrist_camera = cam_config
 
 action_mode = MoveArmThenGripper(
     arm_action_mode=JointVelocity(), gripper_action_mode=Discrete())
+
 env = Environment(
     action_mode, DATASET, obs_config, False)
 env.launch()
 
-task = env.get_task(ReachTargetNoObs)
-demos: list[Demo] = task.get_demos(2, live_demos=live_demos)
-print(f"{demos = } | {type(demos) = }")
+#%%
+## Attach Task and create Agent
+task_env = env.get_task(ReachTargetNoObs)
+agent = Agent(env.action_shape[0])
 
+# %%
+## Request Demos
+demos: list[Demo] = task_env.get_demos(2, live_demos=live_demos)
+print(f"{demos = } | {type(demos) = } | {len(demos) = }")
 
 demos = np.array(demos, dtype=object).flatten()
-
-agent = Agent(env.action_shape[0])
 agent.ingest(demos) ## trains here
+agent.save_model(model_name)
 
 training_steps = 120
 episode_length = 40
@@ -174,7 +201,27 @@ obs = None
 #     print(action)
 #     obs, reward, terminate = task.step(action)
 
-print('Done')
-env.shutdown()
+
 
 # %%
+## Load Agent
+agent.load_model(model_name)
+
+#%%
+## Task Execution
+_, obs = task_env.reset()
+done = False
+while not done:
+  obs: Observation
+  action = agent.act(obs).squeeze(0)
+  print(f"{action.shape = }")
+  obs, reward, done = task_env.step(action)
+  print(f"{reward = } | {done = }")
+    
+
+
+
+
+# %%
+print('Done')
+env.shutdown()
