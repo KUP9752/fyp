@@ -77,7 +77,7 @@ class PositionDataset(Dataset):
     imagePath = os.path.join(self.imagesDir, imageName)
     image = Image.open(imagePath)
     toExtract = ["agent_x", "agent_y", "target_x", "target_y"]
-    label = label = self.imageLabels.loc[self.imageLabels.index[idx], toExtract].values.astype(np.float32)
+    label = self.imageLabels.loc[self.imageLabels.index[idx], toExtract].values.astype(np.float32)
     
     if self.transform:
       image = self.transform(image)
