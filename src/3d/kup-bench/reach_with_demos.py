@@ -77,14 +77,18 @@ class PolicyWrist(nn.Module):
     self.losses = [0 for _ in range(epochs)]
     for epoch in progress(range(epochs)):
       running_loss = 0
-      obs_batch = np.random.choice(demos, replace = False)
+      ## picks one, currently only considering one demo
+      obs_batch = np.random.choice(demos, replace = False) 
+      print(f"{len(obs_batch) = }")
+      
+      print(f"{obs_batch = } | {type(obs_batch) = }")
       
       inputs, labels = zip(
         *[(obs.wrist_rgb, obs.joint_velocities) for obs in obs_batch]
       )
-      
-      print(f"{inputs = }")
-      print(f"{labels = }")
+      print(f"{inputs[46] = }")
+    #   print(f"{inputs = } | {type(inputs) = } | {len(inputs) = }")
+    #   print(f"{labels = }")
       
       inputs, labels = inputs.to(device), labels.to(device)
       optimiser.zero_grad()
@@ -125,14 +129,12 @@ live_demos = True
 DATASET = '' if live_demos else 'PATH/TO/YOUR/DATASET'
 
 obs_config = ObservationConfig()
-obs_config.set_all(False)
+obs_config.set_all(True)
 cam_config = CameraConfig(rgb=True, depth=False, mask=False,
                               render_mode=RenderMode.OPENGL,
                               image_size=(64, 64))
 nocam_config = CameraConfig(rgb=False, depth=False, mask=False,
                           render_mode=RenderMode.OPENGL)
-obs_config = ObservationConfig()
-obs_config.set_all(False)
 obs_config.right_shoulder_camera = nocam_config
 obs_config.left_shoulder_camera = nocam_config
 obs_config.overhead_camera = nocam_config
@@ -150,7 +152,8 @@ env.launch()
 
 task = env.get_task(ReachTargetNoObs)
 demos: list[Demo] = task.get_demos(2, live_demos=live_demos)
-## returns the fucking observations as empty??? what the fuck are the velocities??
+print(f"{demos = } | {type(demos) = }")
+
 
 demos = np.array(demos, dtype=object).flatten()
 
