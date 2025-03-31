@@ -26,9 +26,12 @@ set_seed(42)
 
 
 #%%
-# 2. Create Environment and Set Model Name
+## 2. Create Environment and Set Model Name
 # To use 'saved' demos, set the path below, and set live_demos=False
-model_name = "reach-1-demo"
+num_demos = 1
+cam_type = CamType.WRIST
+model_name = f"reach-{num_demos}-demo-{cam_type}"
+model_path = f"./models/{model_name}.pth"
 live_demos = True
 DATASET = '' if live_demos else 'PATH/TO/YOUR/DATASET'
 
@@ -63,12 +66,14 @@ agent = Agent(env.action_shape[0], CamType.WRIST)
 
 # %%
 ## 4. Request Demos
-demos: list[Demo] = task_env.get_demos(2, live_demos=live_demos)
+demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos)
+print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
 print(f"{demos = } | {type(demos) = } | {len(demos) = }")
+print(f"Observations len: {len(demos[0])}")
 
-demos = np.array(demos, dtype=object).flatten()
+
 agent.ingest(demos) ## trains here
-agent.save_model(model_name)
+agent.save_model(model_path)
 
 training_steps = 120
 episode_length = 40
@@ -88,7 +93,7 @@ obs = None
 
 # %%
 ## 5. Load Agent
-agent.load_model(model_name)
+agent.load_model(model_path)
 
 #%%
 ## 6. Task Execution
