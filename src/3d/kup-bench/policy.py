@@ -38,7 +38,7 @@ class DemoObsDataset(Dataset):
     rng = np.random.default_rng()
     for demo in demos:
       obss = demo._observations
-      print(f"[loader] Observations len: {len(obss)}")
+      # print(f"[loader] Observations len: {len(obss)}")
       
       rng.shuffle(obss)
       self.all_data.extend(obss)
@@ -126,7 +126,7 @@ class Policy(nn.Module):
     
     dataset = DemoObsDataset(demos, self.cam_type)
     loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=False) ## shuffling makes it worse
-    print(f"Shuffled Dataset Size: {len(dataset)}")
+    print(f"Dataset Size: {len(dataset)}")
     
     model.train()
     self.losses = [0 for _ in range(epochs)]
@@ -145,7 +145,7 @@ class Policy(nn.Module):
         self.losses[epoch] = loss
       
     ## TODO add the number of demos here later for debugging purposes
-    print(f"Done Training Policy on Demos") 
+    print(f"Done Training Policy on {len(demos)} Demos") 
     
     if model_path:
       torch.save(self.state_dict(), f"{model_path}")
