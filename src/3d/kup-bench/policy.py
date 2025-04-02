@@ -30,7 +30,7 @@ class CamType(Flag):
         return "r_shoulder"
 
 
-class ShuffledDemoDataset(Dataset):
+class DemoObsDataset(Dataset):
   def __init__(self, demos: list[Demo], cam_type: CamType):
     self.cam_type = cam_type
     self.all_data = []
@@ -124,18 +124,16 @@ class Policy(nn.Module):
     loss_fn = nn.MSELoss()
     optimiser = optim.Adam(model.parameters(), lr = lr)
     
-    dataset = ShuffledDemoDataset(demos, self.cam_type)
-    loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=True)
+    dataset = DemoObsDataset(demos, self.cam_type)
+    loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=False) ## shuffling makes it worse
     print(f"Shuffled Dataset Size: {len(dataset)}")
     
     model.train()
     self.losses = [0 for _ in range(epochs)]
     for epoch in progress(range(epochs)):
       running_loss = 0
-      ## picks one, currently only considering one demo
       
       for inputs, labels in loader:
-        
         inputs, labels = inputs.to(device), labels.to(device)
         optimiser.zero_grad()
         pred_actions = model(inputs)
