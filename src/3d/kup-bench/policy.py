@@ -117,16 +117,18 @@ class Policy(nn.Module):
             model_path: str = None
   ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Training Params: \n\t{epochs = }, \n\t{minibatch_size = }, \n\t{lr = }, \n\t{model_path = }, \n\t{device}\n")
+    
     
     model = self.to(device)
-    print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
+    # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
     
     loss_fn = nn.MSELoss()
     optimiser = optim.Adam(model.parameters(), lr = lr)
     
     dataset = DemoObsDataset(demos, self.cam_type)
     loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=False) ## shuffling makes it worse
-    print(f"Dataset Size: {len(dataset)}")
+    # print(f"Dataset Size: {len(dataset)}")
     
     model.train()
     self.losses = [0 for _ in range(epochs)]
@@ -156,8 +158,8 @@ class Agent(object):
       self.action_shape = action_shape
       self.policy = Policy(action_shape, cam_type)
 
-    def ingest(self, demos: list[Demo]):
-      self.policy.train_policy(demos)
+    def ingest(self, demos: list[Demo], **training_params):
+      self.policy.train_policy(demos, **training_params)
       
     def act(self, obs:  Observation):
       # gripper = [1.0]  # Always open
