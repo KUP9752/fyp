@@ -65,18 +65,20 @@ env.launch()
 
 #%%
 ## 3. Attach Task and create Agent
-task_env = env.get_task(SideR)
+task = SideR
+task_env = env.get_task(task)
 agent = Agent(env.action_shape[0], CamType.WRIST)
+task
 
 # %%
 ## 4. Request Demos
-demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
-print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
-print(f"{demos = } | {type(demos) = } | {len(demos) = }")
-print(f"Observations len: {len(demos[0])}")
+demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos, random_selection = False)
+# print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
+# print(f"{demos = } | {type(demos) = } | {len(demos) = }")
+# print(f"Observations len: {len(demos[0])}")
 
 
-agent.ingest(demos) ## trains here
+agent.ingest(demos, minibatch_size = 32, lr =  0.01) ## trains here
 agent.save_model(model_path)
 
 # training_steps = 120
@@ -116,7 +118,7 @@ while not done:
   if count == 200:
     break
     
-print(f"{f"Done Successfull! {count}" if done else "Failed!"}")
+print(f"{f"Done Successfull! done in {count} steps" if done else "Failed!"}")
 
 #%%
 # 7. Manipulate object positions and calculate distances.
