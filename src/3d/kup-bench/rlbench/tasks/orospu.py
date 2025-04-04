@@ -7,23 +7,23 @@ from rlbench.const import colors as colours
 from pyrep.objects import Object
 from rlbench.backend.spawn_boundary import SpawnBoundary
 
-class ReachTargetNoObs(Task):
+class Orospu(Task):
 
     def init_task(self) -> None:
       self.target = Shape("target")
-      success_sensor =  ProximitySensor("success")
       self.boundary = Shape("boundary")
-      self.register_success_conditions([
-        DetectedCondition(self.robot.arm.get_tip(), success_sensor)
-      ])
+      
     def init_episode(self, index: int) -> List[str]:
       ## create a spawn boundary
       color_name, color_rgb = colours[index]
       self.target.set_color(color_rgb)      
       sb = SpawnBoundary([self.boundary])
+      print("orospu evaldi stephen")
+      print(self.target.get_bounding_box())
+      print(self.boundary.get_bounding_box())
       sb.sample(
         self.target, 
-        min_distance = 0, #min distance doesn't matter no other objects yet
+        min_distance = 0.2, #min distance doesn't matter no other objects yet
         min_rotation = (0, 0, 0),
         max_rotation = (0, 0, 0)
       ) 
