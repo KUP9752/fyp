@@ -15,6 +15,7 @@ from rlbench.backend.observation import Observation
 from rlbench.demo import Demo
 
 from pyrep.const import RenderMode
+from pyrep.objects import Object
 
 import numpy as np
 import torch
@@ -77,8 +78,12 @@ demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos, random_
 # print(f"{demos = } | {type(demos) = } | {len(demos) = }")
 # print(f"Observations len: {len(demos[0])}")
 
-
-agent.ingest(demos, minibatch_size = 32, lr =  0.01) ## trains here
+training_params = {
+  "epochs": 200,
+  "minibatch_size": 32,
+  "lr": 0.01
+}
+agent.ingest(demos, **training_params) ## trains here
 agent.save_model(model_path)
 
 # training_steps = 120
@@ -108,21 +113,28 @@ _, obs = task_env.reset()
 # plt.imshow(obs.wrist_rgb)
 count = 0
 done = False
+distances = []
 while not done:
   obs: Observation
   action = agent.act(obs).squeeze(0)
   # print(f"{action.shape = }")
   obs, reward, done = task_env.step(action)
-  # print(f"{reward = } | {done = }")
+  gripper = Object.get_object("Panda_gripper")
+  target = Object.get_object("target")
+  distance = np.linalg.norm(gripper.get_position() - target.get_position())
+  distances.append(distance)
+  
   count += 1
   if count == 200:
     break
     
 print(f"{f"Done Successfull! done in {count} steps" if done else "Failed!"}")
+print(f"Final distance: {distances[-1]}")
+
 
 #%%
 # 7. Manipulate object positions and calculate distances.
-from pyrep.objects import Object
+
 
 gripper = Object.get_object("Panda_gripper")
 target = Object.get_object("target")

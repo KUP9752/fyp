@@ -113,7 +113,7 @@ class Policy(nn.Module):
             demos: list[Demo],
             epochs: int = 200,
             minibatch_size: int = 32, ## size of the observations currently being used
-            lr: float = 0.001,
+            lr: float = 0.01,
             model_path: str = None
   ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
