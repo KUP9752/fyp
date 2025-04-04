@@ -11,6 +11,7 @@ from rlbench.observation_config import ObservationConfig, CameraConfig
 from rlbench.tasks.reach_target_no_obs_side_r import ReachTargetNoObsSideR as SideR
 from rlbench.tasks.reach_target_no_obs_side_l import ReachTargetNoObsSideL as SideL
 from rlbench.tasks.reach_target_no_obs_central import ReachTargetNoObsCentral as Central
+from rlbench.tasks.reach_target_no_obs import ReachTargetNoObs as PlaceRandom
 from rlbench.backend.observation import Observation
 from rlbench.demo import Demo
 
@@ -66,14 +67,14 @@ env.launch()
 
 #%%
 ## 3. Attach Task and create Agent
-task = SideR
+task = PlaceRandom
 task_env = env.get_task(task)
 agent = Agent(env.action_shape[0], CamType.WRIST)
 task
 
 # %%
 ## 4. Request Demos
-demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos, random_selection = False)
+demos: list[Demo] = task_env.get_demos(30, live_demos=live_demos, random_selection = False)
 # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
 # print(f"{demos = } | {type(demos) = } | {len(demos) = }")
 # print(f"Observations len: {len(demos[0])}")
