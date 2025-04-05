@@ -30,12 +30,13 @@ from utils import set_seed
 
 set_seed(42)
 
+num_demos = 1
+cam_type = CamType.WRIST
 
 #%%
 ## 2. Create Environment and Set Model Name
 # To use 'saved' demos, set the path below, and set live_demos=False
-num_demos = 1
-cam_type = CamType.WRIST
+
 model_name = f"reach-{num_demos}-demo-{cam_type}"
 model_path = f"./models/{model_name}.pth"
 live_demos = True
@@ -69,15 +70,16 @@ env.launch()
 ## 3. Attach Task and create Agent
 task = PlaceRandom
 task_env = env.get_task(task)
-agent = Agent(env.action_shape[0], CamType.WRIST)
+agent = Agent(env.action_shape[0], cam_type)
 task
 
 # %%
 ## 4. Request Demos
-demos: list[Demo] = task_env.get_demos(30, live_demos=live_demos, random_selection = False)
+demos: list[Demo] = task_env.get_demos(100, live_demos=live_demos, random_selection = False)
+
 # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
 # print(f"{demos = } | {type(demos) = } | {len(demos) = }")
-# print(f"Observations len: {len(demos[0])}")
+print(f"Observations len: {list(map(len, demos))}")
 
 training_params = {
   "epochs": 200,
@@ -86,7 +88,11 @@ training_params = {
 }
 agent.ingest(demos, **training_params) ## trains here
 agent.save_model(model_path)
-
+# %%
+lens = list(map(len, demos))
+print(f"Observations len: {lens}")
+print(f"average {sum(lens)/len(lens)}")
+print(f"max {max(lens)}")
 # training_steps = 120
 # episode_length = 40
 # obs = None
@@ -126,7 +132,7 @@ while not done:
   distances.append(distance)
   
   count += 1
-  if count == 200:
+  if count == 60:
     break
     
 print(f"{f"Done Successfull! done in {count} steps" if done else "Failed!"}")
