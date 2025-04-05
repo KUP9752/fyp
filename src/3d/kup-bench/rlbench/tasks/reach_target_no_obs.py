@@ -36,3 +36,6 @@ class ReachTargetNoObs(Task):
       
     def base_rotation_bounds(self):
       return [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]
+    
+    def is_static_workspace(self):
+      return True
