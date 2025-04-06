@@ -31,7 +31,7 @@ from utils import set_seed
 set_seed(42)
 
 num_demos = 1
-cam_type = CamType.WRIST
+cam_type = CamType.WRIST | CamType.LEFT_SHOULDER | CamType.RIGHT_SHOULDER
 
 #%%
 ## 2. Create Environment and Set Model Name
@@ -75,7 +75,7 @@ task
 
 # %%
 ## 4. Request Demos
-demos: list[Demo] = task_env.get_demos(100, live_demos=live_demos, random_selection = False)
+demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos, random_selection = False)
 
 # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
 # print(f"{demos = } | {type(demos) = } | {len(demos) = }")

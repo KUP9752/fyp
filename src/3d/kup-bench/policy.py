@@ -16,18 +16,20 @@ from enum import Flag, auto
 set_seed(42)
 
 class CamType(Flag):
-  WRIST = 0
+  WRIST = auto()
   LEFT_SHOULDER = auto()
   RIGHT_SHOULDER = auto()
   
   def __str__(self):
-    match self:
-      case CamType.WRIST:
-        return "wrist"
-      case CamType.LEFT_SHOULDER:
-        return "l_shoulder"
-      case CamType.RIGHT_SHOULDER:
-        return "r_shoulder"
+    s = ""
+    if self & CamType.WRIST:
+      s += "wrist"
+    if self & CamType.LEFT_SHOULDER:
+      s += "+l_shoulder"
+    if self & CamType.RIGHT_SHOULDER:
+      s += "+r_shoulder"
+      
+    return s
 
 
 class DemoObsDataset(Dataset):
@@ -49,33 +51,57 @@ class DemoObsDataset(Dataset):
 
   def __getitem__(self, idx):
     obs = self.all_data[idx]
-    match self.cam_type:
-      case CamType.WRIST:
-        inputs, labels = obs.wrist_rgb, np.append(obs.joint_velocities, obs.gripper_open)
-      case CamType.LEFT_SHOULDER:
-        inputs, labels = obs.left_shoulder_rgb, np.append(obs.joint_velocities, obs.gripper_open)
-      case CamType.RIGHT_SHOULDER:
-        inputs, labels = obs.right_shoulder_rgb, np.append(obs.joint_velocities, obs.gripper_open)
-      case _:
-        raise ValueError("There are no other camtype options")
-      
-    inputs = torch.tensor(inputs, dtype = torch.float32)
-    ## batch, 64, 64, 3  -> batch, 3, 64, 64
-    inputs = torch.permute(inputs, (2, 0, 1)) 
     
+    images = []
+    
+    if self.cam_type & CamType.WRIST:
+      # print(f"Using Wrist Image")
+      wrist_image = torch.tensor(obs.wrist_rgb, dtype = torch.float32)
+      wrist_image = torch.permute(wrist_image, (2, 0, 1))   ## 64, 64, 3  -> 3, 64, 64
+      images.append(wrist_image)
+    if self.cam_type & CamType.LEFT_SHOULDER:
+      # print(f"Using L Shouulder Image")
+      ls_image = torch.tensor(obs.left_shoulder_rgb, dtype = torch.float32)
+      ls_image = torch.permute(ls_image, (2, 0, 1))   ## 64, 64, 3  -> 3, 64, 64
+      images.append(ls_image)
+    if self.cam_type & CamType.RIGHT_SHOULDER:
+      # print(f"Using R Shoulder Image")
+      rs_image = torch.tensor(obs.right_shoulder_rgb, dtype = torch.float32)
+      rs_image = torch.permute(rs_image, (2, 0, 1))   ## 64, 64, 3  -> 3, 64, 64
+      images.append(rs_image)
+    
+    if not images:
+      raise ValueError("[policy - DemoObsDataSet - __getitem__] No images selected !")
+      
+    ## this allows multi rgb cameras   
+    inputs = torch.cat(images, dim = 0)  ## cat on the colours channel
+    ## inputs shape should now be (3 * num_cams, 64, 64)
+    labels = np.append(obs.joint_velocities, obs.gripper_open)
     labels = torch.tensor(labels, dtype = torch.float32)
+    
     return inputs, labels
 
       
-## This is made for imsage sizes of 64x64 and Single Cam!
+## This is made for image sizes of 64x64 and now multi cam setups
 class Policy(nn.Module):
   def __init__(self, action_shape: int, cam_type: CamType = CamType.WRIST):
     super(Policy, self).__init__()
-    
     self.cam_type = cam_type
+    print(f"[policy - Policy] Using {self.cam_type} as camera type")
+    
+    num_cams = 0
+    if cam_type & CamType.WRIST:
+      num_cams += 1
+    if cam_type & CamType.LEFT_SHOULDER:
+      num_cams += 1
+    if cam_type & CamType.RIGHT_SHOULDER:
+      num_cams += 1
+    
+    if num_cams == 0:
+      raise ValueError("[policy - Policy] No cameras selected!")
     
     self.conv = nn.Sequential(
-      nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=1, padding=0),
+      nn.Conv2d(in_channels=3 * num_cams, out_channels=32, kernel_size=3, stride=1, padding=0),
       nn.MaxPool2d(kernel_size=(2, 2), stride=2, padding=0),
       nn.ReLU(inplace=False),
       nn.Conv2d(in_channels=32, out_channels=48, kernel_size=3, stride=1, padding=0),
@@ -101,7 +127,7 @@ class Policy(nn.Module):
       nn.ReLU(inplace=False),
       nn.Linear(50, action_shape)
     )
-    
+  
   def forward(self, image):
     feats = self.conv(image)
     return self.fc(feats)
@@ -155,6 +181,7 @@ class Policy(nn.Module):
 class Agent(object):
 
     def __init__(self, action_shape, cam_type = CamType.WRIST):
+      self.cam_type = cam_type
       self.action_shape = action_shape
       self.policy = Policy(action_shape, cam_type)
 
@@ -166,9 +193,28 @@ class Agent(object):
       # return np.concatenate([arm, gripper], axis=-1)
       
       self.policy.eval()
-      torch_obs = torch.tensor(obs.wrist_rgb, dtype=torch.float32)
-      torch_obs = torch_obs.permute(2, 0, 1)
-      torch_obs = torch_obs.unsqueeze(0)
+      images = []
+      if self.cam_type & CamType.WRIST:
+        # print(f"Using Wrist Image")
+        wrist_image = torch.tensor(obs.wrist_rgb, dtype = torch.float32)
+        wrist_image = torch.permute(wrist_image, (2, 0, 1))   ## 64, 64, 3  -> 3, 64, 64
+        images.append(wrist_image)
+      if self.cam_type & CamType.LEFT_SHOULDER:
+        # print(f"Using L Shouulder Image")
+        ls_image = torch.tensor(obs.left_shoulder_rgb, dtype = torch.float32)
+        ls_image = torch.permute(ls_image, (2, 0, 1))   ## 64, 64, 3  -> 3, 64, 64
+        images.append(ls_image)
+      if self.cam_type & CamType.RIGHT_SHOULDER:
+        # print(f"Using R Shoulder Image")
+        rs_image = torch.tensor(obs.right_shoulder_rgb, dtype = torch.float32)
+        rs_image = torch.permute(rs_image, (2, 0, 1))   ## 64, 64, 3  -> 3, 64, 64
+        images.append(rs_image)
+      
+      if not images:
+        raise ValueError("[policy - Agent - act] No images selected !")
+      
+      torch_obs = torch.cat(images, dim = 0)  ## cat on the colours channel
+      torch_obs = torch_obs.unsqueeze(0) ## add a batch dimension 1, 3 * num_cams, 64, 64
       with torch.no_grad():
         pred = self.policy(torch_obs)
       return pred
