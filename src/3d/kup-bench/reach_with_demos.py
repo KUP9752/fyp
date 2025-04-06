@@ -138,6 +138,25 @@ while not done:
 print(f"{f"Done Successfull! done in {count} steps" if done else "Failed!"}")
 print(f"Final distance: {distances[-1]}")
 
+#%%
+## Getting the initial camera positions per task
+# tasks = [SideR, SideL, Central]
+# for task in tasks:
+#   task_env = env.get_task(task)
+#   _, obs = task_env.reset()
+  
+#   plt.imshow(obs.wrist_rgb)
+#   plt.savefig(f"images/wrist-{task.__name__}.png")
+#   plt.close()
+  
+#   plt.imshow(obs.left_shoulder_rgb)
+#   plt.savefig(f"images/lshoulder-{task.__name__}.png")
+#   plt.close()
+  
+#   plt.imshow(obs.right_shoulder_rgb)
+#   plt.savefig(f"images/rshoulder-{task.__name__}.png")
+#   plt.close()
+
 
 #%%
 # 7. Manipulate object positions and calculate distances.
@@ -153,3 +172,5 @@ print(f"target pos: {target.get_position()}")
 # %% 
 ## !! Finish
 env.shutdown()
+
+# %%
