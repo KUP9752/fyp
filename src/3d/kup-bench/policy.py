@@ -34,8 +34,9 @@ class DemoObsDataset(Dataset):
   def __init__(self, demos: list[Demo], cam_type: CamType):
     self.cam_type = cam_type
     self.all_data = []
-    set_seed(42)
-    rng = np.random.default_rng()
+    seed = 42
+    set_seed(seed)
+    rng = np.random.default_rng(seed)
     for demo in demos:
       obss = demo._observations
       # print(f"[loader] Observations len: {len(obss)}")
@@ -51,13 +52,10 @@ class DemoObsDataset(Dataset):
     match self.cam_type:
       case CamType.WRIST:
         inputs, labels = obs.wrist_rgb, np.append(obs.joint_velocities, obs.gripper_open)
-        # inputs, labels = zip(
-        #   *[(obs.wrist_rgb, np.append(obs.joint_velocities, 1.)) for obs in obs_batch]
-        # )
       case CamType.LEFT_SHOULDER:
         inputs, labels = obs.left_shoulder_rgb, np.append(obs.joint_velocities, obs.gripper_open)
       case CamType.RIGHT_SHOULDER:
-        inputs, labels = obs.right_shoulder_rgb, np.append(obs.joint_velocities, 1.)
+        inputs, labels = obs.right_shoulder_rgb, np.append(obs.joint_velocities, obs.gripper_open)
       case _:
         raise ValueError("There are no other camtype options")
       
@@ -117,6 +115,8 @@ class Policy(nn.Module):
             model_path: str = None
   ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Camera: {self.cam_type}")
+    
     print(f"Training Params: \n\t{epochs = }, \n\t{minibatch_size = }, \n\t{lr = }, \n\t{model_path = }, \n\t{device}\n")
     
     
