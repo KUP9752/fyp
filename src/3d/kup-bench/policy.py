@@ -1,3 +1,4 @@
+from typing import Optional
 import numpy as np
 
 import torch 
@@ -15,6 +16,7 @@ from enum import Flag, auto
 
 set_seed(42)
 
+
 class CamType(Flag):
   WRIST = auto()
   LEFT_SHOULDER = auto()
@@ -30,6 +32,18 @@ class CamType(Flag):
       s += "+r_shoulder"
       
     return s
+  
+  @classmethod
+  ## recreates everytime, but couldn't find a good way to cache
+  def all_combinations(cls):
+    all_combs = []
+    for i in range(1, 2**len(CamType)):
+      comb = CamType(0)
+      for j in range(len(CamType)):
+        if i & (1 << j):
+          comb |= CamType(1 << j)
+      all_combs.append(comb)
+    return all_combs
 
 
 class DemoObsDataset(Dataset):
@@ -138,7 +152,7 @@ class Policy(nn.Module):
             epochs: int = 200,
             minibatch_size: int = 32, ## size of the observations currently being used
             lr: float = 0.01,
-            model_path: str = None
+            model_path: Optional[str] = None
   ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Camera: {self.cam_type}")
