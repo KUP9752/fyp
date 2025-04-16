@@ -8,7 +8,7 @@ from rlbench.const import colors as colours
 from pyrep.objects import Object
 from rlbench.backend.spawn_boundary import SpawnBoundary
 
-class ReachTargetObs(Task):
+class ReachTargetObsRandom(Task):
 
     def init_task(self) -> None:
       self.target = Shape("target")
@@ -22,6 +22,9 @@ class ReachTargetObs(Task):
       self.target_boundary = Shape("target_boundary")
       self.obs_boundary = Shape("obs_boundary")
       
+      
+    ## The obstacle and the target are independently sampled from 2 different boundaries, 
+    ## which are both within the view of the wrist camera
     def init_episode(self, index: int) -> List[str]:
       
       ## pick from candidates to request a demo from specific direction of object
