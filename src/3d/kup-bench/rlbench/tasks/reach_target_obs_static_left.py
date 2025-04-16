@@ -7,7 +7,7 @@ from rlbench.const import colors as colours
 from pyrep.objects import Object
 from rlbench.backend.spawn_boundary import SpawnBoundary
 
-class ReachTargetObs(Task):
+class ReachTargetObsStaticLeft(Task):
 
     def init_task(self) -> None:
       self.target = Shape("target")
