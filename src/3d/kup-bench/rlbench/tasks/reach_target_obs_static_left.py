@@ -12,7 +12,6 @@ class ReachTargetObsStaticLeft(Task):
     def init_task(self) -> None:
       self.target = Shape("target")
       success_sensor =  ProximitySensor("success")
-      self.boundary = Shape("boundary")
       self.register_success_conditions([
         DetectedCondition(self.robot.arm.get_tip(), success_sensor)
       ])
@@ -20,13 +19,6 @@ class ReachTargetObsStaticLeft(Task):
       ## create a spawn boundary
       color_name, color_rgb = colours[index]
       self.target.set_color(color_rgb)      
-      sb = SpawnBoundary([self.boundary])
-      sb.sample(
-        self.target, 
-        min_distance = 0, #min distance doesn't matter no other objects yet
-        min_rotation = (0, 0, 0),
-        max_rotation = (0, 0, 0)
-      ) 
       
       return [f"reach the {color_name} target", f"reach the {color_name} thing", f"reach the {color_name} sphere"]
 
