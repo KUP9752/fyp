@@ -8,10 +8,22 @@ from rlbench.action_modes.gripper_action_modes import Discrete
 from rlbench.environment import Environment
 from rlbench.observation_config import ObservationConfig, CameraConfig
 
-from rlbench.tasks.reach_target_no_obs_side_r import ReachTargetNoObsSideR as SideR
-from rlbench.tasks.reach_target_no_obs_side_l import ReachTargetNoObsSideL as SideL
-from rlbench.tasks.reach_target_no_obs_central import ReachTargetNoObsCentral as Central
-from rlbench.tasks.reach_target_no_obs import ReachTargetNoObs as PlaceRandom
+# Tasks
+## No Obstacle
+from rlbench.tasks.reach_target_no_obs_side_r import ReachTargetNoObsSideR as ReachNoObs_SideR
+from rlbench.tasks.reach_target_no_obs_side_l import ReachTargetNoObsSideL as ReachNoObs_SideL
+from rlbench.tasks.reach_target_no_obs_central import ReachTargetNoObsCentral as ReachNoObs_Central
+from rlbench.tasks.reach_target_no_obs import ReachTargetNoObs as ReachNoObs_PlaceRandom
+## Obstacle
+from rlbench.tasks.reach_target_obs_static_left import ReachTargetObsStaticLeft as ReachObs_StaticLeft
+from rlbench.tasks.reach_target_obs_static import ReachTargetObsStatic as ReachObs_Static
+from rlbench.tasks.reach_target_obs_random_static import ReachTargetObsRandomStatic as ReachObs_RandomStatic
+from rlbench.tasks.reach_target_obs_random import ReachTargetObsRandom as ReachObs_Random
+from rlbench.tasks.reach_target_obs_ind_random import ReachTargetObsIndRandom as ReachObs_IndepRandom
+## Grasp
+from rlbench.tasks.simple_grasp import SimpleGrasp as Grasp_Simple
+from rlbench.tasks.grasp_and_move import GraspAndMove as Grasp_ThenMove
+
 from rlbench.backend.observation import Observation
 from rlbench.demo import Demo
 
@@ -19,10 +31,9 @@ from pyrep.const import RenderMode
 from pyrep.objects import Object
 
 import numpy as np
-import torch
 import torch.nn.functional as F
 
-from policy import Policy, Agent, CamType
+from policy import Agent, CamType
 
 from matplotlib import pyplot as plt
 
@@ -30,14 +41,14 @@ from utils import set_seed
 
 set_seed(42)
 
-num_demos = 1
-cam_type = CamType.WRIST | CamType.LEFT_SHOULDER | CamType.RIGHT_SHOULDER
+num_demos = 10
+cam_type = CamType.WRIST 
 
 #%%
 ## 2. Create Environment and Set Model Name
 # To use 'saved' demos, set the path below, and set live_demos=False
 
-model_name = f"reach-{num_demos}-demo-{cam_type}"
+model_name = f"rwd-reach-{num_demos}-demo-{cam_type}"
 model_path = f"./models/{model_name}.pth"
 live_demos = True
 DATASET = '' if live_demos else 'PATH/TO/YOUR/DATASET'
@@ -68,7 +79,7 @@ env.launch()
 
 #%%
 ## 3. Attach Task and create Agent
-task = PlaceRandom
+task = ReachObs_IndepRandom
 task_env = env.get_task(task)
 agent = Agent(env.action_shape[0], cam_type)
 task
@@ -82,7 +93,7 @@ demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos, random_
 print(f"Observations len: {list(map(len, demos))}")
 
 training_params = {
-  "epochs": 200,
+  "epochs": 400,
   "minibatch_size": 32,
   "lr": 0.01
 }
@@ -130,9 +141,10 @@ while not done:
   target = Object.get_object("target")
   distance = np.linalg.norm(gripper.get_position() - target.get_position())
   distances.append(distance)
+  print(f"{done = }")
   
   count += 1
-  if count == 60:
+  if count == 100:
     break
     
 print(f"{f"Done Successfull! done in {count} steps" if done else "Failed!"}")
@@ -174,3 +186,10 @@ print(f"target pos: {target.get_position()}")
 env.shutdown()
 
 # %%
+## Random Testing Cell
+from policy import CamType
+CamType.all_combinations()
+
+
+
+## more testin 
