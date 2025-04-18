@@ -55,7 +55,6 @@ class ReachTargetObsStatic(Task):
       self.ep_pick = None # set to `None` for debugging purposes
 
     def variation_count(self) -> int:
-      # TODO: The number of variations for this task.
       return 3
       
     def base_rotation_bounds(self):

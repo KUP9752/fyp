@@ -39,3 +39,5 @@ class ReachTargetNoObs(Task):
     
     def is_static_workspace(self):
       return True
+    
+    

@@ -9,7 +9,9 @@ from pyrep.objects import Object
 from rlbench.backend.spawn_boundary import SpawnBoundary
 
 class ReachTargetObsRandomStatic(Task):
-
+    ## Static: the target nor the obstacle moves 
+    ## Random: the waypoint generation is left free from the start, 
+    ##  depending on rlbench pathfinding any demo can be given
     def init_task(self) -> None:
       self.target = Shape("target")
       success_sensor =  ProximitySensor("success")
@@ -24,11 +26,8 @@ class ReachTargetObsRandomStatic(Task):
        
       return [f"reach the sphere target behind an obstacle"]
     
-    ## we changed the name of the waypoint reset it back, apparently this changes the ttm file
 
     def variation_count(self) -> int:
-      # TODO: The number of variations for this task, add colours again?
-      
       return 1
       
     def base_rotation_bounds(self):
