@@ -33,23 +33,22 @@ from pyrep.objects import Object
 import numpy as np
 import torch.nn.functional as F
 
-from policy import Agent, CamType
+# from policy import  CamType
 
 from matplotlib import pyplot as plt
-
+from policy import Agent, CamType
 from utils import set_seed
 
 set_seed(42)
 
 num_demos = 10
-cam_type = CamType.WRIST 
+# cam_type = CamType.WRIST 
 
 #%%
 ## 2. Create Environment and Set Model Name
 # To use 'saved' demos, set the path below, and set live_demos=False
 
-model_name = f"rwd-reach-{num_demos}-demo-{cam_type}"
-model_path = f"./models/{model_name}.pth"
+
 live_demos = True
 DATASET = '' if live_demos else 'PATH/TO/YOUR/DATASET'
 
@@ -82,47 +81,44 @@ env.launch()
 task = ReachObs_IndepRandom
 task_env = env.get_task(task)
 agent = Agent(env.action_shape[0], cam_type)
+
+model_name = f"rwd-reach-{num_demos}-demo-{cam_type}-{task}"
+model_path = f"./models/{model_name}.pth"
+print(model_name)
 task
 
 # %%
 ## 4. Request Demos
-demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos, random_selection = False)
 
+# demos = []
+# for var in [0,1,2]:
+#   task_env.set_variation(var)
+#   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
+
+demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos, random_selection = True)
 # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
 # print(f"{demos = } | {type(demos) = } | {len(demos) = }")
 print(f"Observations len: {list(map(len, demos))}")
 
 training_params = {
-  "epochs": 400,
+  "epochs": 1000,
   "minibatch_size": 32,
-  "lr": 0.01
+  "lr": 1e-4,
+  "shuffle_data": False
 }
 agent.ingest(demos, **training_params) ## trains here
 agent.save_model(model_path)
 # %%
-lens = list(map(len, demos))
-print(f"Observations len: {lens}")
-print(f"average {sum(lens)/len(lens)}")
-print(f"max {max(lens)}")
-# training_steps = 120
-# episode_length = 40
-# obs = None
-
-## this is for RL version with demos, i want to do IL for now
-# for i in range(training_steps):
-#     if i % episode_length == 0:
-#         print('Reset Episode')
-#         descriptions, obs = task.reset()
-#         print(descriptions)
-#     action = agent.act(obs)
-#     print(action)
-#     obs, reward, terminate = task.step(action)
-
+task_env.variation_count()
+# lens = list(map(len, demos))
+# print(f"Observations len: {lens}")
+# print(f"average {sum(lens)/len(lens)}")
+# print(f"max {max(lens)}")
 
 
 # %%
 ## 5. Load Agent
-# agent.load_model(model_path)
+agent.load_model(model_path)
 
 #%%
 ## 6. Task Execution
@@ -141,10 +137,10 @@ while not done:
   target = Object.get_object("target")
   distance = np.linalg.norm(gripper.get_position() - target.get_position())
   distances.append(distance)
-  print(f"{done = }")
+  # print(f"{done = }")
   
   count += 1
-  if count == 100:
+  if count == 80:
     break
     
 print(f"{f"Done Successfull! done in {count} steps" if done else "Failed!"}")
@@ -188,7 +184,10 @@ env.shutdown()
 # %%
 ## Random Testing Cell
 from policy import CamType
-CamType.all_combinations()
+# CamType.all_combinations()
+c = CamType.LEFT_SHOULDER | CamType.WRIST
+
+str(c)
 
 
 

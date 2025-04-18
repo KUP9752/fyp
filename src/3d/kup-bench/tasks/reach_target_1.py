@@ -19,7 +19,6 @@ class ReachTarget1(Task):
       return [f"reach the {color_name} target", f"reach the {color_name} thing", f"reach the {color_name} sphere"]
 
     def variation_count(self) -> int:
-        # TODO: The number of variations for this task.
         return len(colours)
       
     def base_rotation_bounds(self):

@@ -10,11 +10,9 @@ from rlbench.demo import Demo
 from rlbench.backend.observation import Observation
 
 from tqdm import tqdm as progress
-from utils import set_seed
+
 
 from enum import Flag, auto
-
-set_seed(42)
 
 
 class CamType(Flag):
@@ -23,15 +21,15 @@ class CamType(Flag):
   RIGHT_SHOULDER = auto()
   
   def __str__(self):
-    s = ""
+    parts = []
     if self & CamType.WRIST:
-      s += "wrist"
+      parts.append("wrist")
     if self & CamType.LEFT_SHOULDER:
-      s += "+l_shoulder"
+      parts.append("l_shoulder")
     if self & CamType.RIGHT_SHOULDER:
-      s += "+r_shoulder"
-      
-    return s
+      parts.append("r_shoulder")
+    
+    return "+".join(parts)
   
   @classmethod
   ## recreates everytime, but couldn't find a good way to cache
@@ -152,6 +150,7 @@ class Policy(nn.Module):
             epochs: int = 200,
             minibatch_size: int = 32, ## size of the observations currently being used
             lr: float = 0.01,
+            shuffle_data = False, 
             model_path: Optional[str] = None
   ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -164,10 +163,11 @@ class Policy(nn.Module):
     # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
     
     loss_fn = nn.MSELoss()
+    ## NOTE: suggested nn.Smooth1Loss()
     optimiser = optim.Adam(model.parameters(), lr = lr)
     
     dataset = DemoObsDataset(demos, self.cam_type)
-    loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=False) ## shuffling makes it worse
+    loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=shuffle_data) ## shuffling makes it worse
     # print(f"Dataset Size: {len(dataset)}")
     
     model.train()
@@ -186,7 +186,6 @@ class Policy(nn.Module):
         loss = running_loss / len(demos)
         self.losses[epoch] = loss
       
-    ## TODO add the number of demos here later for debugging purposes
     print(f"Done Training Policy on {len(demos)} Demos") 
     
     if model_path:
@@ -202,7 +201,7 @@ class Agent(object):
     def ingest(self, demos: list[Demo], **training_params):
       self.policy.train_policy(demos, **training_params)
       
-    def act(self, obs:  Observation):
+    def act(self, obs:  Observation) -> torch.Tensor:
       # gripper = [1.0]  # Always open
       # return np.concatenate([arm, gripper], axis=-1)
       
