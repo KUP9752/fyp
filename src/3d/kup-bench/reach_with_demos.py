@@ -37,12 +37,12 @@ import torch.nn.functional as F
 
 from matplotlib import pyplot as plt
 from policy import Agent, CamType
-from utils import set_seed
+from utils import set_seed, get_task_name
 
 set_seed(42)
 
-num_demos = 10
-# cam_type = CamType.WRIST 
+num_demos = 50
+cam_type = CamType.WRIST 
 
 #%%
 ## 2. Create Environment and Set Model Name
@@ -82,8 +82,8 @@ task = ReachObs_IndepRandom
 task_env = env.get_task(task)
 agent = Agent(env.action_shape[0], cam_type)
 
-model_name = f"rwd-reach-{num_demos}-demo-{cam_type}-{task}"
-model_path = f"./models/{model_name}.pth"
+model_name = f"rwd-reach-{num_demos}-demo-{cam_type}-{get_task_name(task)}"
+model_path = f"./all-models/reach-with-demos/{model_name}.pth"
 print(model_name)
 task
 
@@ -96,10 +96,10 @@ task
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
 
 demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos, random_selection = True)
-# print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
-# print(f"{demos = } | {type(demos) = } | {len(demos) = }")
-print(f"Observations len: {list(map(len, demos))}")
-
+# # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
+# # print(f"{demos = } | {type(demos) = } | {len(demos) = }")
+# print(f"Observations len: {list(map(len, demos))}")
+,
 training_params = {
   "epochs": 1000,
   "minibatch_size": 32,
@@ -183,12 +183,8 @@ env.shutdown()
 
 # %%
 ## Random Testing Cell
-from policy import CamType
-# CamType.all_combinations()
-c = CamType.LEFT_SHOULDER | CamType.WRIST
-
-str(c)
-
-
+xs = np.zeros((3, 10, 2))
+xs = np.zeros((10), dtype=np.bool)
+xs[3]
 
 ## more testin 

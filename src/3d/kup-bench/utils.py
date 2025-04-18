@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Literal, Optional, Type
 import torch
 import numpy as np
 
@@ -73,7 +73,7 @@ def request_demos_and_train_for_task(
     save_model = False,
     live_demos = True, 
     **training_params
-  ) -> TaskEnvironment:
+  ) -> tuple[TaskEnvironment, list[Demo]]:
   task_name = get_task_name(current_task) 
   
   ## load this task into env
@@ -87,15 +87,16 @@ def request_demos_and_train_for_task(
     model_path = f"./all-models/{model_name}.pth"
     agent.save_model(model_path)
   
-  return task_env
+  return task_env, demos
 
 ## Createes a newe agent and runs the task as given
-def run_task(
+## The distance metric seems to be only useful for reaching currently
+def run_reach_task(
   env: Environment,
-  task,
+  task, ## any of Reach_* or ReachObs_* tasks
   cam_type: CamType,
   demo_count: int,
-  max_eplen: int = 100,
+  max_eplen: int | Literal["demo_max"] = "demo_max",
   **training_params
 ) -> tuple[list[float], bool]:
   print(f"Training for {demo_count} demos for task: {get_task_name(task)}")
@@ -103,7 +104,7 @@ def run_task(
   agent = Agent(env.action_shape[0], cam_type)
   
   ## request demos and train
-  task_env = request_demos_and_train_for_task(
+  task_env, demos = request_demos_and_train_for_task(
     env,
     task,
     agent,
@@ -111,6 +112,9 @@ def run_task(
     save_model=True,
     **training_params
   )
+  ## if max len is not specified make it the max of the givem demo
+  if max_eplen == "demo_max":
+    max_eplen = max(list(map(len, demos)))
   
   ## evaluate
   obs: Observation

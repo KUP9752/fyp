@@ -49,7 +49,6 @@ class DemoObsDataset(Dataset):
     self.cam_type = cam_type
     self.all_data = []
     seed = 42
-    set_seed(seed)
     rng = np.random.default_rng(seed)
     for demo in demos:
       obss = demo._observations
@@ -156,7 +155,7 @@ class Policy(nn.Module):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Camera: {self.cam_type}")
     
-    print(f"Training Params: \n\t{epochs = }, \n\t{minibatch_size = }, \n\t{lr = }, \n\t{model_path = }, \n\t{device}\n")
+    print(f"Training Params: \n\t{epochs = }, \n\t{minibatch_size = }, \n\t{lr = }, \n\t{model_path = }, \n\t{shuffle_data = }, \n\t{device}\n")
     
     
     model = self.to(device)
