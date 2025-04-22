@@ -41,8 +41,8 @@ from utils import set_seed, get_task_name
 
 set_seed(42)
 
-num_demos = 50
-cam_type = CamType.WRIST 
+num_demos = 20
+cam_type = CamType.WRIST
 
 #%%
 ## 2. Create Environment and Set Model Name
@@ -78,7 +78,7 @@ env.launch()
 
 #%%
 ## 3. Attach Task and create Agent
-task = ReachObs_IndepRandom
+task = ReachObs_RandomStatic
 task_env = env.get_task(task)
 agent = Agent(env.action_shape[0], cam_type)
 
@@ -99,11 +99,11 @@ demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos, random_
 # # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
 # # print(f"{demos = } | {type(demos) = } | {len(demos) = }")
 # print(f"Observations len: {list(map(len, demos))}")
-,
+
 training_params = {
   "epochs": 1000,
-  "minibatch_size": 32,
-  "lr": 1e-4,
+  "minibatch_size": 64,
+  "lr": 1e-3,
   "shuffle_data": False
 }
 agent.ingest(demos, **training_params) ## trains here
