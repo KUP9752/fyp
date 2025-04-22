@@ -45,7 +45,7 @@ class CamType(Flag):
 
 
 class DemoObsDataset(Dataset):
-  def __init__(self, demos: list[Demo], cam_type: CamType, shuffle_obs: bool= True):
+  def __init__(self, demos: list[Demo], cam_type: CamType, shuffle_obs: bool):
     self.cam_type = cam_type
     self.all_data = []
     seed = 42
