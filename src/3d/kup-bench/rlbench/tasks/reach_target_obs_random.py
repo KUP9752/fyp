@@ -9,7 +9,9 @@ from pyrep.objects import Object
 from rlbench.backend.spawn_boundary import SpawnBoundary
 
 class ReachTargetObsRandom(Task):
-
+    ## Random: The obstacle and the target are placed randomly, 
+    ## first place the obstacle (which is bound to the bounding box `target_boundary`)
+    ## so the target can then be placed within this carried bounding box, ensures the target is mostly covered by the obstacle if not always
     def init_task(self) -> None:
       self.target = Shape("target")
       self.obs = Shape("obstacle")

@@ -9,9 +9,9 @@ from pyrep.objects import Object
 from rlbench.backend.spawn_boundary import SpawnBoundary
 
 class ReachTargetObsRandomStatic(Task):
-    ## Static: the target nor the obstacle moves 
     ## Random: the waypoint generation is left free from the start, 
     ##  depending on rlbench pathfinding any demo can be given
+    ## Static: the target nor the obstacle moves 
     def init_task(self) -> None:
       self.target = Shape("target")
       success_sensor =  ProximitySensor("success")

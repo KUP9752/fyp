@@ -9,7 +9,9 @@ from pyrep.objects import Object
 from rlbench.backend.spawn_boundary import SpawnBoundary
 
 class ReachTargetObsIndRandom(Task):
-
+    ## Independently Random: Meaning the obstacle and the target are 
+    ## sampled randomly and are placed within the vision cone of the wrist camera
+    ## there is a chance the obstacle might not be fully covered or even blocked at all
     def init_task(self) -> None:
       self.target = Shape("target")
       self.obs = Shape("obstacle")
