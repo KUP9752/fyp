@@ -1,0 +1,7 @@
+cam_type,task_name,demo_count,final_dists,final_dist_avg,has_reached
+wrist,ReachObs_Random,5,[0.83960591],0.8396059145649776,[False]
+wrist,ReachObs_Random,10,[0.44883016],0.44883015526026576,[False]
+wrist+l_shoulder,ReachObs_Random,5,[0.25723862],0.2572386243988095,[False]
+wrist+l_shoulder,ReachObs_Random,10,[0.44405013],0.4440501324808533,[False]
+wrist+r_shoulder,ReachObs_Random,5,[0.32575732],0.32575731979672734,[False]
+wrist+r_shoulder,ReachObs_Random,10,[0.13273583],0.13273583487216045,[False]

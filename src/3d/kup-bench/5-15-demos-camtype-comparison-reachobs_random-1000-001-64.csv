@@ -1,0 +1,7 @@
+cam_type,task_name,demo_count,final_dists,final_dist_avg,has_reached
+wrist,ReachObs_Random,5,"[0.74259812 0.73565423 0.75028073 0.76996145 0.75176999 0.75364354 0.77446394 0.73615445 0.76493157 0.7396055 ]",0.7519063525831581,[False False False False False False False False False False]
+wrist,ReachObs_Random,15,"[0.73788711 0.73228437 0.74798478 0.72609883 0.74038151 0.74313323 0.74523668 0.75150289 0.74489003 0.72743309]",0.7396832515889468,[False False False False False False False False False False]
+wrist+l_shoulder,ReachObs_Random,5,"[0.73968221 0.75988701 0.75226393 0.75459621 0.79309117 0.76091079 0.7478941  0.758607   0.73707489 0.7476806 ]",0.755168791251497,[False False False False False False False False False False]
+wrist+l_shoulder,ReachObs_Random,15,"[0.74557666 0.73917574 0.78514647 0.75103781 0.76346    0.78661058 0.73386856 0.78633468 0.7360338  0.73266204]",0.7559906343256131,[False False False False False False False False False False]
+wrist+r_shoulder,ReachObs_Random,5,"[0.74649445 0.73366158 0.7447545  0.79061479 0.76265026 0.75580228 0.74132332 0.7267235  0.75958941 0.75767448]",0.7519288576234433,[False False False False False False False False False False]
+wrist+r_shoulder,ReachObs_Random,15,"[0.73968604 0.72453191 0.74668805 0.72968219 0.77052621 0.73004723 0.7378963  0.74857893 0.72621758 0.73857268]",0.7392427126666925,[False False False False False False False False False False]
