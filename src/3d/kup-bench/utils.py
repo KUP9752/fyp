@@ -65,25 +65,34 @@ def get_task_name(task) -> str:
   else:
     raise ValueError("[utils - get_task_name] Task not found!")
 
-def request_demos_and_train_for_task(
+def demos_and_train_for_task(
     env: Environment,
     current_task: Type[Task],
     agent: Agent,
-    num_demos: int,
+    given_demos: int | list[Demo],
     save_model = False,
     live_demos = True, 
     **training_params
   ) -> tuple[TaskEnvironment, list[Demo]]:
   task_name = get_task_name(current_task) 
-  
-  ## load this task into env
   task_env = env.get_task(current_task) # removes all other loaded tasks
-  ## num_demos defined in the 
-  demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos)
-  agent.ingest(demos, **training_params)
+  
+  if isinstance(given_demos, int):
+    demo_count = given_demos
+    print(f"1- Requesting {given_demos} demos for task: {task_name}")
+    ## load this task into env
+    ## num_demos defined in the 
+    demos: list[Demo] = task_env.get_demos(demo_count, live_demos=live_demos)
+    agent.ingest(demos, **training_params)
+  elif isinstance(given_demos, list):
+    print(f"2- Using given demos for task: {task_name}")
+    demos = given_demos
+    demo_count = len(demos)
+    agent.ingest(given_demos, **training_params)
+  
   
   if save_model:
-    model_name = f"task-{task_name}-demo-{num_demos}-cam-{agent.cam_type}"
+    model_name = f"task-{task_name}-demo-{demo_count}-cam-{agent.cam_type}"
     model_path = f"./all-models/{model_name}.pth"
     agent.save_model(model_path)
   
@@ -95,23 +104,24 @@ def run_reach_task(
   env: Environment,
   task, ## any of Reach_* or ReachObs_* tasks
   cam_type: CamType,
-  demo_count: int,
+  demos: int | list[Demo],
   max_eplen: int | Literal["demo_max"] = "demo_max",
   **training_params
 ) -> tuple[list[float], bool]:
-  print(f"Training for {demo_count} demos for task: {get_task_name(task)}")
   ## new agent trained each time
   agent = Agent(env.action_shape[0], cam_type)
   
   ## request demos and train
-  task_env, demos = request_demos_and_train_for_task(
+  
+  task_env, demos = demos_and_train_for_task(
     env,
     task,
     agent,
-    demo_count,
+    demos,
     save_model=True,
     **training_params
   )
+    
   ## if max len is not specified make it the max of the givem demo
   if max_eplen == "demo_max":
     max_eplen = max(list(map(len, demos)))

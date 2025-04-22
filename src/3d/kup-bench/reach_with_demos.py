@@ -41,7 +41,7 @@ from utils import set_seed, get_task_name
 
 set_seed(42)
 
-num_demos = 20
+num_demos = 5
 cam_type = CamType.WRIST
 
 #%%
@@ -78,7 +78,7 @@ env.launch()
 
 #%%
 ## 3. Attach Task and create Agent
-task = ReachObs_RandomStatic
+task = ReachObs_Random
 task_env = env.get_task(task)
 agent = Agent(env.action_shape[0], cam_type)
 
@@ -89,21 +89,24 @@ task
 
 # %%
 ## 4. Request Demos
-
 # demos = []
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
+demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos)
+demos
 
-demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos, random_selection = True)
 # # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
 # # print(f"{demos = } | {type(demos) = } | {len(demos) = }")
 # print(f"Observations len: {list(map(len, demos))}")
 
+# %%
+## 5. Train
 training_params = {
   "epochs": 1000,
   "minibatch_size": 64,
   "lr": 1e-3,
+  "shuffle_obs_in_demo": False,
   "shuffle_data": False
 }
 agent.ingest(demos, **training_params) ## trains here
@@ -183,8 +186,8 @@ env.shutdown()
 
 # %%
 ## Random Testing Cell
-xs = np.zeros((3, 10, 2))
-xs = np.zeros((10), dtype=np.bool)
-xs[3]
+xs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
 
+print(len(xs))
+xs[:15]
 ## more testin 
