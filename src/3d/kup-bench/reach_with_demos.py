@@ -41,8 +41,8 @@ from utils import set_seed, get_task_name
 
 set_seed(42)
 
-num_demos = 5
-cam_type = CamType.WRIST
+num_demos = 10
+cam_type = CamType.WRIST | CamType.LEFT_SHOULDER
 
 #%%
 ## 2. Create Environment and Set Model Name
@@ -106,10 +106,13 @@ training_params = {
   "epochs": 1000,
   "minibatch_size": 64,
   "lr": 1e-3,
-  "shuffle_obs_in_demo": False,
-  "shuffle_data": False
+  "shuffle_obs_in_demo": True,
+  "shuffle_data": True
 }
-agent.ingest(demos, **training_params) ## trains here
+
+ingest_num = 10
+
+agent.ingest(demos[:ingest_num], **training_params) ## trains here
 agent.save_model(model_path)
 # %%
 task_env.variation_count()
@@ -186,8 +189,7 @@ env.shutdown()
 
 # %%
 ## Random Testing Cell
-xs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+bs = np.array([True, False, True, False], dtype=np.bool)
 
-print(len(xs))
-xs[:15]
+np.sum(bs)
 ## more testin 

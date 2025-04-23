@@ -106,6 +106,7 @@ def run_reach_task(
   cam_type: CamType,
   demos: int | list[Demo],
   max_eplen: int | Literal["demo_max"] = "demo_max",
+  within_err_dist: Optional[float] = None, ## allows the execution to finish early depending on if an error around the target is reached
   **training_params
 ) -> tuple[list[float], bool]:
   ## new agent trained each time
@@ -141,7 +142,12 @@ def run_reach_task(
     target = Object.get_object("target")
     distance = np.linalg.norm(gripper.get_position() - target.get_position())
     distances.append(distance)
-    if done:
+    
+    ## doing separately to make pylance happy
+    if within_err_dist is not None:
+      done = done or distance <= within_err_dist
+      
+    if done: 
       break
     
   return distances, done

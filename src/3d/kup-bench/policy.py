@@ -151,7 +151,7 @@ class Policy(nn.Module):
             minibatch_size: int = 32, ## size of the observations currently being used
             lr: float = 0.01,
             shuffle_data = False, 
-            shuffle_obs_in_demo = False,
+            shuffle_obs_in_demo = True,
             model_path: Optional[str] = None
   ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
