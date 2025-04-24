@@ -13,7 +13,7 @@ from rlbench.observation_config import ObservationConfig, CameraConfig
 from rlbench.tasks.reach_target_no_obs_side_r import ReachTargetNoObsSideR as ReachNoObs_SideR
 from rlbench.tasks.reach_target_no_obs_side_l import ReachTargetNoObsSideL as ReachNoObs_SideL
 from rlbench.tasks.reach_target_no_obs_central import ReachTargetNoObsCentral as ReachNoObs_Central
-from rlbench.tasks.reach_target_no_obs import ReachTargetNoObs as ReachNoObs_PlaceRandom
+from rlbench.tasks.reach_target_no_obs_random import ReachTargetNoObsRandom as ReachNoObs_PlaceRandom
 ## Obstacle
 from rlbench.tasks.reach_target_obs_static_left import ReachTargetObsStaticLeft as ReachObs_StaticLeft
 from rlbench.tasks.reach_target_obs_static import ReachTargetObsStatic as ReachObs_Static
@@ -78,9 +78,10 @@ env.launch()
 
 #%%
 ## 3. Attach Task and create Agent
-task = ReachObs_Random
+task = ReachNoObs_PlaceRandom
 task_env = env.get_task(task)
-agent = Agent(env.action_shape[0], cam_type)
+agent = Agent(env.action_shape[
+  0], cam_type)
 
 model_name = f"rwd-reach-{num_demos}-demo-{cam_type}-{get_task_name(task)}"
 model_path = f"./all-models/reach-with-demos/{model_name}.pth"
@@ -104,13 +105,13 @@ demos
 ## 5. Train
 training_params = {
   "epochs": 1000,
-  "minibatch_size": 64,
+  "minibatch_size": 32,
   "lr": 1e-3,
   "shuffle_obs_in_demo": True,
   "shuffle_data": True
 }
 
-ingest_num = 10
+ingest_num = 2
 
 agent.ingest(demos[:ingest_num], **training_params) ## trains here
 agent.save_model(model_path)
@@ -129,6 +130,7 @@ agent.load_model(model_path)
 #%%
 ## 6. Task Execution
 agent.policy.to("cpu")
+task_env = env.get_task(ReachNoObs_PlaceRandom)
 _, obs = task_env.reset()
 # plt.imshow(obs.wrist_rgb)
 count = 0
@@ -146,7 +148,7 @@ while not done:
   # print(f"{done = }")
   
   count += 1
-  if count == 80:
+  if count == 100:
     break
     
 print(f"{f"Done Successfull! done in {count} steps" if done else "Failed!"}")

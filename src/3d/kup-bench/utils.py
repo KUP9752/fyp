@@ -19,7 +19,7 @@ from pyrep.objects import Object
 from rlbench.tasks.reach_target_no_obs_side_r import ReachTargetNoObsSideR as ReachNoObs_SideR
 from rlbench.tasks.reach_target_no_obs_side_l import ReachTargetNoObsSideL as ReachNoObs_SideL
 from rlbench.tasks.reach_target_no_obs_central import ReachTargetNoObsCentral as ReachNoObs_Central
-from rlbench.tasks.reach_target_no_obs import ReachTargetNoObs as ReachNoObs_PlaceRandom
+from rlbench.tasks.reach_target_no_obs_random import ReachTargetNoObsRandom as ReachNoObs_PlaceRandom
 ## Obstacle
 from rlbench.tasks.reach_target_obs_static_left import ReachTargetObsStaticLeft as ReachObs_StaticLeft
 from rlbench.tasks.reach_target_obs_static import ReachTargetObsStatic as ReachObs_Static
@@ -61,7 +61,10 @@ def get_task_name(task) -> str:
   elif task == ReachObs_IndepRandom:
     return "ReachObs_IndRandom"
   ## Grasp
-  ## TODO:  
+  elif task == Grasp_Simple:
+    return "Grasp_Simple"
+  elif task == Grasp_ThenMove:
+    return "Grasp_ThenMove"
   else:
     raise ValueError("[utils - get_task_name] Task not found!")
 
