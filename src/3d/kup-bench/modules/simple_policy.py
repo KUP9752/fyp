@@ -10,38 +10,7 @@ from rlbench.demo import Demo
 from rlbench.backend.observation import Observation
 
 from tqdm import tqdm as progress
-
-
-from enum import Flag, auto
-
-
-class CamType(Flag):
-  WRIST = auto()
-  LEFT_SHOULDER = auto()
-  RIGHT_SHOULDER = auto()
-  
-  def __str__(self):
-    parts = []
-    if self & CamType.WRIST:
-      parts.append("wrist")
-    if self & CamType.LEFT_SHOULDER:
-      parts.append("l_shoulder")
-    if self & CamType.RIGHT_SHOULDER:
-      parts.append("r_shoulder")
-    
-    return "+".join(parts)
-  
-  @classmethod
-  ## recreates everytime, but couldn't find a good way to cache
-  def all_combinations(cls):
-    all_combs = []
-    for i in range(1, 2**len(CamType)):
-      comb = CamType(0)
-      for j in range(len(CamType)):
-        if i & (1 << j):
-          comb |= CamType(1 << j)
-      all_combs.append(comb)
-    return all_combs
+from modules.cam_type import CamType
 
 
 class DemoObsDataset(Dataset):
@@ -83,7 +52,7 @@ class DemoObsDataset(Dataset):
       images.append(rs_image)
     
     if not images:
-      raise ValueError("[policy - DemoObsDataSet - __getitem__] No images selected !")
+      raise ValueError("[simple_policy] - DemoObsDataSet - __getitem__] No images selected !")
       
     ## this allows multi rgb cameras   
     inputs = torch.cat(images, dim = 0)  ## cat on the colours channel
@@ -99,7 +68,7 @@ class Policy(nn.Module):
   def __init__(self, action_shape: int, cam_type: CamType = CamType.WRIST):
     super(Policy, self).__init__()
     self.cam_type = cam_type
-    print(f"[policy - Policy] Using {self.cam_type} as camera type")
+    print(f"[simple_policy] - Policy] Using {self.cam_type} as camera type")
     
     num_cams = 0
     if cam_type & CamType.WRIST:
@@ -110,7 +79,7 @@ class Policy(nn.Module):
       num_cams += 1
     
     if num_cams == 0:
-      raise ValueError("[policy - Policy] No cameras selected!")
+      raise ValueError("[simple_policy] - Policy] No cameras selected!")
     
     self.conv = nn.Sequential(
       nn.Conv2d(in_channels=3 * num_cams, out_channels=32, kernel_size=3, stride=1, padding=0),
@@ -225,7 +194,7 @@ class Agent(object):
         images.append(rs_image)
       
       if not images:
-        raise ValueError("[policy - Agent - act] No images selected !")
+        raise ValueError("[simple_policy] - Agent - act] No images selected !")
       
       torch_obs = torch.cat(images, dim = 0)  ## cat on the colours channel
       torch_obs = torch_obs.unsqueeze(0) ## add a batch dimension 1, 3 * num_cams, 64, 64

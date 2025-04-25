@@ -28,15 +28,19 @@ from rlbench.backend.observation import Observation
 from rlbench.demo import Demo
 
 from pyrep.const import RenderMode
-from pyrep.objects import Object
-
+from pyrep.objects import Object, VisionSensor, Shape
 import numpy as np
+import torch
 import torch.nn.functional as F
+
+from torchvision import models, transforms
+from PIL import Image, ImageDraw
 
 # from policy import  CamType
 
 from matplotlib import pyplot as plt
-from policy import Agent, CamType
+from modules.simple_policy import Agent
+from modules.cam_type import CamType
 from utils import set_seed, get_task_name
 
 set_seed(42)
@@ -65,7 +69,7 @@ obs_config.left_shoulder_camera = cam_config
 obs_config.overhead_camera = nocam_config
 obs_config.front_camera = nocam_config
 
-## active camera: wrist camera
+## active camera: wri camera
 obs_config.wrist_camera = cam_config
 
 
@@ -78,7 +82,7 @@ env.launch()
 
 #%%
 ## 3. Attach Task and create Agent
-task = ReachNoObs_PlaceRandom
+task = ReachObs_Random
 task_env = env.get_task(task)
 agent = Agent(env.action_shape[
   0], cam_type)
@@ -111,31 +115,86 @@ training_params = {
   "shuffle_data": True
 }
 
-ingest_num = 2
+ingest_num = 1
 
 agent.ingest(demos[:ingest_num], **training_params) ## trains here
 agent.save_model(model_path)
 # %%
-task_env.variation_count()
-# lens = list(map(len, demos))
-# print(f"Observations len: {lens}")
-# print(f"average {sum(lens)/len(lens)}")
-# print(f"max {max(lens)}")
+## _
+# task_env.variation_count()
 
+model = models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
+model.eval()
+def checkImage(image_arr):
+  # Load and preprocess the image
+  # image = Image.open("../../../assets/demo-trials-no_obs/tasks/static-tasks-camera/rshoulder-side_r.png")
+  image = Image.fromarray(image_arr)
+  image = image.convert("RGB")
+  
+  plt.imshow(image)
+  plt.axis('off')  # Hide axes
+  plt.show()
+
+  transform = transforms.Compose([
+    transforms.ToTensor()
+  ])
+  print(f"{image.size = }")
+  image_tensor = transform(image).unsqueeze(0)
+  print(f"{image_tensor.shape = }")
+
+  # Perform inference
+  with torch.no_grad():
+      prediction = model(image_tensor)
+
+  # Check detection confidence
+  threshold = 0.001  # Confidence score threshold
+  from pprint import pprint
+  pprint(prediction, indent = 2)
+
+  boxes_above_threshold = prediction[0]["boxes"][prediction[0]["scores"] > threshold]
+  print(f"{boxes_above_threshold = }")
+
+  # Draw bounding boxes on the image
+  draw = ImageDraw.Draw(image)
+  print(len(boxes_above_threshold))
+  for i, box in enumerate(boxes_above_threshold):
+      xmin, ymin, xmax, ymax = box
+      draw.rectangle([xmin, ymin, xmax, ymax], outline="red" if i % 2 == 0 else "blue", width=1)
+
+  # Display the image with bounding boxes
+  plt.imshow(image)
+  plt.axis('off')  # Hide axes
+  plt.show()
 
 # %%
 ## 5. Load Agent
-agent.load_model(model_path)
+# agent.load_model(model_path)
+
+
+def check_visibility(view_handle: str, target_handle: str, tolerance = 0.1):
+  cam = VisionSensor(view_handle)
+  target = Shape(target_handle)
+
+  rgb = cam.capture_rgb()
+  target_rbg = target.get_color()
+  
+  mask = np.all(np.abs(rgb - target_rbg) < tolerance, axis = -1)
+  visible_pxs = np.count_nonzero(mask)
+  print(f"{visible_pxs = }")
+  print(f"{mask.size =}")
+  
+  return visible_pxs / mask.size
 
 #%%
 ## 6. Task Execution
 agent.policy.to("cpu")
-task_env = env.get_task(ReachNoObs_PlaceRandom)
+task_env = env.get_task(ReachNoObs_Central)
 _, obs = task_env.reset()
-# plt.imshow(obs.wrist_rgb)
 count = 0
 done = False
 distances = []
+
+# %% Auto task Execution
 while not done:
   obs: Observation
   action = agent.act(obs).squeeze(0)
@@ -143,6 +202,12 @@ while not done:
   obs, reward, done = task_env.step(action)
   gripper = Object.get_object("Panda_gripper")
   target = Object.get_object("target")
+  
+  vis_score = check_visibility("cam_wrist", "target")
+  
+  print(f"{vis_score = }")
+  
+  
   distance = np.linalg.norm(gripper.get_position() - target.get_position())
   distances.append(distance)
   # print(f"{done = }")
@@ -150,10 +215,32 @@ while not done:
   count += 1
   if count == 100:
     break
-    
+  
 print(f"{f"Done Successfull! done in {count} steps" if done else "Failed!"}")
 print(f"Final distance: {distances[-1]}")
 
+# %% 
+# Single Step
+obs: Observation
+action = agent.act(obs).squeeze(0)
+obs, reward, done = task_env.step(action)
+gripper = Object.get_object("Panda_gripper")
+target = Object.get_object("target")
+
+vis_score = check_visibility("cam_wrist", "target", 0.5)
+plt.imshow(obs.wrist_rgb)
+plt.show()
+print(f"{vis_score = }")
+
+
+distance = np.linalg.norm(gripper.get_position() - target.get_position())
+distances.append(distance)
+
+if done:
+  print(f"{f"Done Successfull! done in {count} steps" if done else "Failed!"}")
+  print(f"Final distance: {distances[-1]}")
+
+checkImage(obs.wrist_rgb)
 #%%
 ## Getting the initial camera positions per task
 # tasks = [SideR, SideL, Central]

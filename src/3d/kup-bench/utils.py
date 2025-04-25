@@ -2,7 +2,8 @@ from typing import Literal, Optional, Type
 import torch
 import numpy as np
 
-from policy import Agent, CamType
+from modules.simple_policy import Agent
+from modules.cam_type import CamType
 
 from rlbench.environment import Environment
 from rlbench.task_environment import TaskEnvironment
