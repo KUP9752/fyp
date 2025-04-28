@@ -33,6 +33,7 @@ class CNNEncoder(nn.Module):
       nn.ReLU(inplace=False),
     )
     
+    
   ## given an image batch with multi cams (batch_size, num_cams, c, w, h)
   def forward(self, image):
     return self.conv_encode(image)
@@ -44,19 +45,22 @@ class MultiCamCnn(nn.Module):
     
     cnns = {}
     if cam_type & CamType.WRIST:
-      cnns[CamType.WRIST] = CNNEncoder()
+      cnns[f"{CamType.WRIST}"] = CNNEncoder()
     if cam_type & CamType.LEFT_SHOULDER:
-      cnns[CamType.LEFT_SHOULDER] = CNNEncoder()
+      cnns[f"{CamType.LEFT_SHOULDER}"] = CNNEncoder()
     if cam_type & CamType.RIGHT_SHOULDER:
-      cnns[CamType.RIGHT_SHOULDER] = CNNEncoder()
+      cnns[f"{CamType.RIGHT_SHOULDER}"] = CNNEncoder()
     
+    self.out_shape = (128, 2, 2) ## this is per CNNEncoder
+    
+    ## ModuleDict indexing must be done with strings
     self.conv_encodes = nn.ModuleDict(cnns)
     
   def forward(self, image, cam_type: CamType):
     
     assert cam_type.is_single_type(), f"[multi_cam_cnn] The camera type given '{cam_type}' has multiple cameras in it"
     
-    return self.conv_encodes[cam_type](image) #type: ignore lets see if this works
+    return self.conv_encodes[f"{cam_type}"](image) #type: ignore lets see if this works
     
     
         

@@ -21,8 +21,14 @@ class PolicyHead(nn.Module):
       super(PolicyHead, self).__init__()
       self.policy_mlp = nn.Sequential(
           nn.Linear(feature_dim, hidden_dim),
-          nn.ReLU(),
-          nn.Linear(hidden_dim, action_dim)
+          nn.ReLU(inplace=False),
+          nn.Dropout(0.2),
+          nn.Linear(hidden_dim, hidden_dim),
+          nn.ReLU(inplace=False),
+          nn.Dropout(0.2),
+          nn.Linear(hidden_dim, hidden_dim // 4),
+          nn.ReLU(inplace=False),
+          nn.Linear(hidden_dim // 4, action_dim)
       )
 
     def forward(self, fused_feature):
@@ -33,7 +39,7 @@ class CameraAttention(nn.Module):
     super(CameraAttention, self).__init__()
     self.attention_mlp = nn.Sequential(
       nn.Linear(feature_dim, hidden_dim),
-      nn.ReLU(),
+      nn.ReLU(inplace=False),
       nn.Linear(hidden_dim, 1)  # Output 1 score per camera
     )
 
@@ -74,20 +80,54 @@ class CamAttentionPolicy(nn.Module):
     self.policy_head = PolicyHead(feat_dim, action_shape)
   
   def forward(self, images: torch.Tensor):
-    batch_size, num_cams, c, h, w = images.shape
+    batch_size, num_cams, c, w, h = images.shape
     ## ensure same number of cams given
     assert num_cams == self.num_cams, f"[cam_attention_policy] Model Creation time num cams {self.num_cams} does not match the inference time tensor shape num cams: {num_cams}"
     
-    images = images.view(batch_size * num_cams, c, h, w) ## so I dont have to use lists which are cpu-side
+    device = next(self.parameters()).device
+    # MultiCamCNN forward pass per camera selected
     
-    ## TODO: find a way to call this with cam type given
-    feats: torch.Tensor = self.conv_encode.forward(images, )
-    feats = feats.mean(dim=[-2, -1]) ## Global Average Pooling (batch_size * num_cams, feats)
-    feats = feats.view(batch_size, num_cams, -1)
+    ## allocate empty tensors, if they stay empty they will not be `cat`ed
+    feats_size, x, y = self.conv_encode.out_shape
+    # wrist_feats = torch.empty(batch_size, c, w, h, device = device)
+    # lshoulder_feats = torch.empty(batch_size, c, w, h, device = device)
+    # rshoulder_feats = torch.empty(batch_size, c, w, h, device = device)
     
+    to_stack = []
+    
+    curr_index = 0 ## in the case earlier ones don't exist, for example only `RIGHT_SHOULDER`
+    if self.cam_type & CamType.WRIST:
+      wrist_feats = self.conv_encode(images[:, curr_index, :, :, :], CamType.WRIST)
+      curr_index += 1
+      to_stack.append(wrist_feats)
+    if self.cam_type & CamType.LEFT_SHOULDER:
+      lshoulder_feats = self.conv_encode(images[:, curr_index, :, :, :], CamType.LEFT_SHOULDER)
+      curr_index += 1
+      to_stack.append(lshoulder_feats)
+    if self.cam_type & CamType.RIGHT_SHOULDER:
+      rshoulder_feats = self.conv_encode(images[:, curr_index, :, :, :], CamType.RIGHT_SHOULDER)
+      to_stack.append(rshoulder_feats)
+    
+    print()
+    feats = torch.stack(to_stack, dim = 1)  ## dim = 1 so (batch_size, num_cams, feat_size, 2, 2)
+    print(f"1-{feats.shape = }")
+    
+    assert feats.shape[1] == self.num_cams, f"[cam_attention_policy] The image dimension ({feats.shape[1]}) is not the same as the number of cams being used for the policy ({self.num_cams})"  
+    
+    feats = feats.mean(dim=[-2, -1]) ## Global Average Pooling the other dimensions after feat size
+    feats = feats.view(batch_size, num_cams, -1) ## should be (batch_size, num_cams, feat_size) here
+    
+    print(f"2-{feats.shape = }")
+    # CameraWise attention
     attention_weights: torch.Tensor = self.cam_attention(feats)
+    print(f"{attention_weights.shape = }")
+    
     fused_feats = (attention_weights.unsqueeze(-1) * feats).sum(dim=1)
+    print(f"{fused_feats.shape = }")
+    
+    # Policy Head
     actions = self.policy_head(fused_feats)
+    print(f"{actions.shape = }")
     
     return actions # , attention_weights //NOTE: might need attention weights later on
     

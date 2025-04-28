@@ -94,7 +94,7 @@ model_path = f"./all-models/reach-with-demos/{model_name}.pth"
 print(model_name)
 task
 # %%
-## 4. Request Demos
+## 4. Request Demos3
 # demos = []
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
@@ -102,19 +102,20 @@ task
 demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos)
 demos
 
+
 # # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
 # # print(f"{demos = } | {type(demos) = } | {len(demos) = }")
 # print(f"Observations len: {list(map(len, demos))}")
-
-
+# %%
+agent.policy
 # %%
 ## 5. Train
 training_params = {
   "epochs": 1000,
-  "minibatch_size": 32,
-  "lr": 1e-3,
-  "shuffle_obs_in_demo": True,
-  "shuffle_data": True
+  "minibatch_size": 64,
+  "lr": 1e-2,
+  "shuffle_obs_in_demo": False,
+  "shuffle_data": False
 }
 
 ingest_num = 10
@@ -285,4 +286,11 @@ env.shutdown()
 
 # %%
 ## Random Testing Cell
+from modules.cam_type  import CamType
+import torch
+ts = torch.empty(10, 128, 2, 2)
+xs = torch.ones(10, 128, 2, 2)
+
+torch.stack([ts, xs], dim = 1).shape
+
 ## more testin 
