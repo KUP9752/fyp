@@ -12,12 +12,13 @@ from rlbench.backend.observation import Observation
 from tqdm import tqdm as progress
 from modules.cam_type import CamType
 
-from demo_obs_dataset import DemoObsDataset
+from modules.demo_obs_dataset import DemoObsDataset
+
 
 ## This is made for image sizes of 64x64 and now multi cam setups
-class Policy(nn.Module):
+class SimplePolicy(nn.Module):
   def __init__(self, action_shape: int, cam_type: CamType = CamType.WRIST):
-    super(Policy, self).__init__()
+    super(SimplePolicy, self).__init__()
     self.cam_type = cam_type
     print(f"[simple_policy] - Policy] Using {self.cam_type} as camera type")
     
@@ -71,7 +72,7 @@ class Policy(nn.Module):
             minibatch_size: int = 32, ## size of the observations currently being used
             lr: float = 0.01,
             shuffle_data = False, 
-            shuffle_obs_in_demo = True,
+            shuffle_obs_in_demo = False,
             model_path: Optional[str] = None
   ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -87,7 +88,8 @@ class Policy(nn.Module):
     ## NOTE: suggested nn.Smooth1Loss()
     optimiser = optim.Adam(model.parameters(), lr = lr)
     
-    dataset = DemoObsDataset(demos, self.cam_type, shuffle_obs=shuffle_obs_in_demo)
+    ## 'cat' makes sure to return all the images fuxed together (batch_size, 3 * num_cam, W, H)
+    dataset = DemoObsDataset(demos, self.cam_type, shuffle_obs=shuffle_obs_in_demo, get_type="cat")
     loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=shuffle_data) ## shuffling makes it worse
     # print(f"Dataset Size: {len(dataset)}")
     
@@ -104,7 +106,7 @@ class Policy(nn.Module):
         loss.backward()
         optimiser.step()
         running_loss += loss.item()
-        loss = running_loss / len(demos)
+        loss = running_loss / len(loader)
         self.losses[epoch] = loss
       
     print(f"Done Training Policy on {len(demos)} Demos") 
@@ -112,51 +114,3 @@ class Policy(nn.Module):
     if model_path:
       torch.save(self.state_dict(), f"{model_path}")
 
-class Agent(object):
-
-    def __init__(self, action_shape, cam_type = CamType.WRIST):
-      self.cam_type = cam_type
-      self.action_shape = action_shape
-      self.policy = Policy(action_shape, cam_type)
-
-    def ingest(self, demos: list[Demo], **training_params):
-      self.policy.train_policy(demos, **training_params)
-      
-    def act(self, obs:  Observation) -> torch.Tensor:
-      # gripper = [1.0]  # Always open
-      # return np.concatenate([arm, gripper], axis=-1)
-      
-      self.policy.eval()
-      images = []
-      if self.cam_type & CamType.WRIST:
-        # print(f"Using Wrist Image")
-        wrist_image = torch.tensor(obs.wrist_rgb, dtype = torch.float32)
-        wrist_image = torch.permute(wrist_image, (2, 0, 1))   ## 64, 64, 3  -> 3, 64, 64
-        images.append(wrist_image)
-      if self.cam_type & CamType.LEFT_SHOULDER:
-        # print(f"Using L Shouulder Image")
-        ls_image = torch.tensor(obs.left_shoulder_rgb, dtype = torch.float32)
-        ls_image = torch.permute(ls_image, (2, 0, 1))   ## 64, 64, 3  -> 3, 64, 64
-        images.append(ls_image)
-      if self.cam_type & CamType.RIGHT_SHOULDER:
-        # print(f"Using R Shoulder Image")
-        rs_image = torch.tensor(obs.right_shoulder_rgb, dtype = torch.float32)
-        rs_image = torch.permute(rs_image, (2, 0, 1))   ## 64, 64, 3  -> 3, 64, 64
-        images.append(rs_image)
-      
-      if not images:
-        raise ValueError("[simple_policy] - Agent - act] No images selected !")
-      
-      torch_obs = torch.cat(images, dim = 0)  ## cat on the colours channel
-      torch_obs = torch_obs.unsqueeze(0) ## add a batch dimension 1, 3 * num_cams, 64, 64
-      with torch.no_grad():
-        pred = self.policy(torch_obs)
-      return pred
-        
-    def save_model(self, model_path: str):
-      torch.save(self.policy.state_dict(), f'{model_path}')
-      print(f"Saved Model under '{model_path}'")
-      
-      
-    def load_model(self, model_path: str):
-      self.policy.load_state_dict(torch.load(f'{model_path}'))  

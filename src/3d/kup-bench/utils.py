@@ -2,7 +2,7 @@ from typing import Literal, Optional, Type
 import torch
 import numpy as np
 
-from modules.simple_policy import Agent
+from modules.agent import Agent
 from modules.cam_type import CamType
 
 from rlbench.environment import Environment
@@ -31,12 +31,6 @@ from rlbench.tasks.reach_target_obs_ind_random import ReachTargetObsIndRandom as
 from rlbench.tasks.simple_grasp import SimpleGrasp as Grasp_Simple
 from rlbench.tasks.grasp_and_move import GraspAndMove as Grasp_ThenMove
 
-
-
-def set_seed(seed = 42):
-  torch.manual_seed(seed)
-  np.random.seed(seed)
-  
   
 ## kup-bench helpers
 
@@ -107,6 +101,7 @@ def demos_and_train_for_task(
 def run_reach_task(
   env: Environment,
   task, ## any of Reach_* or ReachObs_* tasks
+  policy_type: Literal["simple", "cam_attention"],
   cam_type: CamType,
   demos: int | list[Demo],
   max_eplen: int | Literal["demo_max"] = "demo_max",
@@ -114,7 +109,7 @@ def run_reach_task(
   **training_params
 ) -> tuple[list[float], bool]:
   ## new agent trained each time
-  agent = Agent(env.action_shape[0], cam_type)
+  agent = Agent(env.action_shape[0], policy_type, cam_type)
   
   ## request demos and train
   

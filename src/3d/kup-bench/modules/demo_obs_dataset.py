@@ -1,18 +1,30 @@
+from typing import Literal
 from torch.utils.data import Dataset
 
 import torch
 import numpy as np
 
 from rlbench.demo import Demo
-from rlbench.backend.observation import Observation
-from cam_type import CamType
+from modules.cam_type import CamType
+from seed import SEED
+
+
 
 class DemoObsDataset(Dataset):
-  def __init__(self, demos: list[Demo], cam_type: CamType, shuffle_obs: bool):
+  def __init__(self,
+    demos: list[Demo],
+    cam_type: CamType,
+    shuffle_obs: bool,
+    get_type: Literal["cat", "stack"]
+  ):
+    
+    if get_type not in ["cat", "stack"]:
+      raise ValueError("[demo_obs_dataset] 'get_type' is assigned an incorrect option")
+    self.get_type = get_type
+    
     self.cam_type = cam_type
     self.all_data = []
-    seed = 42
-    rng = np.random.default_rng(seed)
+    rng = np.random.default_rng(SEED)
     for demo in demos:
       obss = demo._observations
       # print(f"[loader] Observations len: {len(obss)}")
@@ -26,9 +38,8 @@ class DemoObsDataset(Dataset):
 
   def __getitem__(self, idx):
     obs = self.all_data[idx]
-    
+    ## NOTE: Hard coded only using 3 cameras currently
     images = []
-    
     ## TODO: add some transformations and other augmentations to make generalisation better?
     if self.cam_type & CamType.WRIST:
       # print(f"Using Wrist Image")
@@ -47,12 +58,16 @@ class DemoObsDataset(Dataset):
       images.append(rs_image)
     
     if not images:
-      raise ValueError("[simple_policy] - DemoObsDataSet - __getitem__] No images selected !")
+      raise ValueError("[demo_obs_dataset] - DemoObsDataSet - __getitem__] No images selected !")
       
     ## this allows multi rgb cameras   
-    inputs = torch.cat(images, dim = 0)  ## cat on the colours channel
-    ## inputs shape should now be (3 * num_cams, 64, 64)
+    if self.get_type == "cat":
+      inputs = torch.cat(images, dim = 0)  ## cat on the colours channel
+      ## inputs shape should now be (3 * num_cams, 64, 64)
+    elif self.get_type == "stack":
+      inputs = torch.stack(images, dim = 0)
+      ## inputs shape should now be (num_cams, 3, 64, 64)
     labels = np.append(obs.joint_velocities, obs.gripper_open)
     labels = torch.tensor(labels, dtype = torch.float32)
     
-    return inputs, labels
+    return inputs, labels # type: ignore (unbound 'inputs' will raise in `__init__`)

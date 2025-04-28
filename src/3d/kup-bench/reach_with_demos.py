@@ -39,11 +39,12 @@ from PIL import Image, ImageDraw
 # from policy import  CamType
 
 from matplotlib import pyplot as plt
-from modules.simple_policy import Agent
+from modules.agent import Agent
 from modules.cam_type import CamType
-from utils import set_seed, get_task_name
+from utils import get_task_name
+from seed import set_seed
 
-set_seed(42)
+set_seed()
 
 num_demos = 10
 cam_type = CamType.WRIST | CamType.LEFT_SHOULDER
@@ -84,8 +85,7 @@ env.launch()
 ## 3. Attach Task and create Agent
 task = ReachObs_Random
 task_env = env.get_task(task)
-agent = Agent(env.action_shape[
-  0], cam_type)
+agent = Agent(env.action_shape[0], "simple", cam_type)
 
 model_name = f"rwd-reach-{num_demos}-demo-{cam_type}-{get_task_name(task)}"
 model_path = f"./all-models/reach-with-demos/{model_name}.pth"
@@ -278,7 +278,4 @@ env.shutdown()
 
 # %%
 ## Random Testing Cell
-bs = np.array([True, False, True, False], dtype=np.bool)
-
-np.sum(bs)
 ## more testin 
