@@ -20,3 +20,4 @@ def check_visibility(view_handle: str, target_handle: str, tolerance = 0.1):
   return visible_pxs / mask.size
 
 
+
