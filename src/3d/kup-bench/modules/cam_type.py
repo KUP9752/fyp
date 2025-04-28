@@ -16,6 +16,9 @@ class CamType(Flag):
     
     return "+".join(parts)
   
+  def is_single_type(self) -> bool:
+    return self.value != 0 and self.value & (self.value - 1) == 0
+  
   @classmethod
   ## recreates everytime, but couldn't find a good way to cache
   def all_combinations(cls):

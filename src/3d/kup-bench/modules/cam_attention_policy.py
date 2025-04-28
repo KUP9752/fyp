@@ -14,16 +14,16 @@ from tqdm import tqdm as progress
 from modules.cam_type import CamType
 
 from modules.demo_obs_dataset import DemoObsDataset
-
+from modules.multi_cam_cnn import MultiCamCnn
 
 class PolicyHead(nn.Module):
     def __init__(self, feature_dim, action_dim, hidden_dim=256):
-        super(PolicyHead, self).__init__()
-        self.policy_mlp = nn.Sequential(
-            nn.Linear(feature_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, action_dim)
-        )
+      super(PolicyHead, self).__init__()
+      self.policy_mlp = nn.Sequential(
+          nn.Linear(feature_dim, hidden_dim),
+          nn.ReLU(),
+          nn.Linear(hidden_dim, action_dim)
+      )
 
     def forward(self, fused_feature):
         return self.policy_mlp(fused_feature)  # (batch_size, action_dim)
@@ -43,8 +43,7 @@ class CameraAttention(nn.Module):
     scores = scores.squeeze(-1)            # (batch_size, num_cameras)
 
     return F.softmax(scores, dim=1)  # (batch_size, num_cameras)
-
-
+  
 class CamAttentionPolicy(nn.Module):
   def __init__(
     self, 
@@ -68,20 +67,7 @@ class CamAttentionPolicy(nn.Module):
     if self.num_cams == 0:
       raise ValueError("[cam_attention_policy] - Policy] No cameras selected!")
     
-    self.conv_encode = nn.Sequential(
-      nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=1, padding=0),
-      nn.MaxPool2d(kernel_size=(2, 2), stride=2, padding=0),
-      nn.ReLU(inplace=False),
-      nn.Conv2d(in_channels=32, out_channels=48, kernel_size=3, stride=1, padding=0),
-      nn.MaxPool2d(kernel_size=(2, 2), stride=2, padding=0),
-      nn.ReLU(inplace=False),
-      nn.Conv2d(in_channels=48, out_channels=64, kernel_size=3, stride=1, padding=0),
-      nn.MaxPool2d(kernel_size=(2, 2), stride=2, padding=0),
-      nn.ReLU(inplace=False),
-      nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=0),
-      nn.MaxPool2d(kernel_size=(2, 2), stride=2, padding=0),
-      nn.ReLU(inplace=False),
-    )
+    self.conv_encode = MultiCamCnn(cam_type)
     
     self.cam_attention = CameraAttention(feat_dim, cam_att_hidden_dim)
     
@@ -94,7 +80,8 @@ class CamAttentionPolicy(nn.Module):
     
     images = images.view(batch_size * num_cams, c, h, w) ## so I dont have to use lists which are cpu-side
     
-    feats: torch.Tensor = self.conv_encode(images)
+    ## TODO: find a way to call this with cam type given
+    feats: torch.Tensor = self.conv_encode.forward(images, )
     feats = feats.mean(dim=[-2, -1]) ## Global Average Pooling (batch_size * num_cams, feats)
     feats = feats.view(batch_size, num_cams, -1)
     
