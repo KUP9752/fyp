@@ -53,9 +53,9 @@ class CamAttentionPolicy(nn.Module):
     feat_dim = 128,
     cam_att_hidden_dim = 64,
   ):
+    self.cam_type = cam_type
     super(CamAttentionPolicy, self).__init__()
     print(f"[cam_attention_policy] - Policy] Using {self.cam_type} as camera type")
-    self.cam_type = cam_type
     
     self.num_cams = 0
     if cam_type & CamType.WRIST:
@@ -102,7 +102,7 @@ class CamAttentionPolicy(nn.Module):
     fused_feats = (attention_weights.unsqueeze(-1) * feats).sum(dim=1)
     actions = self.policy_head(fused_feats)
     
-    return actions, attention_weights
+    return actions # , attention_weights //NOTE: might need attention weights later on
     
 
   def train_policy(self, 
@@ -118,7 +118,7 @@ class CamAttentionPolicy(nn.Module):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Camera: {self.cam_type}")
     
-    print(f"Training Params: \n\t{epochs = }, \n\t{minibatch_size = }, \n\t{lr = }, \n\t{model_path = }, \n\t{shuffle_data = },\n\t{shuffle_obs_in_demo = } \n\t{device}\n")
+    print(f"Training Params: \n\t{epochs = }, \n\t{minibatch_size = }, \n\t{lr = }, \n\t{lr_eta_min =}, \n\t{model_path = }, \n\t{shuffle_data = },\n\t{shuffle_obs_in_demo = }, \n\t{device}\n")
     
     
     model = self.to(device)
@@ -143,7 +143,7 @@ class CamAttentionPolicy(nn.Module):
       for inputs, labels in loader:
         inputs, labels = inputs.to(device), labels.to(device)
         optimiser.zero_grad()
-        pred_actions, attn_weights = model(inputs)
+        pred_actions = model(inputs)
         action_loss = loss_fn(pred_actions, labels)
         action_loss.backward()
         optimiser.step()

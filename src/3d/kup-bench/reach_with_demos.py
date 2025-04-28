@@ -83,15 +83,16 @@ env.launch()
 
 #%%
 ## 3. Attach Task and create Agent
+pol_type = "cam_attention"
+
 task = ReachObs_Random
 task_env = env.get_task(task)
-agent = Agent(env.action_shape[0], "simple", cam_type)
+agent = Agent(env.action_shape[0], pol_type, cam_type)
 
-model_name = f"rwd-reach-{num_demos}-demo-{cam_type}-{get_task_name(task)}"
+model_name = f"rwd-reach-{num_demos}-demo-{cam_type}-{get_task_name(task)}-{pol_type}"
 model_path = f"./all-models/reach-with-demos/{model_name}.pth"
 print(model_name)
 task
-
 # %%
 ## 4. Request Demos
 # demos = []
@@ -105,6 +106,7 @@ demos
 # # print(f"{demos = } | {type(demos) = } | {len(demos) = }")
 # print(f"Observations len: {list(map(len, demos))}")
 
+
 # %%
 ## 5. Train
 training_params = {
@@ -115,60 +117,59 @@ training_params = {
   "shuffle_data": True
 }
 
-ingest_num = 1
+ingest_num = 10
 
 agent.ingest(demos[:ingest_num], **training_params) ## trains here
 agent.save_model(model_path)
 # %%
-## _
+## Some detection trials
 # task_env.variation_count()
 
-model = models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
-model.eval()
-def checkImage(image_arr):
-  # Load and preprocess the image
-  # image = Image.open("../../../assets/demo-trials-no_obs/tasks/static-tasks-camera/rshoulder-side_r.png")
-  image = Image.fromarray(image_arr)
-  image = image.convert("RGB")
+# model = models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
+# model.eval()
+# def checkImage(image_arr):
+#   # Load and preprocess the image
+#   # image = Image.open("../../../assets/demo-trials-no_obs/tasks/static-tasks-camera/rshoulder-side_r.png")
+#   image = Image.fromarray(image_arr)
+#   image = image.convert("RGB")
   
-  plt.imshow(image)
-  plt.axis('off')  # Hide axes
-  plt.show()
+#   plt.imshow(image)
+#   plt.axis('off')  # Hide axes
+#   plt.show()
 
-  transform = transforms.Compose([
-    transforms.ToTensor()
-  ])
-  print(f"{image.size = }")
-  image_tensor = transform(image).unsqueeze(0)
-  print(f"{image_tensor.shape = }")
+#   transform = transforms.Compose([
+#     transforms.ToTensor()
+#   ])
+#   print(f"{image.size = }")
+#   image_tensor = transform(image).unsqueeze(0)
+#   print(f"{image_tensor.shape = }")
 
-  # Perform inference
-  with torch.no_grad():
-      prediction = model(image_tensor)
+#   # Perform inference
+#   with torch.no_grad():
+#       prediction = model(image_tensor)
 
-  # Check detection confidence
-  threshold = 0.001  # Confidence score threshold
-  from pprint import pprint
-  pprint(prediction, indent = 2)
+#   # Check detection confidence
+#   threshold = 0.001  # Confidence score threshold
+#   from pprint import pprint
+#   pprint(prediction, indent = 2)
 
-  boxes_above_threshold = prediction[0]["boxes"][prediction[0]["scores"] > threshold]
-  print(f"{boxes_above_threshold = }")
+#   boxes_above_threshold = prediction[0]["boxes"][prediction[0]["scores"] > threshold]
+#   print(f"{boxes_above_threshold = }")
 
-  # Draw bounding boxes on the image
-  draw = ImageDraw.Draw(image)
-  print(len(boxes_above_threshold))
-  for i, box in enumerate(boxes_above_threshold):
-      xmin, ymin, xmax, ymax = box
-      draw.rectangle([xmin, ymin, xmax, ymax], outline="red" if i % 2 == 0 else "blue", width=1)
+#   # Draw bounding boxes on the image
+#   draw = ImageDraw.Draw(image)
+#   print(len(boxes_above_threshold))
+#   for i, box in enumerate(boxes_above_threshold):
+#       xmin, ymin, xmax, ymax = box
+#       draw.rectangle([xmin, ymin, xmax, ymax], outline="red" if i % 2 == 0 else "blue", width=1)
 
-  # Display the image with bounding boxes
-  plt.imshow(image)
-  plt.axis('off')  # Hide axes
-  plt.show()
+#   # Display the image with bounding boxes
+#   plt.imshow(image)
+#   plt.axis('off')  # Hide axes
+#   plt.show()
 
 # %%
-## 5. Load Agent
-# agent.load_model(model_path)
+## Check Visibility
 
 
 def check_visibility(view_handle: str, target_handle: str, tolerance = 0.1):
@@ -188,13 +189,19 @@ def check_visibility(view_handle: str, target_handle: str, tolerance = 0.1):
 #%%
 ## 6. Task Execution
 agent.policy.to("cpu")
-task_env = env.get_task(ReachNoObs_Central)
+# task_env = env.get_task(ReachNoObs_Central)
 _, obs = task_env.reset()
 count = 0
 done = False
 distances = []
 
 # %% Auto task Execution
+agent.policy.to("cpu")
+# task_env = env.get_task(ReachNoObs_Central)
+_, obs = task_env.reset()
+count = 0
+done = False
+distances = []
 while not done:
   obs: Observation
   action = agent.act(obs).squeeze(0)
@@ -240,7 +247,7 @@ if done:
   print(f"{f"Done Successfull! done in {count} steps" if done else "Failed!"}")
   print(f"Final distance: {distances[-1]}")
 
-checkImage(obs.wrist_rgb)
+# checkImage(obs.wrist_rgb)
 #%%
 ## Getting the initial camera positions per task
 # tasks = [SideR, SideL, Central]

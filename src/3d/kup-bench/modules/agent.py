@@ -72,7 +72,7 @@ class Agent(object):
           torch_obs = torch.cat(images, dim = 0)  
         case "stack":
           ## stacked on new channel (num_cams, 3, W, H)
-          torch_obs = torch.cat(images, dim = 0)  
+          torch_obs = torch.stack(images, dim = 0)  
         case _:
           raise ValueError(f"[agent - act] Incorrect 'append_type' (f{self.append_type}) for collating tensors")
         
