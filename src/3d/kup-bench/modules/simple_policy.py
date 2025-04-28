@@ -35,6 +35,7 @@ class DemoObsDataset(Dataset):
     
     images = []
     
+    ## TODO: add some transformations and other augmentations to make generalisation better?
     if self.cam_type & CamType.WRIST:
       # print(f"Using Wrist Image")
       wrist_image = torch.tensor(obs.wrist_rgb, dtype = torch.float32)

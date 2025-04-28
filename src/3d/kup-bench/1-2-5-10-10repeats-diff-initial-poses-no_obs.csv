@@ -1,0 +1,5 @@
+task_name,demo_count,final_dist_avg,reached_count
+Reach_PlaceRandom,1,0.29650342,3
+Reach_PlaceRandom,2,0.22054604,3
+Reach_PlaceRandom,5,0.16303042,5
+Reach_PlaceRandom,10,0.21016857,2
