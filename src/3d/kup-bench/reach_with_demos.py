@@ -50,7 +50,7 @@ from seed import set_seed
 set_seed()
 
 num_demos = 10
-cam_type = CamType.WRIST | CamType.LEFT_SHOULDER
+cam_type = CamType.WRIST| CamType.RIGHT_SHOULDER
 
 #%%
 ## 2. Create Environment and Set Model Name
@@ -102,7 +102,7 @@ task
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
-demos: list[Demo] = task_env.get_demos(3, live_demos=live_demos)
+demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos)
 demos
 
 
@@ -121,7 +121,7 @@ training_params = {
   "shuffle_data": False
 }
 
-ingest_num = 10
+ingest_num = 1
 
 agent.ingest(demos[:ingest_num], **training_params) ## trains here
 agent.save_model(model_path)
@@ -209,15 +209,18 @@ distances = []
 while not done:
   obs: Observation
   
-  action = agent.act(obs).squeeze(0)
+  action, att_weights = agent.act(obs)
+  print(f"{att_weights = }")
+  
+  action = action.squeeze(0)
   # print(f"{action.shape = }")
   obs, reward, done = task_env.step(action)
   gripper = Object.get_object("Panda_gripper")
   target = Object.get_object("target")
   
-  vis_score = check_visibility("cam_wrist", "target")
+  # vis_score = check_visibility("cam_wrist", "target")
   
-  print(f"{vis_score = }")
+  # print(f"{vis_score = }")
   
   
   distance = np.linalg.norm(gripper.get_position() - target.get_position())
@@ -225,8 +228,7 @@ while not done:
   # print(f"{done = }")
   
   count += 1
-  if count == 100:
-    break
+  if count == 100:break
   
 print(f"{f"Done Successfull! done in {count} steps" if done else "Failed!"}")
 print(f"Final distance: {distances[-1]}")

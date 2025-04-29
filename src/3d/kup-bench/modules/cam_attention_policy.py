@@ -40,15 +40,22 @@ class CameraAttention(nn.Module):
     self.attention_mlp = nn.Sequential(
       nn.Linear(feature_dim, hidden_dim),
       nn.ReLU(inplace=False),
+      nn.LayerNorm(hidden_dim), ## NOTE: did not help attention collapse, still extremes but flipped the other way [0, 1] -> [0.99, 0.01] 
       nn.Linear(hidden_dim, 1)  # Output 1 score per camera
     )
 
-  def forward(self, features):  
+  def forward(self, features, temperature: float | None = None):  
     # features: (batch_size, num_cameras, feature_dim)
     scores: torch.Tensor = self.attention_mlp(features)  # (batch_size, num_cameras, 1)
     scores = scores.squeeze(-1)            # (batch_size, num_cameras)
 
-    return F.softmax(scores, dim=1)  # (batch_size, num_cameras), do softmax over the different camera inputs
+    ## //NOTE: normalisation, att_weights were always [0, 1] or leaning towards one cam, need normalisation
+    scores = scores - scores.max(dim=1, keepdim=True)[0]
+    
+    if temperature:
+      return F.softmax(scores / temperature, dim=1)      
+    else:
+      return F.softmax(scores, dim=1)  # (batch_size, num_cameras), do softmax over the different camera inputs
   
 class CamAttentionPolicy(nn.Module):
   def __init__(
@@ -84,11 +91,12 @@ class CamAttentionPolicy(nn.Module):
     ## ensure same number of cams given
     assert num_cams == self.num_cams, f"[cam_attention_policy] Model Creation time num cams {self.num_cams} does not match the inference time tensor shape num cams: {num_cams}"
     
-    device = next(self.parameters()).device
+    # device = next(self.parameters()).device
     # MultiCamCNN forward pass per camera selected
     
     ## allocate empty tensors, if they stay empty they will not be `cat`ed
-    feats_size, x, y = self.conv_encode.out_shape
+    # feats_size, x, y = self.conv_encode.out_shape
+    
     # wrist_feats = torch.empty(batch_size, c, w, h, device = device)
     # lshoulder_feats = torch.empty(batch_size, c, w, h, device = device)
     # rshoulder_feats = torch.empty(batch_size, c, w, h, device = device)
@@ -108,26 +116,26 @@ class CamAttentionPolicy(nn.Module):
       rshoulder_feats = self.conv_encode(images[:, curr_index, :, :, :], CamType.RIGHT_SHOULDER)
       to_stack.append(rshoulder_feats)
     
-    print()
+    # print()
     feats = torch.stack(to_stack, dim = 1)  ## dim = 1 so (batch_size, num_cams, feat_size, 2, 2)
-    print(f"1-{feats.shape = }")
+    # print(f"1-{feats.shape = }")
     
     assert feats.shape[1] == self.num_cams, f"[cam_attention_policy] The image dimension ({feats.shape[1]}) is not the same as the number of cams being used for the policy ({self.num_cams})"  
     
     feats = feats.mean(dim=[-2, -1]) ## Global Average Pooling the other dimensions after feat size
     feats = feats.view(batch_size, num_cams, -1) ## should be (batch_size, num_cams, feat_size) here
     
-    print(f"2-{feats.shape = }")
+    # print(f"2-{feats.shape = }")
     # CameraWise attention
     attention_weights: torch.Tensor = self.cam_attention(feats)
-    print(f"{attention_weights.shape = }")
+    # print(f"{attention_weights.shape = }")
     
     fused_feats = (attention_weights.unsqueeze(-1) * feats).sum(dim=1)
-    print(f"{fused_feats.shape = }")
+    # print(f"{fused_feats.shape = }")
     
     # Policy Head
     actions = self.policy_head(fused_feats)
-    print(f"{actions.shape = }")
+    # print(f"{actions.shape = }")
     
     return actions, attention_weights #//NOTE: might need attention weights later on
     
@@ -173,6 +181,17 @@ class CamAttentionPolicy(nn.Module):
         pred_actions, att_weights = model(inputs)
         action_loss = loss_fn(pred_actions, labels)
         action_loss.backward()
+        
+        print(f"{att_weights = }")
+        ## checking if the wrist CNN is improving
+        for name, param in self.conv_encode.named_parameters():
+          if f"{CamType.WRIST}" in name:
+            if param.grad is None:
+              print(f"{name}: No Gradient")
+            else:
+              print(f"{name}: grad mean = {param.grad.mean().item(): .5f}, grad std = {param.grad.std().item(): .5f}")
+              
+        
         optimiser.step()
         scheduler.step()
         running_loss += action_loss.item()
