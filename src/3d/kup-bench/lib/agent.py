@@ -10,7 +10,7 @@ from lib.policy_type import PolicyType
 
 import torch
 import numpy as np
-from utils import pick_obs_from_cam
+from lib.utils import pick_obs_from_cam
 
 class Agent(object):
 

@@ -44,7 +44,7 @@ from lib.agent import Agent
 from lib.cam_type import CamType
 from lib.policy_type import PolicyType
 
-from utils import get_task_name
+from lib.utils import get_task_name
 from seed import set_seed
 
 set_seed()
@@ -207,7 +207,7 @@ ts = torch.tensor(img)
 ts = ts.permute([2, 0, 1])
 ts.shape
 
-score  = agent.policy._differentiable_colour_score(ts, tolerance = 0.2, softness=0)
+score = agent.policy._differentiable_colour_score(ts, tolerance = 0.2, softness=0)
 plt.imshow(img)
 score
 

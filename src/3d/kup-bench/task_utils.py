@@ -5,6 +5,7 @@ import numpy as np
 from lib.agent import Agent
 from lib.cam_type import CamType
 from lib.policy_type import PolicyType
+from lib.utils import get_task_name
 
 from rlbench.environment import Environment
 from rlbench.task_environment import TaskEnvironment
@@ -34,46 +35,6 @@ from rlbench.tasks.grasp_and_move import GraspAndMove as Grasp_ThenMove
 
   
 ## kup-bench helpers
-
-def get_task_name(task) -> str:
-  ## Reach No Obs
-  if task == ReachNoObs_Central:
-    return "Reach_Central"
-  elif task == ReachNoObs_SideL:
-    return "Reach_SideLeft"
-  elif task == ReachNoObs_SideR:
-    return "Reach_SideRight"
-  elif task == ReachNoObs_PlaceRandom:
-    return "Reach_PlaceRandom"
-  ## Reach with Obstacles
-  elif task == ReachObs_StaticLeft:
-    return "ReachObs_StaticLeft"
-  elif task == ReachObs_Static:
-    return "ReachObs_Static"
-  elif task == ReachObs_RandomStatic:
-    return "ReachObs_RandomStatic"
-  elif task == ReachObs_Random:
-    return "ReachObs_Random"
-  elif task == ReachObs_IndepRandom:
-    return "ReachObs_IndRandom"
-  ## Grasp
-  elif task == Grasp_Simple:
-    return "Grasp_Simple"
-  elif task == Grasp_ThenMove:
-    return "Grasp_ThenMove"
-  else:
-    raise ValueError("[utils - get_task_name] Task not found!")
-
-def pick_obs_from_cam(cam_type: CamType, obs: Observation) -> np.ndarray:
-  match cam_type:
-    case CamType.WRIST:
-      return obs.wrist_rgb
-    case CamType.LEFT_SHOULDER:
-      return obs.left_shoulder_rgb
-    case CamType.RIGHT_SHOULDER:
-      return obs.right_shoulder_rgb
-    case _:
-      raise ValueError(f"[utils - pick_obs_from_cam] Unknown CamType ({cam_type})")
 
 def demos_and_train_for_task(
     env: Environment,

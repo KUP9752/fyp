@@ -8,9 +8,7 @@ from rlbench.demo import Demo
 from lib.cam_type import CamType
 from seed import SEED
 
-from utils import pick_obs_from_cam
-
-
+from lib.utils import pick_obs_from_cam
 
 class DemoObsDataset(Dataset):
   def __init__(self,
