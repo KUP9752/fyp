@@ -1,4 +1,4 @@
-nfrom cam_type import CamType
+from lib.cam_type import CamType
 from pyrep.objects import VisionSensor, Shape
 
 import numpy as np

@@ -49,7 +49,7 @@ from seed import set_seed
 
 set_seed()
 
-num_demos = 10
+num_demos = 3
 cam_type = CamType.WRIST| CamType.RIGHT_SHOULDER
 
 #%%
@@ -70,11 +70,14 @@ nocam_config = CameraConfig(rgb=False, depth=False, mask=False,
 
 obs_config.right_shoulder_camera = cam_config
 obs_config.left_shoulder_camera = cam_config
+obs_config.wrist_camera = cam_config
+
+
+
 obs_config.overhead_camera = nocam_config
 obs_config.front_camera = nocam_config
 
 ## active camera: wri camera
-obs_config.wrist_camera = cam_config
 
 
 action_mode = MoveArmThenGripper(
@@ -116,21 +119,20 @@ agent.policy
 training_params = {
   "epochs": 1000,
   "minibatch_size": 64,
-  "lr": 1e-2,
+  "lr": 1e-3,
   "shuffle_obs_in_demo": False,
   "shuffle_data": False
 }
 
-ingest_num = 1
+ingest_num = num_demos
+
 
 agent.ingest(demos[:ingest_num], **training_params) ## trains here
 agent.save_model(model_path)
 # %%
 ## Some detection trials
-# task_env.variation_count()
+task_env.variation_count()
 
-# model = models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
-# model.eval()
 # def checkImage(image_arr):
 #   # Load and preprocess the image
 #   # image = Image.open("../../../assets/demo-trials-no_obs/tasks/static-tasks-camera/rshoulder-side_r.png")
@@ -149,8 +151,6 @@ agent.save_model(model_path)
 #   print(f"{image_tensor.shape = }")
 
 #   # Perform inference
-#   with torch.no_grad():
-#       prediction = model(image_tensor)
 
 #   # Check detection confidence
 #   threshold = 0.001  # Confidence score threshold
@@ -236,7 +236,10 @@ print(f"Final distance: {distances[-1]}")
 # %% 
 # Single Step
 obs: Observation
-action = agent.act(obs).squeeze(0)
+action, att_weights = agent.act(obs)
+print(f"{att_weights = }")
+  
+action = action.squeeze(0)
 obs, reward, done = task_env.step(action)
 gripper = Object.get_object("Panda_gripper")
 target = Object.get_object("target")
@@ -244,7 +247,18 @@ target = Object.get_object("target")
 vis_score = check_visibility("cam_wrist", "target", 0.5)
 plt.imshow(obs.wrist_rgb)
 plt.show()
-print(f"{vis_score = }")
+print(f"wrist: {vis_score = }")
+
+
+vis_score = check_visibility("cam_over_shoulder_left", "target", 0.5)
+plt.imshow(obs.left_shoulder_rgb)
+plt.show()
+print(f"lshoulder: {vis_score = }")
+
+vis_score = check_visibility("cam_over_shoulder_right", "target", 0.5)
+plt.imshow(obs.right_shoulder_rgb)
+plt.show()
+print(f"lshoulder: {vis_score = }")
 
 
 distance = np.linalg.norm(gripper.get_position() - target.get_position())
