@@ -5,7 +5,8 @@ from modules.cam_attention_policy import CamAttentionPolicy
 from rlbench.demo import Demo
 from rlbench.backend.observation import Observation
 
-from modules.cam_type import CamType
+from lib.cam_type import CamType
+from lib.policy_type import PolicyType
 
 import torch
 
@@ -13,20 +14,21 @@ class Agent(object):
 
     def __init__(self,
       action_shape,
-      policy: Literal["simple", "cam_attention"],
+      policy_type: PolicyType,
       cam_type = CamType.WRIST
     ):
       self.cam_type = cam_type
       self.action_shape = action_shape
-      match policy:
-        case "simple":
+      self.policy_type = policy_type
+      match policy_type:
+        case PolicyType.SIMPLE:
           self.policy = SimplePolicy(action_shape, cam_type)
           self.append_type = "cat"
-        case "cam_attention":
+        case PolicyType.CAM_ATTENTION:
           self.policy = CamAttentionPolicy(action_shape, cam_type) ## NOTE: other varaible settings here
           self.append_type = "stack"
         case _: 
-          raise ValueError(f"[agent] cannot find policy type {policy}")
+          raise ValueError(f"[agent] cannot find policy type {policy_type}")
 
     
     def save_model(self, model_path: str):
@@ -40,8 +42,22 @@ class Agent(object):
     def ingest(self, demos: list[Demo], **training_params):
       self.policy.train_policy(demos, **training_params)
       
+    ## this is abstracted out for observing and printing etc
+    def _infer_move(self, observation: torch.Tensor): ## will return whatever the policy returns, wanted to take the match case out of main `act` function
+      with torch.no_grad():
+        policy_ret = self.policy(observation)
+        
+      match self.policy_type:
+        case PolicyType.SIMPLE:
+          return policy_ret
+        case PolicyType.CAM_ATTENTION:
+          pred, att_weights = policy_ret
+          return pred, att_weights
+        case _ :
+          raise ValueError(f"[agent - _infer_move] unknown PolicyType ({self.policy_type})")  
+      
     ## Inference Call
-    def act(self, obs:  Observation) -> torch.Tensor:
+    def act(self, obs:  Observation):# -> torch.Tensor: ## possibly returns other things
       # gripper = [1.0]  # Always open
       # return np.concatenate([arm, gripper], axis=-1)
       
@@ -78,8 +94,8 @@ class Agent(object):
         
       torch_obs = torch_obs.unsqueeze(0) ## add a batch dimension (1, ...)
       
-      with torch.no_grad():
-        pred = self.policy(torch_obs)
-      return pred
+      return self._infer_move(torch_obs)
+      
+      
         
      

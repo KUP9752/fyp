@@ -48,7 +48,7 @@ class CameraAttention(nn.Module):
     scores: torch.Tensor = self.attention_mlp(features)  # (batch_size, num_cameras, 1)
     scores = scores.squeeze(-1)            # (batch_size, num_cameras)
 
-    return F.softmax(scores, dim=1)  # (batch_size, num_cameras)
+    return F.softmax(scores, dim=1)  # (batch_size, num_cameras), do softmax over the different camera inputs
   
 class CamAttentionPolicy(nn.Module):
   def __init__(
@@ -129,7 +129,7 @@ class CamAttentionPolicy(nn.Module):
     actions = self.policy_head(fused_feats)
     print(f"{actions.shape = }")
     
-    return actions # , attention_weights //NOTE: might need attention weights later on
+    return actions, attention_weights #//NOTE: might need attention weights later on
     
 
   def train_policy(self, 
@@ -170,7 +170,7 @@ class CamAttentionPolicy(nn.Module):
       for inputs, labels in loader:
         inputs, labels = inputs.to(device), labels.to(device)
         optimiser.zero_grad()
-        pred_actions = model(inputs)
+        pred_actions, att_weights = model(inputs)
         action_loss = loss_fn(pred_actions, labels)
         action_loss.backward()
         optimiser.step()

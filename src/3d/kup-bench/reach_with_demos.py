@@ -39,8 +39,8 @@ from PIL import Image, ImageDraw
 # from policy import  CamType
 
 from matplotlib import pyplot as plt
-from modules.agent import Agent
-from modules.cam_type import CamType
+from lib.agent import Agent
+from lib.cam_type import CamType
 from utils import get_task_name
 from seed import set_seed
 
@@ -99,7 +99,7 @@ task
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
-demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos)
+demos: list[Demo] = task_env.get_demos(3, live_demos=live_demos)
 demos
 
 
@@ -205,6 +205,7 @@ done = False
 distances = []
 while not done:
   obs: Observation
+  
   action = agent.act(obs).squeeze(0)
   # print(f"{action.shape = }")
   obs, reward, done = task_env.step(action)
@@ -288,9 +289,5 @@ env.shutdown()
 ## Random Testing Cell
 from modules.cam_type  import CamType
 import torch
-ts = torch.empty(10, 128, 2, 2)
-xs = torch.ones(10, 128, 2, 2)
-
-torch.stack([ts, xs], dim = 1).shape
 
 ## more testin 
