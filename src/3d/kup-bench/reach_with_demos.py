@@ -135,6 +135,7 @@ agent.ingest(demos[:ingest_num], **training_params) ## trains here
 agent.save_model(model_path)
 
 
+
 # %% Auto task Execution
 agent.policy.to("cpu")
 # task_env = env.get_task(ReachNoObs_Central)
@@ -179,22 +180,6 @@ action = action.squeeze(0)
 obs, reward, done = task_env.step(action)
 gripper = Object.get_object("Panda_gripper")
 target = Object.get_object("target")
-
-vis_score = check_visibility("cam_wrist", "target", 0.5)
-plt.imshow(obs.wrist_rgb)
-plt.show()
-print(f"wrist: {vis_score = }")
-
-
-vis_score = check_visibility("cam_over_shoulder_left", "target", 0.5)
-plt.imshow(obs.left_shoulder_rgb)
-plt.show()
-print(f"lshoulder: {vis_score = }")
-
-vis_score = check_visibility("cam_over_shoulder_right", "target", 0.5)
-plt.imshow(obs.right_shoulder_rgb)
-plt.show()
-print(f"lshoulder: {vis_score = }")
 
 
 distance = np.linalg.norm(gripper.get_position() - target.get_position())

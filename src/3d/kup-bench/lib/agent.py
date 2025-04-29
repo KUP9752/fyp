@@ -18,7 +18,8 @@ class Agent(object):
       action_shape,
       policy_type: PolicyType,
       cam_type = CamType.WRIST,
-      target_rgb: torch.Tensor | None = None
+      target_rgb: torch.Tensor | None = None,
+      is_multi_cnn: bool = True,
     ):
       self.cam_type = cam_type
       self.action_shape = action_shape
@@ -28,7 +29,7 @@ class Agent(object):
         case PolicyType.SIMPLE:
           self.policy = SimplePolicy(action_shape, cam_type)
         case PolicyType.CAM_ATTENTION:
-          self.policy = CamAttentionPolicy(action_shape, cam_type, target_rgb=target_rgb) ## NOTE: other varaible settings here
+          self.policy = CamAttentionPolicy(action_shape, cam_type, target_rgb=target_rgb, is_multi_cnn=is_multi_cnn) ## NOTE: other varaible settings here
         case _: 
           raise ValueError(f"[agent - Agent] cannot find policy type {policy_type}")
 

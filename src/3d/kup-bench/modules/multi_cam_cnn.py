@@ -62,6 +62,6 @@ class MultiCamCnn(nn.Module):
     
     return self.conv_encodes[f"{cam_type}"](image) #type: ignore lets see if this works
     
-    
-        
+
+
         

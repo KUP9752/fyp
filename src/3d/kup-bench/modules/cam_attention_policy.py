@@ -14,7 +14,7 @@ from tqdm import tqdm as progress
 from lib.cam_type import CamType
 
 from modules.demo_obs_dataset import DemoObsDataset
-from modules.multi_cam_cnn import MultiCamCnn
+from modules.multi_cam_cnn import MultiCamCnn, CNNEncoder
 
 class PolicyHead(nn.Module):
     def __init__(self, feature_dim, action_dim, hidden_dim=256):
@@ -64,7 +64,8 @@ class CamAttentionPolicy(nn.Module):
     cam_type: CamType,
     feat_dim = 128,
     cam_att_hidden_dim = 64,
-    target_rgb: torch.Tensor | None = None
+    target_rgb: torch.Tensor | None = None,
+    is_multi_cnn: bool = True
   ):
     self.cam_type = cam_type
     super(CamAttentionPolicy, self).__init__()
@@ -79,12 +80,16 @@ class CamAttentionPolicy(nn.Module):
       self.num_cams += 1
     
     if self.num_cams == 0:
-      raise ValueError("[cam_attention_policy] - Policy] No cameras selected!")
+      raise ValueError("[cam_attention_policy] - CamAttentionPolicy] No cameras selected!")
     
-    self.conv_encode = MultiCamCnn(cam_type)
+    self.is_multi_cnn = is_multi_cnn
+    
+    if is_multi_cnn:
+      self.conv_encode = MultiCamCnn(cam_type)
+    else:
+      self.conv_encode = CNNEncoder()
     
     self.cam_attention = CameraAttention(feat_dim, cam_att_hidden_dim)
-    
     self.policy_head = PolicyHead(feat_dim, action_shape)
     
     self.target_rgb = target_rgb
@@ -121,15 +126,7 @@ class CamAttentionPolicy(nn.Module):
     ## ensure same number of cams given
     assert num_cams == self.num_cams, f"[cam_attention_policy] Model Creation time num cams {self.num_cams} does not match the inference time tensor shape num cams: {num_cams}"
     
-    device = next(self.parameters()).device
     # MultiCamCNN forward pass per camera selected
-    
-    ## allocate empty tensors, if they stay empty they will not be `cat`ed
-    # feats_size, x, y = self.conv_encode.out_shape
-    
-    # wrist_feats = torch.empty(batch_size, c, w, h, device = device)
-    # lshoulder_feats = torch.empty(batch_size, c, w, h, device = device)
-    # rshoulder_feats = torch.empty(batch_size, c, w, h, device = device)
     
     ## in order wrist -> ls -> rs
     to_stack = []
@@ -140,7 +137,7 @@ class CamAttentionPolicy(nn.Module):
     for ct in CamType.uniques(): ## in order of declaration
       if self.cam_type & ct:
         image = images[:, curr_index, :, :, :]
-        feats = self.conv_encode(image, ct)
+        feats = self.conv_encode(image, ct) if self.is_multi_cnn else self.conv_encode(image)
         
         to_stack.append(feats)  
         target_scores.append(self._differentiable_colour_score(image))  
