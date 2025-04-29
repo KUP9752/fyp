@@ -64,6 +64,7 @@ class CamAttentionPolicy(nn.Module):
     cam_type: CamType,
     feat_dim = 128,
     cam_att_hidden_dim = 64,
+    target_rgb: torch.Tensor | None = None
   ):
     self.cam_type = cam_type
     super(CamAttentionPolicy, self).__init__()
@@ -85,6 +86,27 @@ class CamAttentionPolicy(nn.Module):
     self.cam_attention = CameraAttention(feat_dim, cam_att_hidden_dim)
     
     self.policy_head = PolicyHead(feat_dim, action_shape)
+    
+    self.target_rgb = target_rgb
+  
+  def set_target_rgb(self, target_rgb: torch.Tensor):
+    assert target_rgb.shape == (3), f"[cam_attention_policy - set_target_rgb] Wrong RGB format given ({target_rgb})"
+    self.target_rgb = target_rgb
+  
+  ## tolerance: colour match threshold, softness: distinguishing factor "inside"/"outside" threshold
+  ## greater softness -> harder thrreshold, less soft ->  colours moderately close are considered the same
+  def _differentiable_colour_score(self, img: torch.Tensor, tolerance = 0.2, softness = 0) -> torch.Tensor:
+    
+    if self.target_rgb is None:
+      raise ValueError(f"[cam_attention_policy - _differentiable_colour_score] Target RGB is not set ")
+    
+    ## img; Tensor (batch_size, 3, W, H) 
+    diff = img - self.target_rgb.view(1, 3, 1, 1)
+    dist = torch.norm(diff, dim = 1) # euclidian distance per pixel  
+    soft_mask = torch.sigmoid((tolerance - dist) * softness)
+    
+    return soft_mask.mean(dim=[1, 2])
+  
   
   def forward(self, images: torch.Tensor):
     batch_size, num_cams, c, w, h = images.shape
@@ -101,7 +123,9 @@ class CamAttentionPolicy(nn.Module):
     # lshoulder_feats = torch.empty(batch_size, c, w, h, device = device)
     # rshoulder_feats = torch.empty(batch_size, c, w, h, device = device)
     
+    ## in order wrist -> ls -> rs
     to_stack = []
+    target_scores = []
     
     curr_index = 0 ## in the case earlier ones don't exist, for example only `RIGHT_SHOULDER`
     

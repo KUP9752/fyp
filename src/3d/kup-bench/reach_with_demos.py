@@ -91,9 +91,10 @@ env.launch()
 ## 3. Attach Task and create Agent
 pol_type = PolicyType.CAM_ATTENTION
 
-task = ReachObs_Random
+task = ReachNoObs_Central
 task_env = env.get_task(task)
-agent = Agent(env.action_shape[0], pol_type, cam_type)
+target = Shape("target")
+agent = Agent(env.action_shape[0], pol_type, cam_type, target_rgb = torch.tensor(target.get_color()))
 
 model_name = f"rwd-reach-{num_demos}-demo-{cam_type}-{get_task_name(task)}-{pol_type}"
 model_path = f"./all-models/reach-with-demos/{model_name}.pth"
@@ -198,6 +199,17 @@ _, obs = task_env.reset()
 count = 0
 done = False
 distances = []
+
+# agent.policy._differentiable_colour_score()
+img = obs.left_shoulder_rgb
+
+ts = torch.tensor(img)
+ts = ts.permute([2, 0, 1])
+ts.shape
+
+score  = agent.policy._differentiable_colour_score(ts, tolerance = 0.2, softness=0)
+plt.imshow(img)
+score
 
 # %% Auto task Execution
 agent.policy.to("cpu")
@@ -306,5 +318,5 @@ env.shutdown()
 
 # %%
 ## Random Testing Cell
-import torch
-## more testin 
+from lib.cam_type import CamType
+CamType.uniques()
