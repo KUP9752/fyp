@@ -130,12 +130,19 @@ def run_reach_task(
   ## evaluate
   obs: Observation
   _, obs = task_env.reset()
-  agent.policy.to("cpu") # move to cpu
+  agent.policy.to("cpu") # move to cpu if not alr there
   distances = []
   done  = False
   
   for _ in range(max_eplen):
-    action = agent.act(obs).squeeze()
+    pol_ret = agent.act(obs) # type: ignore
+    if policy_type == PolicyType.SIMPLE:
+      pol_ret: torch.Tensor
+      action = pol_ret.squeeze()
+    elif policy_type == PolicyType.CAM_ATTENTION:
+      action, att_weights = pol_ret
+      action = action.squeeze()
+      
     obs, reward, done = task_env.step(action)
 
     gripper = Object.get_object("Panda_gripper")
