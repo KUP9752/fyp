@@ -20,15 +20,14 @@ class Agent(object):
       self.cam_type = cam_type
       self.action_shape = action_shape
       self.policy_type = policy_type
+      
       match policy_type:
         case PolicyType.SIMPLE:
           self.policy = SimplePolicy(action_shape, cam_type)
-          self.append_type = "cat"
         case PolicyType.CAM_ATTENTION:
           self.policy = CamAttentionPolicy(action_shape, cam_type) ## NOTE: other varaible settings here
-          self.append_type = "stack"
         case _: 
-          raise ValueError(f"[agent] cannot find policy type {policy_type}")
+          raise ValueError(f"[agent - Agent] cannot find policy type {policy_type}")
 
     
     def save_model(self, model_path: str):
@@ -80,17 +79,18 @@ class Agent(object):
         images.append(rs_image)
       
       if not images:
-        raise ValueError("[agent] - Agent - act] No images selected !")
+        raise ValueError("[agent] - act] No images selected !")
       
-      match self.append_type:
-        case "cat":
+      match self.policy_type:
+        case PolicyType.SIMPLE:
           ## cat on the colours channel (3 * num_cams, W, H)
           torch_obs = torch.cat(images, dim = 0)  
-        case "stack":
+        case PolicyType.CAM_ATTENTION:
           ## stacked on new channel (num_cams, 3, W, H)
           torch_obs = torch.stack(images, dim = 0)  
+        case ## NOTE: add more types as implemented
         case _:
-          raise ValueError(f"[agent - act] Incorrect 'append_type' (f{self.append_type}) for collating tensors")
+          raise ValueError(f"[agent - act] Unknown 'policy_type' (f{self.policy_type}) for collating tensors")
         
       torch_obs = torch_obs.unsqueeze(0) ## add a batch dimension (1, ...)
       
