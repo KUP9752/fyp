@@ -49,8 +49,8 @@ from seed import set_seed
 
 set_seed()
 
-num_demos = 3
-cam_type = CamType.WRIST| CamType.RIGHT_SHOULDER
+num_demos = 1
+cam_type = CamType.WRIST | CamType.RIGHT_SHOULDER
 
 #%%
 ## 2. Create Environment and Set Model Name
@@ -91,7 +91,8 @@ env.launch()
 ## 3. Attach Task and create Agent
 pol_type = PolicyType.CAM_ATTENTION
 
-task = ReachNoObs_Central
+task = ReachObs_Random
+# task = ReachNoObs_Central
 task_env = env.get_task(task)
 target = Shape("target")
 agent = Agent(env.action_shape[0], pol_type, cam_type, target_rgb = torch.tensor(target.get_color()))
@@ -101,7 +102,7 @@ model_path = f"./all-models/reach-with-demos/{model_name}.pth"
 print(model_name)
 task
 # %%
-## 4. Request Demos3
+## 4. Request Demos
 # demos = []
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
@@ -193,6 +194,22 @@ def check_visibility(view_handle: str, target_handle: str, tolerance = 0.1):
 
 #%%
 ## 6. Task Execution
+torch.set_printoptions(threshold=1000_000_000)
+def cs(img: torch.Tensor, tolerance = 0.2, softness = 30) -> torch.Tensor:
+  # normalise image
+  img = img / 255
+  target_rgb = torch.tensor(Shape("target").get_color()) 
+  
+  ## img; Tensor (batch_size, 3, W, H) 
+  diff = img - target_rgb.view(1, 3, 1, 1)
+  dist = torch.norm(diff, dim = 1) # euclidian distance per pixel  
+  soft_mask = torch.sigmoid((tolerance - dist) * softness)
+  
+  print(f"{soft_mask =}")
+  print(f"{soft_mask.shape =}")
+  return soft_mask.mean(dim=[1, 2]) * 1e2
+  # return soft_mask.max(dim=1)[0].max(dim=1)[0]
+
 agent.policy.to("cpu")
 # task_env = env.get_task(ReachNoObs_Central)
 _, obs = task_env.reset()
@@ -207,9 +224,10 @@ ts = torch.tensor(img)
 ts = ts.permute([2, 0, 1])
 ts.shape
 
-score = agent.policy._differentiable_colour_score(ts, tolerance = 0.2, softness=0)
+score = cs(ts)
 plt.imshow(img)
-score
+print(f"score is {score}")
+
 
 # %% Auto task Execution
 agent.policy.to("cpu")

@@ -91,21 +91,29 @@ class CamAttentionPolicy(nn.Module):
   
   def set_target_rgb(self, target_rgb: torch.Tensor):
     assert target_rgb.shape == (3), f"[cam_attention_policy - set_target_rgb] Wrong RGB format given ({target_rgb})"
-    self.target_rgb = target_rgb
+    self.target_rgb = target_rgb.to(next(self.parameters()).device)
   
   ## tolerance: colour match threshold, softness: distinguishing factor "inside"/"outside" threshold
   ## greater softness -> harder thrreshold, less soft ->  colours moderately close are considered the same
-  def _differentiable_colour_score(self, img: torch.Tensor, tolerance = 0.2, softness = 0) -> torch.Tensor:
+  def _differentiable_colour_score(self, img: torch.Tensor, tolerance = 0.2, softness = 50) -> torch.Tensor:
     
     if self.target_rgb is None:
       raise ValueError(f"[cam_attention_policy - _differentiable_colour_score] Target RGB is not set ")
+    
+    ## might be set at __init__ which means it willbe on differnet device
+    device = next(self.parameters()).device
+    self.target_rgb = self.target_rgb.to(device)
+    
+    img = img / 255 ## normalise pixel values
     
     ## img; Tensor (batch_size, 3, W, H) 
     diff = img - self.target_rgb.view(1, 3, 1, 1)
     dist = torch.norm(diff, dim = 1) # euclidian distance per pixel  
     soft_mask = torch.sigmoid((tolerance - dist) * softness)
     
-    return soft_mask.mean(dim=[1, 2])
+    ## max turns this into a binary, do i see red or not, will try that first
+    return soft_mask.max(dim=1)[0].max(dim=1)[0]
+    # return soft_mask.mean(dim=[1, 2]) #TODO: These values need normalising, they are really small usualy like 1e-4/5 small
   
   
   def forward(self, images: torch.Tensor):
@@ -113,7 +121,7 @@ class CamAttentionPolicy(nn.Module):
     ## ensure same number of cams given
     assert num_cams == self.num_cams, f"[cam_attention_policy] Model Creation time num cams {self.num_cams} does not match the inference time tensor shape num cams: {num_cams}"
     
-    # device = next(self.parameters()).device
+    device = next(self.parameters()).device
     # MultiCamCNN forward pass per camera selected
     
     ## allocate empty tensors, if they stay empty they will not be `cat`ed
@@ -133,13 +141,18 @@ class CamAttentionPolicy(nn.Module):
       if self.cam_type & ct:
         image = images[:, curr_index, :, :, :]
         feats = self.conv_encode(image, ct)
-        to_stack.append(feats)  
         
-        curr_index += 1
+        to_stack.append(feats)  
+        target_scores.append(self._differentiable_colour_score(image))  
+        
+        curr_index += 1 ## move onto next available cam
       
     
     # print()
     feats = torch.stack(to_stack, dim = 1)  ## dim = 1 so (batch_size, num_cams, feat_size, 2, 2)
+    
+    t_scores = torch.stack(target_scores, dim = 1) ## (b, num_cams, 1) last float being target score
+    t_scores = t_scores / (t_scores.sum(dim=1, keepdim=True) + 1e-6) ## normalisation with some epsilon, maybe can use softmax?
     # print(f"1-{feats.shape = }")
     
     assert feats.shape[1] == self.num_cams, f"[cam_attention_policy] The image dimension ({feats.shape[1]}) is not the same as the number of cams being used for the policy ({self.num_cams})"  
