@@ -10,7 +10,7 @@ from rlbench.demo import Demo
 from rlbench.backend.observation import Observation
 
 from tqdm import tqdm as progress
-from modules.cam_type import CamType
+from lib.cam_type import CamType
 
 from modules.demo_obs_dataset import DemoObsDataset
 

@@ -39,8 +39,11 @@ from PIL import Image, ImageDraw
 # from policy import  CamType
 
 from matplotlib import pyplot as plt
+
 from lib.agent import Agent
 from lib.cam_type import CamType
+from lib.policy_type import PolicyType
+
 from utils import get_task_name
 from seed import set_seed
 
@@ -83,7 +86,7 @@ env.launch()
 
 #%%
 ## 3. Attach Task and create Agent
-pol_type = "cam_attention"
+pol_type = PolicyType.CAM_ATTENTION
 
 task = ReachObs_Random
 task_env = env.get_task(task)
@@ -287,7 +290,5 @@ env.shutdown()
 
 # %%
 ## Random Testing Cell
-from modules.cam_type  import CamType
 import torch
-
 ## more testin 

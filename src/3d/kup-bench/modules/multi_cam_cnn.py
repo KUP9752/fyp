@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from rlbench.demo import Demo
 
 from tqdm import tqdm as progress
-from modules.cam_type import CamType
+from lib.cam_type import CamType
 
 from modules.demo_obs_dataset import DemoObsDataset
 

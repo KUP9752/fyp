@@ -88,7 +88,7 @@ class Agent(object):
         case PolicyType.CAM_ATTENTION:
           ## stacked on new channel (num_cams, 3, W, H)
           torch_obs = torch.stack(images, dim = 0)  
-        case ## NOTE: add more types as implemented
+        ## NOTE: add more types as implemented
         case _:
           raise ValueError(f"[agent - act] Unknown 'policy_type' (f{self.policy_type}) for collating tensors")
         

@@ -5,7 +5,7 @@ import torch
 import numpy as np
 
 from rlbench.demo import Demo
-from modules.cam_type import CamType
+from lib.cam_type import CamType
 from seed import SEED
 
 
