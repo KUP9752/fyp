@@ -159,7 +159,10 @@ class CamAttentionPolicy(nn.Module):
     actions = self.policy_head(fused_feats)
     # print(f"{actions.shape = }")
     
-    return actions, attention_weights #//NOTE: might need attention weights later on
+    return actions, {
+      "attention_weights": attention_weights,
+      "kl_divergence": F.kl_div(attention_weights.log(), t_scores, reduction="batchmean")
+      } #//NOTE: might need attention weights later on
     
 
   def train_policy(self, 

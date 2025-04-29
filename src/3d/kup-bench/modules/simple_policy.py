@@ -63,7 +63,7 @@ class SimplePolicy(nn.Module):
   
   def forward(self, image):
     feats = self.conv(image)
-    return self.fc(feats), () ##making all policies return action, (...) so I can have multiple outputs
+    return self.fc(feats), {} ##making all policies return action, (...) so I can have multiple outputs
   
 
   def train_policy(self, 

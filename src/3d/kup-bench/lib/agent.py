@@ -60,7 +60,7 @@ class Agent(object):
       
       
     ## Inference Call
-    def act(self, obs:  Observation) -> tuple[torch.Tensor, tuple]: ## possibly returns other things
+    def act(self, obs:  Observation) -> tuple[torch.Tensor, dict]: ## possibly returns other things
       # gripper = [1.0]  # Always open
       # return np.concatenate([arm, gripper], axis=-1)
       
