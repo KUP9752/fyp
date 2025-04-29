@@ -49,8 +49,9 @@ from seed import set_seed
 
 set_seed()
 
-num_demos = 1
-cam_type = CamType.WRIST | CamType.RIGHT_SHOULDER
+num_demos = 10
+cam_type = CamType.WRIST | CamType.RIGHT_SHOULDER |  CamType.LEFT_SHOULDER
+cam_type
 
 #%%
 ## 2. Create Environment and Set Model Name
@@ -132,102 +133,6 @@ ingest_num = num_demos
 
 agent.ingest(demos[:ingest_num], **training_params) ## trains here
 agent.save_model(model_path)
-# %%
-## Some detection trials
-task_env.variation_count()
-
-# def checkImage(image_arr):
-#   # Load and preprocess the image
-#   # image = Image.open("../../../assets/demo-trials-no_obs/tasks/static-tasks-camera/rshoulder-side_r.png")
-#   image = Image.fromarray(image_arr)
-#   image = image.convert("RGB")
-  
-#   plt.imshow(image)
-#   plt.axis('off')  # Hide axes
-#   plt.show()
-
-#   transform = transforms.Compose([
-#     transforms.ToTensor()
-#   ])
-#   print(f"{image.size = }")
-#   image_tensor = transform(image).unsqueeze(0)
-#   print(f"{image_tensor.shape = }")
-
-#   # Perform inference
-
-#   # Check detection confidence
-#   threshold = 0.001  # Confidence score threshold
-#   from pprint import pprint
-#   pprint(prediction, indent = 2)
-
-#   boxes_above_threshold = prediction[0]["boxes"][prediction[0]["scores"] > threshold]
-#   print(f"{boxes_above_threshold = }")
-
-#   # Draw bounding boxes on the image
-#   draw = ImageDraw.Draw(image)
-#   print(len(boxes_above_threshold))
-#   for i, box in enumerate(boxes_above_threshold):
-#       xmin, ymin, xmax, ymax = box
-#       draw.rectangle([xmin, ymin, xmax, ymax], outline="red" if i % 2 == 0 else "blue", width=1)
-
-#   # Display the image with bounding boxes
-#   plt.imshow(image)
-#   plt.axis('off')  # Hide axes
-#   plt.show()
-
-# %%
-## Check Visibility
-
-
-def check_visibility(view_handle: str, target_handle: str, tolerance = 0.1):
-  cam = VisionSensor(view_handle)
-  target = Shape(target_handle)
-
-  rgb = cam.capture_rgb()
-  target_rbg = target.get_color()
-  
-  mask = np.all(np.abs(rgb - target_rbg) < tolerance, axis = -1)
-  visible_pxs = np.count_nonzero(mask)
-  print(f"{visible_pxs = }")
-  print(f"{mask.size =}")
-  
-  return visible_pxs / mask.size
-
-#%%
-## 6. Task Execution
-torch.set_printoptions(threshold=1000_000_000)
-def cs(img: torch.Tensor, tolerance = 0.2, softness = 30) -> torch.Tensor:
-  # normalise image
-  img = img / 255
-  target_rgb = torch.tensor(Shape("target").get_color()) 
-  
-  ## img; Tensor (batch_size, 3, W, H) 
-  diff = img - target_rgb.view(1, 3, 1, 1)
-  dist = torch.norm(diff, dim = 1) # euclidian distance per pixel  
-  soft_mask = torch.sigmoid((tolerance - dist) * softness)
-  
-  print(f"{soft_mask =}")
-  print(f"{soft_mask.shape =}")
-  return soft_mask.mean(dim=[1, 2]) * 1e2
-  # return soft_mask.max(dim=1)[0].max(dim=1)[0]
-
-agent.policy.to("cpu")
-# task_env = env.get_task(ReachNoObs_Central)
-_, obs = task_env.reset()
-count = 0
-done = False
-distances = []
-
-# agent.policy._differentiable_colour_score()
-img = obs.left_shoulder_rgb
-
-ts = torch.tensor(img)
-ts = ts.permute([2, 0, 1])
-ts.shape
-
-score = cs(ts)
-plt.imshow(img)
-print(f"score is {score}")
 
 
 # %% Auto task Execution
