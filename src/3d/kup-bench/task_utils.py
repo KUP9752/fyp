@@ -1,11 +1,14 @@
 from typing import Literal, Optional, Type
+
+from time import strftime
+
 import torch
 import numpy as np
 
 from lib.agent import Agent
 from lib.cam_type import CamType
 from lib.policy_type import PolicyType
-from lib.utils import get_task_name
+from lib.utils import get_task_name, now
 
 from rlbench.environment import Environment
 from rlbench.task_environment import TaskEnvironment
@@ -64,7 +67,7 @@ def demos_and_train_for_task(
   
   if save_model:
     model_name = f"task-{task_name}-demo-{demo_count}-cam-{agent.cam_type}"
-    model_path = f"./all-models/{model_name}.pth"
+    model_path = f"./all-models/{model_name}--{now()}.pth"
     agent.save_model(model_path)
   
   return task_env, demos

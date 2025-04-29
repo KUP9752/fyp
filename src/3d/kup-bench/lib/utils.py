@@ -3,6 +3,7 @@ from lib.cam_type import CamType
 from rlbench.backend.observation import Observation
 
 import numpy as np
+from time import strftime
 
 # Tasks
 ## No Obstacle
@@ -61,3 +62,7 @@ def pick_obs_from_cam(cam_type: CamType, obs: Observation) -> np.ndarray:
       return obs.right_shoulder_rgb
     case _:
       raise ValueError(f"[utils - pick_obs_from_cam] Unknown CamType ({cam_type})")
+
+def now(format = "_%B%d_%H-%M") -> str:
+  return strftime(format)
+  
