@@ -8,6 +8,8 @@ from rlbench.demo import Demo
 from lib.cam_type import CamType
 from seed import SEED
 
+from utils import pick_obs_from_cam
+
 
 
 class DemoObsDataset(Dataset):
@@ -41,22 +43,14 @@ class DemoObsDataset(Dataset):
     ## NOTE: Hard coded only using 3 cameras currently
     images = []
     ## TODO: add some transformations and other augmentations to make generalisation better?
-    if self.cam_type & CamType.WRIST:
-      # print(f"Using Wrist Image")
-      wrist_image = torch.tensor(obs.wrist_rgb, dtype = torch.float32)
-      wrist_image = torch.permute(wrist_image, (2, 0, 1))   ## 64, 64, 3  -> 3, 64, 64
-      images.append(wrist_image)
-    if self.cam_type & CamType.LEFT_SHOULDER:
-      # print(f"Using L Shouulder Image")
-      ls_image = torch.tensor(obs.left_shoulder_rgb, dtype = torch.float32)
-      ls_image = torch.permute(ls_image, (2, 0, 1))   ## 64, 64, 3  -> 3, 64, 64
-      images.append(ls_image)
-    if self.cam_type & CamType.RIGHT_SHOULDER:
-      # print(f"Using R Shoulder Image")
-      rs_image = torch.tensor(obs.right_shoulder_rgb, dtype = torch.float32)
-      rs_image = torch.permute(rs_image, (2, 0, 1))   ## 64, 64, 3  -> 3, 64, 64
-      images.append(rs_image)
     
+    ## wrist -> ls -> rs
+    for ct in CamType.uniques():
+      if self.cam_type & ct:
+        image = torch.tensor(pick_obs_from_cam(ct, obs), dtype= torch.float32)
+        image = torch.permute(image, (2, 0, 1)) ## 64, 64, 3 -> 3, 64, 64
+        images.append(image)
+      
     if not images:
       raise ValueError("[demo_obs_dataset] - DemoObsDataSet - __getitem__] No images selected !")
       
@@ -67,6 +61,7 @@ class DemoObsDataset(Dataset):
     elif self.get_type == "stack":
       inputs = torch.stack(images, dim = 0)
       ## inputs shape should now be (num_cams, 3, 64, 64)
+      
     labels = np.append(obs.joint_velocities, obs.gripper_open)
     labels = torch.tensor(labels, dtype = torch.float32)
     

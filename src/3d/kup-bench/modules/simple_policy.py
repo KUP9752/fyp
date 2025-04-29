@@ -63,7 +63,7 @@ class SimplePolicy(nn.Module):
   
   def forward(self, image):
     feats = self.conv(image)
-    return self.fc(feats)
+    return self.fc(feats), () ##making all policies return action, (...) so I can have multiple outputs
   
 
   def train_policy(self, 
@@ -101,7 +101,7 @@ class SimplePolicy(nn.Module):
       for inputs, labels in loader:
         inputs, labels = inputs.to(device), labels.to(device)
         optimiser.zero_grad()
-        pred_actions = model(inputs)
+        pred_actions, _ = model(inputs)
         loss = loss_fn(pred_actions, labels)
         loss.backward()
         optimiser.step()

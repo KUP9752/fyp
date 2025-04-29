@@ -1,4 +1,5 @@
 from enum import Flag, auto
+from typing import Self
 
 class CamType(Flag):
   WRIST = auto()
@@ -21,7 +22,7 @@ class CamType(Flag):
   
   @classmethod
   ## recreates everytime, but couldn't find a good way to cache
-  def all_combinations(cls):
+  def all_combinations(cls) -> list[Self]:
     all_combs = []
     for i in range(1, 2**len(CamType)):
       comb = CamType(0)
@@ -30,3 +31,10 @@ class CamType(Flag):
           comb |= CamType(1 << j)
       all_combs.append(comb)
     return all_combs
+
+  @classmethod
+  ## in order returns the existing CamTypes
+  def uniques(cls):
+    return [CamType(1 << i) for i in range(len(CamType))]
+    
+    

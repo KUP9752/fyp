@@ -104,17 +104,15 @@ class CamAttentionPolicy(nn.Module):
     to_stack = []
     
     curr_index = 0 ## in the case earlier ones don't exist, for example only `RIGHT_SHOULDER`
-    if self.cam_type & CamType.WRIST:
-      wrist_feats = self.conv_encode(images[:, curr_index, :, :, :], CamType.WRIST)
-      curr_index += 1
-      to_stack.append(wrist_feats)
-    if self.cam_type & CamType.LEFT_SHOULDER:
-      lshoulder_feats = self.conv_encode(images[:, curr_index, :, :, :], CamType.LEFT_SHOULDER)
-      curr_index += 1
-      to_stack.append(lshoulder_feats)
-    if self.cam_type & CamType.RIGHT_SHOULDER:
-      rshoulder_feats = self.conv_encode(images[:, curr_index, :, :, :], CamType.RIGHT_SHOULDER)
-      to_stack.append(rshoulder_feats)
+    
+    for ct in CamType.uniques(): ## in order of declaration
+      if self.cam_type & ct:
+        image = images[:, curr_index, :, :, :]
+        feats = self.conv_encode(image, ct)
+        to_stack.append(feats)  
+        
+        curr_index += 1
+      
     
     # print()
     feats = torch.stack(to_stack, dim = 1)  ## dim = 1 so (batch_size, num_cams, feat_size, 2, 2)

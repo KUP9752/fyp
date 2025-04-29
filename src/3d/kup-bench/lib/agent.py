@@ -9,13 +9,16 @@ from lib.cam_type import CamType
 from lib.policy_type import PolicyType
 
 import torch
+import numpy as np
+from utils import pick_obs_from_cam
 
 class Agent(object):
 
     def __init__(self,
       action_shape,
       policy_type: PolicyType,
-      cam_type = CamType.WRIST
+      cam_type = CamType.WRIST,
+      target_rgb: torch.Tensor | None = None
     ):
       self.cam_type = cam_type
       self.action_shape = action_shape
@@ -25,7 +28,7 @@ class Agent(object):
         case PolicyType.SIMPLE:
           self.policy = SimplePolicy(action_shape, cam_type)
         case PolicyType.CAM_ATTENTION:
-          self.policy = CamAttentionPolicy(action_shape, cam_type) ## NOTE: other varaible settings here
+          self.policy = CamAttentionPolicy(action_shape, cam_type, target_rgb=target_rgb) ## NOTE: other varaible settings here
         case _: 
           raise ValueError(f"[agent - Agent] cannot find policy type {policy_type}")
 
@@ -42,41 +45,33 @@ class Agent(object):
       self.policy.train_policy(demos, **training_params)
       
     ## this is abstracted out for observing and printing etc
-    def _infer_move(self, observation: torch.Tensor): ## will return whatever the policy returns, wanted to take the match case out of main `act` function
-      with torch.no_grad():
-        policy_ret = self.policy(observation)
+    # def _infer_move(self, observation: torch.Tensor): ## will return whatever the policy returns, wanted to take the match case out of main `act` function
+    #   with torch.no_grad():
+    #     policy_ret = self.policy(observation)
         
-      match self.policy_type:
-        case PolicyType.SIMPLE:
-          return policy_ret
-        case PolicyType.CAM_ATTENTION:
-          pred, att_weights = policy_ret
-          return pred, att_weights
-        case _ :
-          raise ValueError(f"[agent - _infer_move] unknown PolicyType ({self.policy_type})")  
+    #   match self.policy_type:
+    #     case PolicyType.SIMPLE:
+    #       return policy_ret
+    #     case PolicyType.CAM_ATTENTION:
+    #       pred, att_weights = policy_ret
+    #       return pred, att_weights
+    #     case _ :
+    #       raise ValueError(f"[agent - _infer_move] unknown PolicyType ({self.policy_type})")  
+      
       
     ## Inference Call
-    def act(self, obs:  Observation):# -> torch.Tensor: ## possibly returns other things
+    def act(self, obs:  Observation) -> tuple[torch.Tensor, tuple]: ## possibly returns other things
       # gripper = [1.0]  # Always open
       # return np.concatenate([arm, gripper], axis=-1)
       
       self.policy.eval()
       images = []
-      if self.cam_type & CamType.WRIST:
-        # print(f"Using Wrist Image")
-        wrist_image = torch.tensor(obs.wrist_rgb, dtype = torch.float32)
-        wrist_image = torch.permute(wrist_image, (2, 0, 1))   ## 64, 64, 3  -> 3, 64, 64
-        images.append(wrist_image)
-      if self.cam_type & CamType.LEFT_SHOULDER:
-        # print(f"Using L Shouulder Image")
-        ls_image = torch.tensor(obs.left_shoulder_rgb, dtype = torch.float32)
-        ls_image = torch.permute(ls_image, (2, 0, 1))   ## 64, 64, 3  -> 3, 64, 64
-        images.append(ls_image)
-      if self.cam_type & CamType.RIGHT_SHOULDER:
-        # print(f"Using R Shoulder Image")
-        rs_image = torch.tensor(obs.right_shoulder_rgb, dtype = torch.float32)
-        rs_image = torch.permute(rs_image, (2, 0, 1))   ## 64, 64, 3  -> 3, 64, 64
-        images.append(rs_image)
+      ## wrist -> ls -> rs
+      for ct in CamType.uniques():
+        if self.cam_type & ct:
+          image = torch.tensor(pick_obs_from_cam(ct, obs), dtype= torch.float32)
+          image = torch.permute(image, (2, 0, 1)) ## 64, 64, 3 -> 3, 64, 64
+          images.append(image)
       
       if not images:
         raise ValueError("[agent] - act] No images selected !")
@@ -94,7 +89,10 @@ class Agent(object):
         
       torch_obs = torch_obs.unsqueeze(0) ## add a batch dimension (1, ...)
       
-      return self._infer_move(torch_obs)
+      with torch.no_grad():
+        pred, rest = self.policy(torch_obs)
+      
+      return pred, rest
       
       
         

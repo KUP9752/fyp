@@ -64,6 +64,17 @@ def get_task_name(task) -> str:
   else:
     raise ValueError("[utils - get_task_name] Task not found!")
 
+def pick_obs_from_cam(cam_type: CamType, obs: Observation) -> np.ndarray:
+  match cam_type:
+    case CamType.WRIST:
+      return obs.wrist_rgb
+    case CamType.LEFT_SHOULDER:
+      return obs.left_shoulder_rgb
+    case CamType.RIGHT_SHOULDER:
+      return obs.right_shoulder_rgb
+    case _:
+      raise ValueError(f"[utils - pick_obs_from_cam] Unknown CamType ({cam_type})")
+
 def demos_and_train_for_task(
     env: Environment,
     current_task: Type[Task],
