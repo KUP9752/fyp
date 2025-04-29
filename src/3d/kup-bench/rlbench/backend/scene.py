@@ -370,7 +370,6 @@ class Scene(object):
                 success = False
                 while not done:
                     done = path.step()
-                    print("calling self.step")
                     self.step()
                     self._joint_position_action = np.append(path.get_executed_joint_position_action(), gripper_open)
                     self._demo_record_step(demo, record, callable_each_step)
