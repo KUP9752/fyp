@@ -4,6 +4,7 @@ import numpy as np
 
 from lib.agent import Agent
 from lib.cam_type import CamType
+from lib.policy_type import PolicyType
 
 from rlbench.environment import Environment
 from rlbench.task_environment import TaskEnvironment
@@ -101,7 +102,7 @@ def demos_and_train_for_task(
 def run_reach_task(
   env: Environment,
   task, ## any of Reach_* or ReachObs_* tasks
-  policy_type: Literal["simple", "cam_attention"],
+  policy_type: PolicyType,
   cam_type: CamType,
   demos: int | list[Demo],
   max_eplen: int | Literal["demo_max"] = "demo_max",
