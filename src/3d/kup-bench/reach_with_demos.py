@@ -44,7 +44,7 @@ from lib.agent import Agent
 from lib.cam_type import CamType
 from lib.policy_type import PolicyType
 
-from lib.utils import get_task_name
+from lib.utils import get_task_name, now
 from seed import set_seed
 
 set_seed()
@@ -97,7 +97,7 @@ task_env = env.get_task(task)
 target = Shape("target")
 agent = Agent(env.action_shape[0], pol_type, cam_type, target_rgb = torch.tensor(target.get_color()))
 
-model_name = f"rwd-reach-{num_demos}-demo-{cam_type}-{get_task_name(task)}-{pol_type}"
+model_name = f"rwd-reach-{num_demos}-demos-{cam_type}-{get_task_name(task)}-{pol_type}--{now()}"
 model_path = f"./all-models/reach-with-demos/{model_name}.pth"
 print(model_name)
 task
@@ -123,7 +123,8 @@ training_params = {
   "minibatch_size": 64,
   "lr": 1e-3,
   "shuffle_obs_in_demo": False,
-  "shuffle_data": False
+  "shuffle_data": False,
+  "lambda_attn": 1e-2,
 }
 
 ingest_num = num_demos
@@ -337,4 +338,4 @@ env.shutdown()
 # %%
 ## Random Testing Cell
 from lib.cam_type import CamType
-CamType.uniques()
+

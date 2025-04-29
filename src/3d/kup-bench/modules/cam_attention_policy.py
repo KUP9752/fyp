@@ -186,12 +186,13 @@ class CamAttentionPolicy(nn.Module):
     lr_eta_min = 1e-4,
     shuffle_data = False, 
     shuffle_obs_in_demo = False,
+    lambda_attn: float = 1e-2,
     model_path: Optional[str] = None
   ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Camera: {self.cam_type}")
     
-    print(f"Training Params: \n\t{epochs = }, \n\t{minibatch_size = }, \n\t{lr = }, \n\t{lr_eta_min =}, \n\t{model_path = }, \n\t{shuffle_data = },\n\t{shuffle_obs_in_demo = }, \n\t{device}\n")
+    print(f"Training Params: \n\t{epochs = }, \n\t{minibatch_size = }, \n\t{lr = }, \n\t{lr_eta_min =}, \n\t{model_path = }, \n\t{shuffle_data = },\n\t{shuffle_obs_in_demo = }, \n\t{lambda_attn = } \n\t{device}\n")
     
     
     model = self.to(device)
@@ -216,19 +217,19 @@ class CamAttentionPolicy(nn.Module):
       for inputs, labels in loader:
         inputs, labels = inputs.to(device), labels.to(device)
         optimiser.zero_grad()
-        pred_actions, att_weights = model(inputs)
+        pred_actions, extras = model(inputs)
         action_loss = loss_fn(pred_actions, labels)
-        action_loss.backward()
+        att_weights = extras["attention_weights"]
+        attention_loss = extras["kl_divergence"]
+        print(f"{action_loss.item() = }")
+        print(f"{attention_loss.item() = }")
         
+        total_loss = action_loss + lambda_attn * attention_loss
+        print(f"{total_loss.item() = }")
+        
+        total_loss.backward()
         print(f"{att_weights = }")
-        ## checking if the wrist CNN is improving
-        for name, param in self.conv_encode.named_parameters():
-          if f"{CamType.WRIST}" in name:
-            if param.grad is None:
-              print(f"{name}: No Gradient")
-            else:
-              print(f"{name}: grad mean = {param.grad.mean().item(): .5f}, grad std = {param.grad.std().item(): .5f}")
-              
+        
         
         optimiser.step()
         scheduler.step()
