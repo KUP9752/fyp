@@ -98,9 +98,13 @@ class CamAttentionPolicy(nn.Module):
     assert target_rgb.shape == (3), f"[cam_attention_policy - set_target_rgb] Wrong RGB format given ({target_rgb})"
     self.target_rgb = target_rgb.to(next(self.parameters()).device)
   
+  def _set_colour_score_pooling(self, pool: Literal["mean", "max"]):
+    self._colour_score_pooling = pool
+    
   ## tolerance: colour match threshold, softness: distinguishing factor "inside"/"outside" threshold
   ## greater softness -> harder thrreshold, less soft ->  colours moderately close are considered the same
-  def _differentiable_colour_score(self, img: torch.Tensor, tolerance = 0.2, softness = 50) -> torch.Tensor:
+  ## NOTE: should be differentiable, because of norm and sigmoid
+  def _colour_score(self, img: torch.Tensor, tolerance = 0.2, softness = 50, pool: Literal["mean", "max"] | None = None) -> torch.Tensor:
     
     if self.target_rgb is None:
       raise ValueError(f"[cam_attention_policy - _differentiable_colour_score] Target RGB is not set ")
@@ -117,8 +121,16 @@ class CamAttentionPolicy(nn.Module):
     soft_mask = torch.sigmoid((tolerance - dist) * softness)
     
     ## max turns this into a binary, do i see red or not, will try that first
-    return soft_mask.max(dim=1)[0].max(dim=1)[0]
-    # return soft_mask.mean(dim=[1, 2]) #TODO: These values need normalising, they are really small usualy like 1e-4/5 small
+    
+    if pool is None:
+      pool = self._colour_score_pooling #type: ignore[assignment]
+    
+    if pool == "max":
+      return soft_mask.max(dim=1)[0].max(dim=1)[0]
+    elif pool == "mean":
+      return soft_mask.mean(dim=[1, 2]) + 1e2#TODO: These values need normalising, they are really small usualy like 1e-4/5 small
+    else:
+      raise ValueError(f"[cam_attention_policy - _differentiable_colour_score] Pooling type '{pool}' not supported")
   
   
   def forward(self, images: torch.Tensor):
@@ -140,7 +152,7 @@ class CamAttentionPolicy(nn.Module):
         feats = self.conv_encode(image, ct) if self.is_multi_cnn else self.conv_encode(image)
         
         to_stack.append(feats)  
-        target_scores.append(self._differentiable_colour_score(image))  
+        target_scores.append(self._colour_score(image))  
         
         curr_index += 1 ## move onto next available cam
       
@@ -218,14 +230,14 @@ class CamAttentionPolicy(nn.Module):
         action_loss = loss_fn(pred_actions, labels)
         att_weights = extras["attention_weights"]
         attention_loss = extras["kl_divergence"]
-        print(f"{action_loss.item() = }")
-        print(f"{attention_loss.item() = }")
+        # print(f"{action_loss.item() = }")
+        # print(f"{attention_loss.item() = }")
         
         total_loss = action_loss + lambda_attn * attention_loss
-        print(f"{total_loss.item() = }")
+        # print(f"{total_loss.item() = }")
         
         total_loss.backward()
-        print(f"{att_weights = }")
+        # print(f"{att_weights = }")
         
         
         optimiser.step()
