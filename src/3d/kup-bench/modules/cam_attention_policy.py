@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 import numpy as np
 
 import torch 
@@ -64,8 +64,9 @@ class CamAttentionPolicy(nn.Module):
     cam_type: CamType,
     feat_dim = 128,
     cam_att_hidden_dim = 64,
+    is_multi_cnn: bool = True,
     target_rgb: torch.Tensor | None = None,
-    is_multi_cnn: bool = True
+    colour_score_pooling: Literal["mean", "max"] = "mean"
   ):
     self.cam_type = cam_type
     super(CamAttentionPolicy, self).__init__()
@@ -93,14 +94,12 @@ class CamAttentionPolicy(nn.Module):
     self.policy_head = PolicyHead(feat_dim, action_shape)
     
     self.target_rgb = target_rgb
+    self._colour_score_pooling = colour_score_pooling
   
   def set_target_rgb(self, target_rgb: torch.Tensor):
     assert target_rgb.shape == (3), f"[cam_attention_policy - set_target_rgb] Wrong RGB format given ({target_rgb})"
     self.target_rgb = target_rgb.to(next(self.parameters()).device)
   
-  def _set_colour_score_pooling(self, pool: Literal["mean", "max"]):
-    self._colour_score_pooling = pool
-    
   ## tolerance: colour match threshold, softness: distinguishing factor "inside"/"outside" threshold
   ## greater softness -> harder thrreshold, less soft ->  colours moderately close are considered the same
   ## NOTE: should be differentiable, because of norm and sigmoid
@@ -196,6 +195,7 @@ class CamAttentionPolicy(nn.Module):
     shuffle_data = False, 
     shuffle_obs_in_demo = False,
     lambda_attn: float = 1e-2,
+    
     model_path: Optional[str] = None
   ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

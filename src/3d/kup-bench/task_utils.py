@@ -17,7 +17,7 @@ from rlbench.backend.task import Task
 from rlbench.backend.observation import Observation
 from rlbench.demo import Demo
 
-from pyrep.objects import Object
+from pyrep.objects import Object, Shape
 
 
 # Tasks
@@ -41,7 +41,7 @@ from rlbench.tasks.grasp_and_move import GraspAndMove as Grasp_ThenMove
 
 def demos_and_train_for_task(
     env: Environment,
-    current_task: Type[Task],
+    current_task: type[Task],
     agent: Agent,
     given_demos: int | list[Demo],
     save_model = False,
@@ -110,14 +110,9 @@ def run_reach_task(
   done  = False
   
   for _ in range(max_eplen):
-    pol_ret = agent.act(obs) # type: ignore
-    if policy_type == PolicyType.SIMPLE:
-      pol_ret: torch.Tensor
-      action = pol_ret.squeeze()
-    elif policy_type == PolicyType.CAM_ATTENTION:
-      action, att_weights = pol_ret
-      action = action.squeeze()
-      
+    action, pol_dict = agent.act(obs) # type: ignore
+    action = action.squeeze()
+    
     obs, reward, done = task_env.step(action)
 
     gripper = Object.get_object("Panda_gripper")
@@ -133,3 +128,83 @@ def run_reach_task(
       break
     
   return distances, done
+
+def run_reach_task_with_agent(
+  env: Environment,
+  task: Task, ## any of Reach_* or ReachObs_* tasks
+  agent: Agent, 
+  demos: list[Demo],
+  max_eplen: int | Literal["demo_max"] = "demo_max",
+  within_err_dist: Optional[float] = None, ## allows the execution to finish early depending on if an error around the target is reached
+  **training_params
+) -> tuple[dict, bool]:
+  ## new agent trained each time
+  
+  ## request demos and train
+  task_env, demos = demos_and_train_for_task(
+    env,
+    task, #type: ignore[arg-type]
+    agent,
+    demos,
+    save_model=True,
+    **training_params
+  )
+    
+  ## if max len is not specified make it the max of the givem demo
+  if max_eplen == "demo_max":
+    max_eplen = max(list(map(len, demos)))
+  
+  ## evaluate
+  obs: Observation
+  _, obs = task_env.reset()
+  
+  obstacle = Shape("obstacle")
+  
+  agent.policy.to("cpu") # move to cpu if not alr there
+  distances = []
+  done  = False
+  
+  atts_before_obs = []
+  atts_after_obs = []
+  
+  for _ in range(max_eplen):
+    action, pol_dict = agent.act(obs) # type: ignore
+    action = action.squeeze()
+    
+    ## get the attention weights
+    atts = pol_dict["attention_weights"]
+    
+    ## if the z value (height) of arm is negative with respect to obstacle, then we are below
+    
+    if task_env._robot.arm.get_tip().get_position(relative_to=obstacle)[2] <= 0:
+      ## below
+      # print("BELOW THE OBS")
+      # print(f"{atts = }")
+      # print()
+      atts_before_obs.append(atts)
+    else:
+      ## above
+      # print("above THE OBS")
+      # print(f"{atts = }")
+      # print()
+      atts_after_obs.append(atts)
+    
+    obs, reward, done = task_env.step(action)
+
+    gripper = Object.get_object("Panda_gripper")
+    target = Object.get_object("target")
+    distance = np.linalg.norm(gripper.get_position() - target.get_position())
+    distances.append(distance)
+    
+    ## doing separately to make pylance happy
+    if within_err_dist is not None:
+      done = done or distance <= within_err_dist
+      
+    if done: 
+      break
+    
+  return {
+    "distances": distances, 
+    "avg_attentions_before_obstacle": torch.stack(atts_before_obs, dim=0).mean(dim=0, dtype=torch.float32),
+    "avg_attentions_before_obstacle": torch.stack(atts_after_obs, dim=0).mean(dim=0, dtype=torch.float32),
+    },  done  
