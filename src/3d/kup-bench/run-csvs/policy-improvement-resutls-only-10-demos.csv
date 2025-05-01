@@ -1,4 +1,0 @@
-epoch,minibatch_size,learning_rate,task_name,demo_count,final_dists,has_reached,final_dist_avg
-1000,32,0.0001,ReachObs_RandomStatic,10,"[0.7260293  0.72603402 0.7261339  0.72606081 0.72612917 0.72609653 0.72611826 0.72610674 0.72608074 0.72608806]",[False False False False False False False False False False],0.7260877537122065
-1000,32,0.0001,ReachObs_Random,10,"[0.74217418 0.76372666 0.72294664 0.73334712 0.73325935 0.72522709 0.74475183 0.73639801 0.76100501 0.76253265]",[False False False False False False False False False False],0.7425368538745947
-1000,32,0.0001,ReachObs_IndRandom,10,"[0.75269474 0.7661515  0.78608283 0.74943968 0.79165382 0.77899314 0.77537439 0.767856   0.77454614 0.76479668]",[False False False False False False False False False False],0.7707588920354139
