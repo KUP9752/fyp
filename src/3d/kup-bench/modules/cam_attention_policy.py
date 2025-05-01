@@ -192,7 +192,7 @@ class CamAttentionPolicy(nn.Module):
     minibatch_size: int = 64, ## size of the observations currently being used
     lr: float = 1e-2,
     lr_eta_min = 1e-4,
-    shuffle_data = False, 
+    shuffle_data = True, 
     shuffle_obs_in_demo = False,
     lambda_attn: float = 1e-2,
     
