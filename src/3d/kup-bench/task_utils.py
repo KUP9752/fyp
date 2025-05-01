@@ -164,8 +164,8 @@ def run_reach_task_with_agent(
   distances = []
   done  = False
   
-  atts_before_obs = []
-  atts_after_obs = []
+  atts_above_obs = []
+  atts_below_obs = []
   
   for _ in range(max_eplen):
     action, pol_dict = agent.act(obs) # type: ignore
@@ -173,7 +173,7 @@ def run_reach_task_with_agent(
     
     ## get the attention weights
     atts = pol_dict["attention_weights"]
-    
+    # print(f"{atts = }")
     ## if the z value (height) of arm is negative with respect to obstacle, then we are below
     
     if task_env._robot.arm.get_tip().get_position(relative_to=obstacle)[2] <= 0:
@@ -181,13 +181,13 @@ def run_reach_task_with_agent(
       # print("BELOW THE OBS")
       # print(f"{atts = }")
       # print()
-      atts_before_obs.append(atts)
+      atts_below_obs.append(atts)
     else:
       ## above
       # print("above THE OBS")
       # print(f"{atts = }")
       # print()
-      atts_after_obs.append(atts)
+      atts_above_obs.append(atts)
     
     obs, reward, done = task_env.step(action)
 
@@ -205,6 +205,6 @@ def run_reach_task_with_agent(
     
   return {
     "distances": distances, 
-    "avg_attentions_before_obstacle": torch.stack(atts_before_obs, dim=0).mean(dim=0, dtype=torch.float32),
-    "avg_attentions_before_obstacle": torch.stack(atts_after_obs, dim=0).mean(dim=0, dtype=torch.float32),
+    "avg_attentions_below_obstacle": torch.stack(atts_below_obs, dim=0).mean(dim=0, dtype=torch.float32) if len(atts_below_obs) > 0 else None,
+    "avg_attentions_above_obstacle": torch.stack(atts_above_obs, dim=0).mean(dim=0, dtype=torch.float32) if len(atts_above_obs) > 0 else None,
     },  done  

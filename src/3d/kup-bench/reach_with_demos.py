@@ -227,5 +227,10 @@ env.shutdown()
 
 # %%
 ## Random Testing Cell
-from lib.cam_type import CamType
+import torch
+ts = []
+tensor = torch.tensor([1,2,3])
+for _ in range(3):
+  ts.append(tensor)
 
+torch.stack(ts, dim=0).mean(dim=0, dtype=torch.float32)

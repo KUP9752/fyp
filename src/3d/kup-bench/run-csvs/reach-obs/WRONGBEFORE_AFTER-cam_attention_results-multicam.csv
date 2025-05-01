@@ -1,0 +1,43 @@
+,task_name,cam_type,demo_count,pool_method,avg_final_dist,avg_avg_attn_before,avg_avg_attn_after
+0,ReachObs_Random,wrist,1,mean,0.5678067971046182,tensor([[1.]]),tensor([[1.]])
+1,ReachObs_Random,wrist,1,max,0.4659953305842294,tensor([[1.]]),tensor([[1.]])
+2,ReachObs_Random,wrist,5,mean,0.5085229627497536,tensor([[1.]]),tensor([[1.]])
+3,ReachObs_Random,wrist,5,max,0.5075920236807032,tensor([[1.]]),tensor([[1.]])
+4,ReachObs_Random,wrist,10,mean,0.2860799138177422,tensor([[1.]]),tensor([[1.]])
+5,ReachObs_Random,wrist,10,max,0.43900743641726836,tensor([[1.]]),tensor([[1.]])
+6,ReachObs_Random,l_shoulder,1,mean,0.3465373254554209,tensor([[1.]]),tensor([[1.]])
+7,ReachObs_Random,l_shoulder,1,max,0.3887329593281642,tensor([[1.]]),tensor([[1.]])
+8,ReachObs_Random,l_shoulder,5,mean,0.4157460784928889,tensor([[1.]]),tensor([[1.]])
+9,ReachObs_Random,l_shoulder,5,max,0.4428774262447349,tensor([[1.]]),tensor([[1.]])
+10,ReachObs_Random,l_shoulder,10,mean,0.19753890852370254,tensor([[1.]]),tensor([[1.]])
+11,ReachObs_Random,l_shoulder,10,max,0.17117949621260914,tensor([[1.]]),tensor([[1.]])
+12,ReachObs_Random,wrist+l_shoulder,1,mean,0.48680724520984536,"tensor([[0.5023, 0.4977]])","tensor([[0.5023, 0.4977]])"
+13,ReachObs_Random,wrist+l_shoulder,1,max,0.44430909831947873,"tensor([[0.0434, 0.9566]])","tensor([[0.0434, 0.9566]])"
+14,ReachObs_Random,wrist+l_shoulder,5,mean,0.503661828381665,"tensor([[0.4757, 0.5243]])","tensor([[0.4757, 0.5243]])"
+15,ReachObs_Random,wrist+l_shoulder,5,max,0.44341247036762477,"tensor([[0.1235, 0.8765]])","tensor([[0.1235, 0.8765]])"
+16,ReachObs_Random,wrist+l_shoulder,10,mean,0.4071596159482618,"tensor([[0.4930, 0.5070]])","tensor([[0.4930, 0.5070]])"
+17,ReachObs_Random,wrist+l_shoulder,10,max,0.2711864818259066,"tensor([[0.0836, 0.9164]])","tensor([[0.0836, 0.9164]])"
+18,ReachObs_Random,r_shoulder,1,mean,0.43782795993455725,tensor([[1.]]),tensor([[1.]])
+19,ReachObs_Random,r_shoulder,1,max,0.4365589564728011,tensor([[1.]]),tensor([[1.]])
+20,ReachObs_Random,r_shoulder,5,mean,0.4522053968225972,tensor([[1.]]),tensor([[1.]])
+21,ReachObs_Random,r_shoulder,5,max,0.4657306644802862,tensor([[1.]]),tensor([[1.]])
+22,ReachObs_Random,r_shoulder,10,mean,0.31630393337999835,tensor([[1.]]),tensor([[1.]])
+23,ReachObs_Random,r_shoulder,10,max,0.23688480526276973,tensor([[1.]]),tensor([[1.]])
+24,ReachObs_Random,wrist+r_shoulder,1,mean,0.5053755952169283,"tensor([[0.4968, 0.5032]])","tensor([[0.4968, 0.5032]])"
+25,ReachObs_Random,wrist+r_shoulder,1,max,0.5710854405774428,"tensor([[0.0552, 0.9448]])","tensor([[0.0552, 0.9448]])"
+26,ReachObs_Random,wrist+r_shoulder,5,mean,0.40228161320830774,"tensor([[0.4880, 0.5120]])","tensor([[0.4880, 0.5120]])"
+27,ReachObs_Random,wrist+r_shoulder,5,max,0.5613211267157739,"tensor([[0.1399, 0.8601]])","tensor([[0.1399, 0.8601]])"
+28,ReachObs_Random,wrist+r_shoulder,10,mean,0.46961920796664297,"tensor([[0.5013, 0.4987]])","tensor([[0.5013, 0.4987]])"
+29,ReachObs_Random,wrist+r_shoulder,10,max,0.29453358493862003,"tensor([[0.1615, 0.8385]])","tensor([[0.1615, 0.8385]])"
+30,ReachObs_Random,l_shoulder+r_shoulder,1,mean,0.4982600222615039,"tensor([[0.5114, 0.4886]])","tensor([[0.5114, 0.4886]])"
+31,ReachObs_Random,l_shoulder+r_shoulder,1,max,0.4556995569425467,"tensor([[0.3426, 0.6574]])","tensor([[0.3426, 0.6574]])"
+32,ReachObs_Random,l_shoulder+r_shoulder,5,mean,0.6400847898648943,"tensor([[0.5216, 0.4784]])","tensor([[0.5216, 0.4784]])"
+33,ReachObs_Random,l_shoulder+r_shoulder,5,max,0.4412935253768538,"tensor([[0.4345, 0.5655]])","tensor([[0.4345, 0.5655]])"
+34,ReachObs_Random,l_shoulder+r_shoulder,10,mean,0.2017252644639777,"tensor([[0.4991, 0.5009]])","tensor([[0.4991, 0.5009]])"
+35,ReachObs_Random,l_shoulder+r_shoulder,10,max,0.24638655993267217,"tensor([[0.4766, 0.5234]])","tensor([[0.4766, 0.5234]])"
+36,ReachObs_Random,wrist+l_shoulder+r_shoulder,1,mean,0.5401402508554729,"tensor([[0.3328, 0.3373, 0.3298]])","tensor([[0.3328, 0.3373, 0.3298]])"
+37,ReachObs_Random,wrist+l_shoulder+r_shoulder,1,max,0.44770020977981106,"tensor([[0.0399, 0.3420, 0.6180]])","tensor([[0.0399, 0.3420, 0.6180]])"
+38,ReachObs_Random,wrist+l_shoulder+r_shoulder,5,mean,0.5492042396240051,"tensor([[0.3214, 0.3393, 0.3394]])","tensor([[0.3214, 0.3393, 0.3394]])"
+39,ReachObs_Random,wrist+l_shoulder+r_shoulder,5,max,0.613217900961238,"tensor([[0.1511, 0.5748, 0.2741]])","tensor([[0.1511, 0.5748, 0.2741]])"
+40,ReachObs_Random,wrist+l_shoulder+r_shoulder,10,mean,0.38958493106631087,"tensor([[0.3267, 0.3354, 0.3379]])","tensor([[0.3267, 0.3354, 0.3379]])"
+41,ReachObs_Random,wrist+l_shoulder+r_shoulder,10,max,0.2146090261793482,"tensor([[0.0987, 0.3757, 0.5256]])","tensor([[0.0987, 0.3757, 0.5256]])"
