@@ -16,7 +16,7 @@ from rlbench.tasks.reach_target_no_obs_central import ReachTargetNoObsCentral as
 from rlbench.tasks.reach_target_no_obs_random import ReachTargetNoObsRandom as ReachNoObs_PlaceRandom
 ## Obstacle
 from rlbench.tasks.reach_target_obs_static_left import ReachTargetObsStaticLeft as ReachObs_StaticLeft
-from rlbench.tasks.reach_target_obs_static import ReachTargetObsStatic as ReachObs_Static
+from rlbench.tasks.reach_target_obs_static import ReachTargetObsStatic as ReachObs_Static 
 from rlbench.tasks.reach_target_obs_random_static import ReachTargetObsRandomStatic as ReachObs_RandomStatic
 from rlbench.tasks.reach_target_obs_random import ReachTargetObsRandom as ReachObs_Random
 from rlbench.tasks.reach_target_obs_ind_random import ReachTargetObsIndRandom as ReachObs_IndepRandom
@@ -50,8 +50,7 @@ from seed import set_seed
 set_seed()
 
 num_demos = 10
-cam_type = CamType.WRIST | CamType.RIGHT_SHOULDER |  CamType.LEFT_SHOULDER
-cam_type
+cam_type = CamType.WRIST | CamType.RIGHT_SHOULDER
 
 #%%
 ## 2. Create Environment and Set Model Name
@@ -134,7 +133,8 @@ ingest_num = num_demos
 agent.ingest(demos[:ingest_num], **training_params) ## trains here
 agent.save_model(model_path)
 
-
+#%%
+agent.policy.load_state_dict(torch.load("/home/kup/Desktop/code/fyp/src/3d/kup-bench/models/PROMISING-rwd-reach-1-demo-wrist+r_shoulder-ReachObs_Random-PolicyType.CAM_ATTENTION.pth"))
 
 # %% Auto task Execution
 agent.policy.to("cpu")
@@ -170,13 +170,27 @@ while not done:
 print(f"{f"Done Successfull! done in {count} steps" if done else "Failed!"}")
 print(f"Final distance: {distances[-1]}")
 
+# %% Reset Task Env
+# %% Auto task Execution
+agent.policy.to("cpu")
+# task_env = env.get_task(ReachNoObs_Central)
+_, obs = task_env.reset()
+count = 0
+done = False
+distances = []
 # %% 
 # Single Step
 obs: Observation
+
 action, att_weights = agent.act(obs)
 print(f"{att_weights = }")
   
 action = action.squeeze(0)
+
+
+action = torch.tensor([0.0, 0, 0, 0., 0, 0.0, 0.0, 1.0])
+print(f"{action.shape = }")
+
 obs, reward, done = task_env.step(action)
 gripper = Object.get_object("Panda_gripper")
 target = Object.get_object("target")
