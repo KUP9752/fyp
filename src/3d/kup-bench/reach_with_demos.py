@@ -29,6 +29,8 @@ from rlbench.demo import Demo
 
 from pyrep.const import RenderMode
 from pyrep.objects import Object, VisionSensor, Shape
+from pyrep.backend import sim
+
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -38,6 +40,7 @@ from PIL import Image, ImageDraw
 
 # from policy import  CamType
 
+import open3d as o3d
 from matplotlib import pyplot as plt
 
 from lib.agent import Agent
@@ -46,11 +49,50 @@ from lib.policy_type import PolicyType
 
 from lib.utils import get_task_name, now
 from seed import set_seed
+from pprint import pprint
 
 set_seed()
 
 num_demos = 10
 cam_type = CamType.WRIST | CamType.RIGHT_SHOULDER
+
+
+LABELS = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
+               'bus', 'train', 'truck', 'boat', 'traffic light',
+               'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird',
+               'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear',
+               'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie',
+               'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball',
+               'kite', 'baseball bat', 'baseball glove', 'skateboard',
+               'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup',
+               'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple',
+               'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza',
+               'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed',
+               'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote',
+               'keyboard', 'cell phone', 'microwave', 'oven', 'toaster',
+               'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors',
+               'teddy bear', 'hair drier', 'toothbrush']
+# === Perception Modules ===
+from torchvision.transforms import functional as F
+from torchvision.models.detection import maskrcnn_resnet50_fpn
+class Segmenter:
+    def __init__(self, device='cpu'):
+      self.model = maskrcnn_resnet50_fpn(pretrained=True).to(device).eval()
+      self.device = device
+
+    def segment(self, image):
+        """
+        image: HxWx3 RGB np.uint8
+        returns: list of masks (boolean arrays) and bounding boxes
+        """
+        img_t: torch.Tensor = F.to_tensor(image).to(self.device)
+        
+        outputs = self.model([img_t.float()])[0]
+        masks = (outputs['masks'] > 0.5).squeeze(1).cpu().numpy()
+        boxes = outputs['boxes'].cpu().numpy()
+        return masks, boxes, outputs
+
+
 
 #%%
 ## 2. Create Environment and Set Model Name
@@ -62,7 +104,7 @@ DATASET = '' if live_demos else 'PATH/TO/YOUR/DATASET'
 
 obs_config = ObservationConfig()
 obs_config.set_all(True) ## important to get the data from the joints etc
-cam_config = CameraConfig(rgb=True, depth=False, mask=False,
+cam_config = CameraConfig(rgb=True, depth=True, mask=True, point_cloud=True,
                               render_mode=RenderMode.OPENGL,
                     image_size=(64, 64))
 nocam_config = CameraConfig(rgb=False, depth=False, mask=False,
@@ -107,7 +149,7 @@ task
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
-demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos)
+demos: list[Demo] = task_env.get_demos(1, live_demos=live_demos)
 demos
 
 
@@ -167,11 +209,48 @@ while not done:
   count += 1
   if count == 100:break
   
-print(f"{f"Done Successfull! done in {count} steps" if done else "Failed!"}")
+print({f"Done Successfull! done in {count} steps" if done else "Failed!"})
 print(f"Final distance: {distances[-1]}")
 
 # %% Reset Task Env
+
+
 # %% Auto task Execution
+seg = Segmenter()
+def show_pc(arr_pc):
+  pcd = o3d.geometry.PointCloud()
+  pcd.points = o3d.utility.Vector3dVector(arr_pc)
+  o3d.visualization.draw_geometries([pcd])
+  
+def run_segmenter():
+  with torch.no_grad():
+    im = obs.wrist_rgb
+    plt.imshow(im)
+    image = im / 255
+    print(image.dtype)
+    
+    masks, boxes, outs = seg.segment(image)
+    print(f"{masks.shape = } {boxes.shape =}")
+    print(f"{len(masks) = } {len(boxes) =}")
+  
+  # np.transpose(masks, (0, 1, 2))
+  # plt.imshow(masks)
+
+  im = Image.fromarray(im)
+  draw = ImageDraw.Draw(im)
+
+  pprint(outs, indent = 2)
+  colours = ["red", "green", "blue", "orange", "purple", "yellow"]
+  for i, box in enumerate(boxes):
+    print(box)
+    draw.rectangle(box, outline=colours[i % (len(boxes) - 1)], width=1)
+    
+  for i, label in enumerate(outs["labels"]):
+    print(f"label {label}: {LABELS[label]}, col: {colours[i % (len(boxes) - 1)]}")
+  # print(f"score {label}")
+    
+  plt.imshow(im)
+
 agent.policy.to("cpu")
 # task_env = env.get_task(ReachNoObs_Central)
 _, obs = task_env.reset()
@@ -181,27 +260,36 @@ distances = []
 # %% 
 # Single Step
 obs: Observation
-
 action, att_weights = agent.act(obs)
 print(f"{att_weights = }")
   
 action = action.squeeze(0)
+signal = sim.simGetFloatSignal("wrist_target_vis_binary")
+print(f"{signal = }")
+task_env
 
-
-action = torch.tensor([0.0, 0, 0, 0., 0, 0.0, 0.0, 1.0])
+# action = torch.tensor([0.0, 0, 0, 0., 0, 0.0, 0.0, 1.0])
 print(f"{action.shape = }")
 
+# run_segmenter()
 obs, reward, done = task_env.step(action)
 gripper = Object.get_object("Panda_gripper")
 target = Object.get_object("target")
 
+pc = obs.wrist_point_cloud
+print(f"{pc.shape = }")
+plt.imshow(obs.wrist_rgb)
+plt.imshow(obs.wrist_depth)
+show_pc(pc.reshape(-1, 3))
+  
 
 distance = np.linalg.norm(gripper.get_position() - target.get_position())
 distances.append(distance)
 
 if done:
-  print(f"{f"Done Successfull! done in {count} steps" if done else "Failed!"}")
+  print({f"Done Successfull! done in {count} steps" if done else "Failed!"})
   print(f"Final distance: {distances[-1]}")
+
 
 # checkImage(obs.wrist_rgb)
 #%%

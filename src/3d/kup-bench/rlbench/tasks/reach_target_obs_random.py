@@ -24,7 +24,6 @@ class ReachTargetObsRandom(Task):
       self.target_boundary = Shape("target_boundary")
       self.obs_boundary = Shape("obs_boundary")
       
-      
     ## The obstacle and the target are independently sampled from 2 different boundaries, 
     ## which are both within the view of the wrist camera
     def init_episode(self, index: int) -> List[str]:
