@@ -23,6 +23,9 @@ from rlbench.tasks.reach_target_obs_ind_random import ReachTargetObsIndRandom as
 ## Grasp
 from rlbench.tasks.simple_grasp import SimpleGrasp as Grasp_Simple
 from rlbench.tasks.grasp_and_move import GraspAndMove as Grasp_ThenMove
+## Vision Experiments - Grasp
+from rlbench.tasks.vision_static import VisionStatic as Vision_Static
+
 
 from rlbench.backend.observation import Observation
 from rlbench.demo import Demo
@@ -133,11 +136,19 @@ env.launch()
 ## 3. Attach Task and create Agent
 pol_type = PolicyType.CAM_ATTENTION
 
-task = ReachObs_Random
+task = Vision_Static
 # task = ReachNoObs_Central
-task_env = env.get_task(task)
-target = Shape("target")
-agent = Agent(env.action_shape[0], pol_type, cam_type, target_rgb = torch.tensor(target.get_color()))
+print(env.get_task.__code__.co_filename)
+
+task_env = env.get_task(task_class = task, scale = 0.4)
+try:
+  target = Shape("target")
+  target_rgb = torch.tensor(target.get_color())
+except RuntimeError:
+  print(f"'target' doesn't exist meaning this is a different task")
+  target_rgb = None
+  
+agent = Agent(env.action_shape[0], pol_type, cam_type, target_rgb = target_rgb)
 
 model_name = f"rwd-reach-{num_demos}-demos-{cam_type}-{get_task_name(task)}-{pol_type}--{now()}"
 model_path = f"./all-models/reach-with-demos/{model_name}.pth"

@@ -138,14 +138,14 @@ class Environment(object):
             self._pyrep.shutdown()
         self._pyrep = None
 
-    def get_task(self, task_class: Type[Task]) -> TaskEnvironment:
+    def get_task(self, task_class: Type[Task], **task_params) -> TaskEnvironment:
 
         # If user hasn't called launch, implicitly call it.
         if self._pyrep is None:
             self.launch()
 
         self._scene.unload()
-        task = task_class(self._pyrep, self._robot)
+        task = task_class(self._pyrep, self._robot, **task_params)
         self._prev_task = task
         return TaskEnvironment(
             self._pyrep, self._robot, self._scene, task,
