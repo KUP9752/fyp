@@ -68,7 +68,7 @@ class Agent(object):
       ## wrist -> ls -> rs
       for ct in CamType.uniques():
         if self.cam_type & ct:
-          image = torch.tensor(pick_obs_from_cam(ct, obs), dtype= torch.float32)
+          image = torch.tensor(pick_obs_from_cam(ct, obs, normalise_rgb = True), dtype= torch.float32)
           image = torch.permute(image, (2, 0, 1)) ## 64, 64, 3 -> 3, 64, 64
           images.append(image)
       

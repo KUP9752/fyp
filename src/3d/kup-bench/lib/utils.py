@@ -20,7 +20,8 @@ from rlbench.tasks.reach_target_obs_ind_random import ReachTargetObsIndRandom as
 ## Grasp
 from rlbench.tasks.simple_grasp import SimpleGrasp as Grasp_Simple
 from rlbench.tasks.grasp_and_move import GraspAndMove as Grasp_ThenMove
-
+## Vision Experiments - Grasp
+from rlbench.tasks.vision_static import VisionStatic as Vision_Static
 
 
 def get_task_name(task) -> str:
@@ -49,17 +50,19 @@ def get_task_name(task) -> str:
     return "Grasp_Simple"
   elif task == Grasp_ThenMove:
     return "Grasp_ThenMove"
+  elif task == Vision_Static:
+    return "Vision_Static"
   else:
     raise ValueError("[utils - get_task_name] Task not found!")
 
-def pick_obs_from_cam(cam_type: CamType, obs: Observation) -> np.ndarray:
+def pick_obs_from_cam(cam_type: CamType, obs: Observation, normalise_rgb: bool = True) -> np.ndarray:
   match cam_type:
     case CamType.WRIST:
-      return obs.wrist_rgb
+      return (obs.wrist_rgb / 255) if normalise_rgb else obs.wrist_rgb
     case CamType.LEFT_SHOULDER:
-      return obs.left_shoulder_rgb
+      return (obs.left_shoulder_rgb / 255) if normalise_rgb else obs.left_shoulder_rgb
     case CamType.RIGHT_SHOULDER:
-      return obs.right_shoulder_rgb
+      return (obs.right_shoulder_rgb / 255) if normalise_rgb else obs.right_shoulder_rgb
     case _:
       raise ValueError(f"[utils - pick_obs_from_cam] Unknown CamType ({cam_type})")
 
