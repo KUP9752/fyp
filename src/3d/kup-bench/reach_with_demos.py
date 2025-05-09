@@ -57,7 +57,7 @@ from pprint import pprint
 set_seed()
 
 num_demos = 10
-cam_type = CamType.WRIST | CamType.RIGHT_SHOULDER
+cam_type = CamType.WRIST # | CamType.RIGHT_SHOULDER
 
 
 LABELS = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
@@ -134,21 +134,26 @@ env.launch()
 
 #%%
 ## 3. Attach Task and create Agent
-pol_type = PolicyType.CAM_ATTENTION
+pol_type = PolicyType.SIMPLE_GRASP
 
 task = Vision_Static
 # task = ReachNoObs_Central
 print(env.get_task.__code__.co_filename)
 
-task_env = env.get_task(task_class = task, scale = 0.4)
+task_env = env.get_task(task_class = task, scale = 0.4, wrist_cam_distance = 0.5)
+# task_env = env.get_task(task_class = task)
+target_name = "grasp_cube"
+
+
 try:
-  target = Shape("target")
+  target = Shape(target_name)
   target_rgb = torch.tensor(target.get_color())
 except RuntimeError:
   print(f"'target' doesn't exist meaning this is a different task")
   target_rgb = None
   
-agent = Agent(env.action_shape[0], pol_type, cam_type, target_rgb = target_rgb)
+# agent = Agent(env.action_shape[0], pol_type, cam_type, target_rgb = target_rgb)
+agent = Agent(env.action_shape[0], pol_type, cam_type, grasp_thresh = 0.5)
 
 model_name = f"rwd-reach-{num_demos}-demos-{cam_type}-{get_task_name(task)}-{pol_type}--{now()}"
 model_path = f"./all-models/reach-with-demos/{model_name}.pth"
@@ -177,7 +182,7 @@ training_params = {
   "lr": 1e-3,
   "shuffle_obs_in_demo": False,
   "shuffle_data": False,
-  "lambda_attn": 1e-2,
+  # "lambda_grasp_loss": 20
 }
 
 ingest_num = num_demos
@@ -187,7 +192,8 @@ agent.ingest(demos[:ingest_num], **training_params) ## trains here
 agent.save_model(model_path)
 
 #%%
-agent.policy.load_state_dict(torch.load("/home/kup/Desktop/code/fyp/src/3d/kup-bench/models/PROMISING-rwd-reach-1-demo-wrist+r_shoulder-ReachObs_Random-PolicyType.CAM_ATTENTION.pth"))
+load_str = "models/grasp/rwd-reach-10-demos-wrist-Vision_Static-simple_grasp_policy--worked-with-scale0.4-dist-0.5_May09_14-57.pth"
+agent.policy.load_state_dict(torch.load(f"/home/kup/Desktop/code/fyp/src/3d/kup-bench/{load_str}"))
 
 # %% Auto task Execution
 agent.policy.to("cpu")
@@ -205,8 +211,9 @@ while not done:
   action = action.squeeze(0)
   # print(f"{action.shape = }")
   obs, reward, done = task_env.step(action)
+  done = False
   gripper = Object.get_object("Panda_gripper")
-  target = Object.get_object("target")
+  target = Object.get_object(target_name)
   
   # vis_score = check_visibility("cam_wrist", "target")
   
@@ -218,7 +225,8 @@ while not done:
   # print(f"{done = }")
   
   count += 1
-  if count == 100:break
+  if count == 300:
+    break
   
 print({f"Done Successfull! done in {count} steps" if done else "Failed!"})
 print(f"Final distance: {distances[-1]}")
@@ -279,19 +287,29 @@ signal = sim.simGetFloatSignal("wrist_target_vis_binary")
 print(f"{signal = }")
 task_env
 
-# action = torch.tensor([0.0, 0, 0, 0., 0, 0.0, 0.0, 1.0])
+
+action = torch.Tensor([
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.,
+    0.
+  ])
 print(f"{action.shape = }")
 
 # run_segmenter()
 obs, reward, done = task_env.step(action)
 gripper = Object.get_object("Panda_gripper")
-target = Object.get_object("target")
+target = Object.get_object(target_name)
 
 pc = obs.wrist_point_cloud
 print(f"{pc.shape = }")
 plt.imshow(obs.wrist_rgb)
 plt.imshow(obs.wrist_depth)
-show_pc(pc.reshape(-1, 3))
+# show_pc(pc.reshape(-1, 3))
   
 
 distance = np.linalg.norm(gripper.get_position() - target.get_position())
@@ -342,8 +360,10 @@ env.shutdown()
 ## Random Testing Cell
 import torch
 ts = []
-tensor = torch.tensor([1,2,3])
-for _ in range(3):
-  ts.append(tensor)
+action = torch.zeros(8)
+grasp =  torch.tensor([2])
+if grasp > 3:
+  print("hello")
 
-torch.stack(ts, dim=0).mean(dim=0, dtype=torch.float32)
+
+

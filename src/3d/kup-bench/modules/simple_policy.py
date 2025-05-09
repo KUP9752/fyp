@@ -5,7 +5,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-
+from torchvision import transforms
+transforms.Normalize
 from rlbench.demo import Demo
 from rlbench.backend.observation import Observation
 
@@ -142,33 +143,31 @@ class SimpleGraspPolicy(SimplePolicy):
       nn.Flatten(),
       nn.Linear(self.flat_size, 128),
       nn.ReLU(inplace=False),
-      # nn.Linear(128, 32),
-      # nn.ReLU(inplace = False),
-      nn.Linear(128, 1),
-      nn.Sigmoid()
+      nn.Linear(128, 64),
+      nn.ReLU(inplace = False),
+      nn.Linear(64, 1),
+      # nn.Sigmoid() ## rmeove for raw logits, lets see that it predicts now
     )
     
   def forward(self, image):
     feats = self.conv(image)
     pose = self.action_head(feats)
-    grasp_prob = self.grasp_head(feats)
+    grasp = self.grasp_head(feats)
     
     ## depending on the grasp probability I want to close the gripper
     
-    print(f"{grasp_prob = }")
-    print(f"{grasp_prob.shape = }")
-    print(f"bombastic")
+    ## remove the uncertainty bit just predict it
+    # grasp = torch.where(
+    #   (grasp_prob > self.grasp_thresh), 
+    #   GRIPPER_CLOSE, 
+    #   GRIPPER_OPEN
+    # ) ## keeps shape (batch_size, 1)
     
-    grasp = torch.where(
-      (grasp_prob > self.grasp_thresh), 
-      GRIPPER_CLOSE, 
-      GRIPPER_OPEN
-    ) ## keeps shape (batch_size, 1)
+    # print(f"{action.shape = }")
+    # return action, {"grasp_probabiltiy": grasp_prob}
     
     action = torch.cat([pose, grasp], dim = 1) ## get (batch_size, 8)
-    print(f"{action.shape = }")
-    
-    return action, {"grasp_probabiltiy": grasp_prob}
+    return action, {"grasp_probabiltiy": grasp}
 
   ## override
   def train_policy(self, 
@@ -190,16 +189,29 @@ class SimpleGraspPolicy(SimplePolicy):
     model = self.to(device)
     # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
     
-    
-    bce_loss = nn.BCEWithLogitsLoss()
-    mse_loss = nn.MSELoss()
-    ## NOTE: suggested nn.Smooth1Loss()
-    optimiser = optim.Adam(model.parameters(), lr = lr)
-    
     ## 'cat' makes sure to return all the images fuxed together (batch_size, 3 * num_cam, W, H)
     dataset = DemoObsDataset(demos, self.cam_type, shuffle_obs=shuffle_obs_in_demo, get_type="cat")
     loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=shuffle_data) ## shuffling makes it worse
-    # print(f"Dataset Size: {len(dataset)}")
+    
+    # grasp_labels = torch.tensor([labels[-1] for _, labels in dataset], dtype = torch.float32)
+    
+    # num_pos = (grasp_labels == 1).sum()
+    # num_neg = (grasp_labels == 0).sum()
+    # if num_pos > 0:
+    #   class_weight = num_neg / num_pos
+    # else:
+    #   class_weight = torch.tensor(1.)
+    
+    # print(f"{num_pos = }, {num_neg = }")
+    run_pose = []
+    run_grasp = []
+    
+    bce_loss = nn.BCEWithLogitsLoss(pos_weight=None)
+    # bce_loss =  nn.BCELoss()
+    mse_loss = nn.MSELoss()
+    
+    optimiser = optim.Adam(model.parameters(), lr = lr)
+    
     model.train()
     self.losses = [0 for _ in range(epochs)]
     for epoch in progress(range(epochs)):
@@ -221,6 +233,7 @@ class SimpleGraspPolicy(SimplePolicy):
         grasp_loss = bce_loss(pred_actions[:, -1], labels[:, -1])
         
         loss = pose_loss +  lambda_grasp_loss * grasp_loss
+        
         loss.backward()
         optimiser.step()
         total_pose_loss += pose_loss.item()

@@ -22,7 +22,10 @@ from rlbench.tasks.simple_grasp import SimpleGrasp as Grasp_Simple
 from rlbench.tasks.grasp_and_move import GraspAndMove as Grasp_ThenMove
 ## Vision Experiments - Grasp
 from rlbench.tasks.vision_static import VisionStatic as Vision_Static
+# from rlbench.tasks.vision_random import VisionRandom as Vision_Random
 
+GRIPPER_CLOSE = 0.0
+GRIPPER_OPEN = 1.0
 
 def get_task_name(task) -> str:
   ## Reach No Obs
@@ -50,8 +53,11 @@ def get_task_name(task) -> str:
     return "Grasp_Simple"
   elif task == Grasp_ThenMove:
     return "Grasp_ThenMove"
+  ## Vision Experiments - Grasp
   elif task == Vision_Static:
     return "Vision_Static"
+  # elif task == Vision_Random:
+  #   return "Vision_Random"
   else:
     raise ValueError("[utils - get_task_name] Task not found!")
 
