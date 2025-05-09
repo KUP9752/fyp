@@ -154,20 +154,8 @@ class SimpleGraspPolicy(SimplePolicy):
     pose = self.action_head(feats)
     grasp = self.grasp_head(feats)
     
-    ## depending on the grasp probability I want to close the gripper
-    
-    ## remove the uncertainty bit just predict it
-    # grasp = torch.where(
-    #   (grasp_prob > self.grasp_thresh), 
-    #   GRIPPER_CLOSE, 
-    #   GRIPPER_OPEN
-    # ) ## keeps shape (batch_size, 1)
-    
-    # print(f"{action.shape = }")
-    # return action, {"grasp_probabiltiy": grasp_prob}
-    
     action = torch.cat([pose, grasp], dim = 1) ## get (batch_size, 8)
-    return action, {"grasp_probabiltiy": grasp}
+    return action, {}
 
   ## override
   def train_policy(self, 
