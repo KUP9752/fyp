@@ -14,6 +14,7 @@ from lib.cam_type import CamType
 
 from modules.demo_obs_dataset import DemoObsDataset
 
+from lib.utils import GRIPPER_CLOSE, GRIPPER_OPEN
 
 ## This is made for image sizes of 64x64 and now multi cam setups
 class SimplePolicy(nn.Module):
@@ -47,10 +48,11 @@ class SimplePolicy(nn.Module):
       nn.MaxPool2d(kernel_size=(2, 2), stride=2, padding=0),
       nn.ReLU(inplace=False),
     )
-    flat_size = 2 * 2 * 128
+    self.flat_size = 2 * 2 * 128
+    
     self.fc = nn.Sequential(
       nn.Flatten(),
-      nn.Linear(flat_size, 200),
+      nn.Linear(self.flat_size, 200),
       nn.ReLU(inplace=False),
       nn.Dropout(0.2),
       nn.Linear(200, 200),
@@ -114,3 +116,121 @@ class SimplePolicy(nn.Module):
     if model_path:
       torch.save(self.state_dict(), f"{model_path}")
 
+class SimpleGraspPolicy(SimplePolicy):
+  ## override
+  def __init__(self, action_shape: int, cam_type: CamType = CamType.WRIST, grasp_thresh: float = 0.5):
+    super().__init__(action_shape, cam_type)
+    
+    self.grasp_thresh = grasp_thresh
+    
+    self.fc = None
+    
+    self.action_head = nn.Sequential(
+      nn.Flatten(),
+      nn.Linear(self.flat_size, 200),
+      nn.ReLU(inplace=False),
+      nn.Dropout(0.2),
+      nn.Linear(200, 200),
+      nn.ReLU(inplace=False),
+      nn.Dropout(0.2),
+      nn.Linear(200, 50),
+      nn.ReLU(inplace=False),
+      nn.Linear(50, action_shape - 1) ## predicts 8 - 1 dim action, no pose predication here
+    )
+    
+    self.grasp_head = nn.Sequential(
+      nn.Flatten(),
+      nn.Linear(self.flat_size, 128),
+      nn.ReLU(inplace=False),
+      # nn.Linear(128, 32),
+      # nn.ReLU(inplace = False),
+      nn.Linear(128, 1),
+      nn.Sigmoid()
+    )
+    
+  def forward(self, image):
+    feats = self.conv(image)
+    pose = self.action_head(feats)
+    grasp_prob = self.grasp_head(feats)
+    
+    ## depending on the grasp probability I want to close the gripper
+    
+    print(f"{grasp_prob = }")
+    print(f"{grasp_prob.shape = }")
+    print(f"bombastic")
+    
+    grasp = torch.where(
+      (grasp_prob > self.grasp_thresh), 
+      GRIPPER_CLOSE, 
+      GRIPPER_OPEN
+    ) ## keeps shape (batch_size, 1)
+    
+    action = torch.cat([pose, grasp], dim = 1) ## get (batch_size, 8)
+    print(f"{action.shape = }")
+    
+    return action, {"grasp_probabiltiy": grasp_prob}
+
+  ## override
+  def train_policy(self, 
+            demos: list[Demo],
+            epochs: int = 200,
+            minibatch_size: int = 32, ## size of the observations currently being used
+            lr: float = 0.01,
+            shuffle_data = False, 
+            shuffle_obs_in_demo = True,
+            model_path: Optional[str] = None,
+            lambda_grasp_loss: float = 1.
+  ):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Camera: {self.cam_type}")
+    
+    print(f"Training Params: \n\t{epochs = }, \n\t{minibatch_size = }, \n\t{lr = }, \n\t{model_path = }, \n\t{shuffle_data = },\n\t{shuffle_obs_in_demo = } \n\t{device}\n")
+    
+    
+    model = self.to(device)
+    # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
+    
+    
+    bce_loss = nn.BCEWithLogitsLoss()
+    mse_loss = nn.MSELoss()
+    ## NOTE: suggested nn.Smooth1Loss()
+    optimiser = optim.Adam(model.parameters(), lr = lr)
+    
+    ## 'cat' makes sure to return all the images fuxed together (batch_size, 3 * num_cam, W, H)
+    dataset = DemoObsDataset(demos, self.cam_type, shuffle_obs=shuffle_obs_in_demo, get_type="cat")
+    loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=shuffle_data) ## shuffling makes it worse
+    # print(f"Dataset Size: {len(dataset)}")
+    model.train()
+    self.losses = [0 for _ in range(epochs)]
+    for epoch in progress(range(epochs)):
+      total_pose_loss, total_grasp_loss = 0., 0.
+      
+      for inputs, labels in loader:
+        inputs, labels = inputs.to(device), labels.to(device)
+        print(f"{inputs.shape =}")
+        print(f"{labels.shape =}")
+        
+        optimiser.zero_grad()
+        
+        
+        pred_actions, _ = model(inputs)
+        print(f"{pred_actions.shape = }")
+        
+        ## [:, x] to preserve the batch shape (batch_size, X)
+        pose_loss = mse_loss(pred_actions[:, :-1], labels[:, :-1]) ## only the pose not he gripper action
+        grasp_loss = bce_loss(pred_actions[:, -1], labels[:, -1])
+        
+        loss = pose_loss +  lambda_grasp_loss * grasp_loss
+        loss.backward()
+        optimiser.step()
+        total_pose_loss += pose_loss.item()
+        total_grasp_loss += grasp_loss.item()
+        loss = (total_pose_loss + lambda_grasp_loss * total_grasp_loss) / len(loader)
+        self.losses[epoch] = loss
+        N = len(loader)
+        print(f"Epoch {epoch}: PoseLoss={total_pose_loss/N:.4f}, GraspLoss={total_grasp_loss/N:.4f}")
+      
+    print(f"Done Training Policy on {len(demos)} Demos") 
+    
+    if model_path:
+      torch.save(self.state_dict(), f"{model_path}")

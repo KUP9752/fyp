@@ -1,5 +1,5 @@
 from typing import Literal
-from modules.simple_policy import SimplePolicy
+from modules.simple_policy import SimplePolicy, SimpleGraspPolicy
 from modules.cam_attention_policy import CamAttentionPolicy
 
 from rlbench.demo import Demo
@@ -26,6 +26,8 @@ class Agent(object):
       match policy_type:
         case PolicyType.SIMPLE:
           self.policy = SimplePolicy(action_shape, cam_type)
+        case PolicyType.SIMPLE_GRASP:
+          self.policy = SimpleGraspPolicy(action_shape, cam_type, **policy_args)
         case PolicyType.CAM_ATTENTION:
           self.policy = CamAttentionPolicy(action_shape, cam_type, **policy_args) ## NOTE: other varaible settings here
         case _: 
@@ -79,6 +81,8 @@ class Agent(object):
         case PolicyType.SIMPLE:
           ## cat on the colours channel (3 * num_cams, W, H)
           torch_obs = torch.cat(images, dim = 0)  
+        case PolicyType.SIMPLE_GRASP:
+          torch_obs = torch.cat(images, dim = 0)
         case PolicyType.CAM_ATTENTION:
           ## stacked on new channel (num_cams, 3, W, H)
           torch_obs = torch.stack(images, dim = 0)  
