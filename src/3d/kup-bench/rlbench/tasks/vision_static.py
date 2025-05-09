@@ -41,7 +41,8 @@ class VisionStatic(Task):
       self.wrist_cam = VisionSensor("cam_wrist")
       
       # success_sensor =  ProximitySensor("success")
-      self.register_graspable_objects([self.grasp_target_visual])
+      self.register_graspable_objects([self.grasp_target, self.grasp_target_visual])
+      
       self.boundary = Shape("boundary")
       # self.register_success_conditions([
       #   DetectedCondition(self.robot.arm.get_tip(), success_sensor)
