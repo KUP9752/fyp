@@ -57,7 +57,7 @@ from pprint import pprint
 set_seed()
 
 num_demos = 10
-cam_type = CamType.WRIST # | CamType.RIGHT_SHOULDER
+cam_type = CamType.LEFT_SHOULDER
 
 
 LABELS = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
@@ -140,7 +140,7 @@ task = Vision_Static
 # task = ReachNoObs_Central
 print(env.get_task.__code__.co_filename)
 
-task_env = env.get_task(task_class = task, scale = 0.4, wrist_cam_distance = 0.5)
+task_env = env.get_task(task_class = task, scale = 1, wrist_cam_distance = 0.5)
 # task_env = env.get_task(task_class = task)
 target_name = "grasp_cube"
 
@@ -192,12 +192,19 @@ agent.ingest(demos[:ingest_num], **training_params) ## trains here
 agent.save_model(model_path)
 
 #%%
-load_str = "models/grasp/rwd-reach-10-demos-wrist-Vision_Static-simple_grasp_policy--worked-with-scale0.4-dist-0.5_May09_14-57.pth"
+# load_str = "models/grasp/rwd-reach-10-demos-wrist-Vision_Static-simple_grasp_policy--worked-with-scale0.4-dist-0.5_May09_14-57.pth"
+
+
+## interesting l_shoulder only model claps before grabbing
+load_str = "/all-models/task-Vision_Static-demo-1-cam-l_shoulder--_May11_16-24.pth"
+
+
 agent.policy.load_state_dict(torch.load(f"/home/kup/Desktop/code/fyp/src/3d/kup-bench/{load_str}"))
 
 # %% Auto task Execution
 agent.policy.to("cpu")
 # task_env = env.get_task(ReachNoObs_Central)
+
 _, obs = task_env.reset()
 count = 0
 done = False
@@ -206,12 +213,13 @@ while not done:
   obs: Observation
   
   action, att_weights = agent.act(obs)
-  print(f"{att_weights = }")
+  # print(f"{att_weights = }")
   
   action = action.squeeze(0)
+  print(f"{action.shape =}")
+  print(f"{action[-1] =}")
   # print(f"{action.shape = }")
   obs, reward, done = task_env.step(action)
-  done = False
   gripper = Object.get_object("Panda_gripper")
   target = Object.get_object(target_name)
   
@@ -225,14 +233,24 @@ while not done:
   # print(f"{done = }")
   
   count += 1
-  if count == 300:
+  if count == 100:
     break
   
 print({f"Done Successfull! done in {count} steps" if done else "Failed!"})
 print(f"Final distance: {distances[-1]}")
 
 # %% Reset Task Env
+fig, axs = plt.subplots(1, 3, figsize=(9, 3))
+images = [obs.wrist_rgb, obs.left_shoulder_rgb, obs.right_shoulder_rgb]
+if 
+for ax, img in zip(axs, images):
+  ax.imshow(img)
+  ax.set_title("")
+  ax.axis("off")
+plt.savefig("images.png", bbox_inches="tight")
 
+plt.close()
+type(axs)
 
 # %% Auto task Execution
 seg = Segmenter()
@@ -359,11 +377,9 @@ env.shutdown()
 # %%
 ## Random Testing Cell
 import torch
-ts = []
-action = torch.zeros(8)
-grasp =  torch.tensor([2])
-if grasp > 3:
-  print("hello")
 
+cam_type = CamType.WRIST | CamType.LEFT_SHOULDER | CamType.RIGHT_SHOULDER
+to_save: list[CamType] = [ct for ct in CamType.uniques() if ct & cam_type]
+print(to_save)
 
 

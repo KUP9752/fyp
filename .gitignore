@@ -15,3 +15,6 @@ src/3d/kup-bench/all-models
 
 ## ignoring the runs folder, created by the writer
 src/3d/kup-bench/runs/
+
+## outputs from the grasping vision expereiments 
+**/outputs/run-grasp-with-agent

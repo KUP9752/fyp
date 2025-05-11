@@ -146,7 +146,7 @@ class SimpleGraspPolicy(SimplePolicy):
       nn.Linear(128, 64),
       nn.ReLU(inplace = False),
       nn.Linear(64, 1),
-      # nn.Sigmoid() ## rmeove for raw logits, lets see that it predicts now
+      # nn.Sigmoid() ## remove for raw logits, lets see that it predicts now
     )
     
   def forward(self, image):
@@ -159,19 +159,20 @@ class SimpleGraspPolicy(SimplePolicy):
 
   ## override
   def train_policy(self, 
-            demos: list[Demo],
-            epochs: int = 200,
-            minibatch_size: int = 32, ## size of the observations currently being used
-            lr: float = 0.01,
-            shuffle_data = False, 
-            shuffle_obs_in_demo = True,
-            model_path: Optional[str] = None,
-            lambda_grasp_loss: float = 1.
+    demos: list[Demo],
+    epochs: int = 200,
+    minibatch_size: int = 32, ## size of the observations currently being used
+    lr: float = 0.01,
+    shuffle_data = False, 
+    shuffle_obs_in_demo = True,
+    model_path: Optional[str] = None,
+    lambda_grasp_loss: float = 1.,
+    lock_loader_seed: Optional[int] = None
   ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Camera: {self.cam_type}")
     
-    print(f"Training Params: \n\t{epochs = }, \n\t{minibatch_size = }, \n\t{lr = }, \n\t{model_path = }, \n\t{shuffle_data = },\n\t{shuffle_obs_in_demo = } \n\t{device}\n")
+    print(f"Training Params: \n\t{epochs = }, \n\t{minibatch_size = }, \n\t{lr = }, \n\t{model_path = }, \n\t{shuffle_data = },\n\t{shuffle_obs_in_demo = },\n\t{'seeded loader' if lock_loader_seed is not None else 'random loader'} \n\t{device}\n")
     
     
     model = self.to(device)
@@ -179,7 +180,17 @@ class SimpleGraspPolicy(SimplePolicy):
     
     ## 'cat' makes sure to return all the images fuxed together (batch_size, 3 * num_cam, W, H)
     dataset = DemoObsDataset(demos, self.cam_type, shuffle_obs=shuffle_obs_in_demo, get_type="cat")
-    loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=shuffle_data) ## shuffling makes it worse
+    if lock_loader_seed is not None:
+      loader = DataLoader(dataset,
+        batch_size=minibatch_size,
+        shuffle=shuffle_data,
+        generator=torch.manual_seed(lock_loader_seed)
+       ) ## shuffling makes it worse
+    else:
+      loader = DataLoader(dataset,
+        batch_size=minibatch_size,
+        shuffle=shuffle_data
+       ) 
     
     # grasp_labels = torch.tensor([labels[-1] for _, labels in dataset], dtype = torch.float32)
     
@@ -207,14 +218,14 @@ class SimpleGraspPolicy(SimplePolicy):
       
       for inputs, labels in loader:
         inputs, labels = inputs.to(device), labels.to(device)
-        print(f"{inputs.shape =}")
-        print(f"{labels.shape =}")
+        # print(f"{inputs.shape =}")
+        # print(f"{labels.shape =}")
         
         optimiser.zero_grad()
         
         
         pred_actions, _ = model(inputs)
-        print(f"{pred_actions.shape = }")
+        # print(f"{pred_actions.shape = }")
         
         ## [:, x] to preserve the batch shape (batch_size, X)
         pose_loss = mse_loss(pred_actions[:, :-1], labels[:, :-1]) ## only the pose not he gripper action
@@ -229,7 +240,7 @@ class SimpleGraspPolicy(SimplePolicy):
         loss = (total_pose_loss + lambda_grasp_loss * total_grasp_loss) / len(loader)
         self.losses[epoch] = loss
         N = len(loader)
-        print(f"Epoch {epoch}: PoseLoss={total_pose_loss/N:.4f}, GraspLoss={total_grasp_loss/N:.4f}")
+        # print(f"Epoch {epoch}: PoseLoss={total_pose_loss/N:.4f}, GraspLoss={total_grasp_loss/N:.4f}")
       
     print(f"Done Training Policy on {len(demos)} Demos") 
     

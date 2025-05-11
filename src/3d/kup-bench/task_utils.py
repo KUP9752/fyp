@@ -1,6 +1,7 @@
 from typing import Literal, Optional, Type
 
 from time import strftime
+import os
 
 import torch
 import numpy as np
@@ -8,7 +9,7 @@ import numpy as np
 from lib.agent import Agent
 from lib.cam_type import CamType
 from lib.policy_type import PolicyType
-from lib.utils import get_task_name, now
+from lib.utils import get_task_name, now, pick_obs_from_cam, GRIPPER_CLOSE, GRIPPER_OPEN
 
 from rlbench.environment import Environment
 from rlbench.task_environment import TaskEnvironment
@@ -18,7 +19,7 @@ from rlbench.backend.observation import Observation
 from rlbench.demo import Demo
 
 from pyrep.objects import Object, Shape
-
+import matplotlib.pyplot as plt
 
 # Tasks
 ## No Obstacle
@@ -46,10 +47,11 @@ def demos_and_train_for_task(
     given_demos: int | list[Demo],
     save_model = False,
     live_demos = True, 
-    **training_params
+    training_params: dict = {},
+    task_params: dict = {}
   ) -> tuple[TaskEnvironment, list[Demo]]:
   task_name = get_task_name(current_task) 
-  task_env = env.get_task(current_task) # removes all other loaded tasks
+  task_env = env.get_task(current_task, **task_params) # removes all other loaded tasks
   
   if isinstance(given_demos, int):
     demo_count = given_demos
@@ -82,7 +84,8 @@ def run_reach_task(
   demos: int | list[Demo],
   max_eplen: int | Literal["demo_max"] = "demo_max",
   within_err_dist: Optional[float] = None, ## allows the execution to finish early depending on if an error around the target is reached
-  **training_params
+  training_params: dict = {},
+  task_params: dict = {}
 ) -> tuple[list[float], bool]:
   ## new agent trained each time
   agent = Agent(env.action_shape[0], policy_type, cam_type)
@@ -95,7 +98,8 @@ def run_reach_task(
     agent,
     demos,
     save_model=True,
-    **training_params
+    training_params = training_params,
+    task_params = task_params
   )
     
   ## if max len is not specified make it the max of the givem demo
@@ -136,7 +140,8 @@ def run_reach_task_with_agent(
   demos: list[Demo],
   max_eplen: int | Literal["demo_max"] = "demo_max",
   within_err_dist: Optional[float] = None, ## allows the execution to finish early depending on if an error around the target is reached
-  **training_params
+  training_params: dict = {},
+  task_params: dict = {}
 ) -> tuple[dict, bool]:
   ## new agent trained each time
   
@@ -147,7 +152,8 @@ def run_reach_task_with_agent(
     agent,
     demos,
     save_model=True,
-    **training_params
+    training_params = training_params,
+    task_params = task_params
   )
     
   ## if max len is not specified make it the max of the givem demo
@@ -208,3 +214,113 @@ def run_reach_task_with_agent(
     "avg_attentions_below_obstacle": torch.stack(atts_below_obs, dim=0).mean(dim=0, dtype=torch.float32) if len(atts_below_obs) > 0 else None,
     "avg_attentions_above_obstacle": torch.stack(atts_above_obs, dim=0).mean(dim=0, dtype=torch.float32) if len(atts_above_obs) > 0 else None,
     },  done  
+
+
+def run_grasp_with_agent(  
+  env: Environment,
+  task: Task, ## any of Reach_* or ReachObs_* tasks
+  agent: Agent, 
+  demos: list[Demo],
+  max_eplen: int | Literal["demo_max"] = "demo_max",
+  training_params: dict = {},
+  task_params: dict = {},
+  print_index: Optional[int] = None
+) -> tuple[dict, bool]:
+  
+  task_env, demos = demos_and_train_for_task(
+    env,
+    task, #type: ignore[arg-type]
+    agent,
+    demos,
+    save_model=True,
+    training_params = training_params,
+    task_params = task_params
+  )
+  
+  ## if max len is not specified make it the max of the givem demo
+  if max_eplen == "demo_max":
+    max_eplen = max(list(map(len, demos)))
+
+  ## evaluate
+  obs: Observation
+  _, obs = task_env.reset()
+  
+  
+  agent.policy.to("cpu") # move to cpu if not alr there
+  distances = []
+  gripper_closing: list[dict] = []
+  done  = False
+  gripper_image_paths = []
+  
+  for _ in range(max_eplen):
+    action, _ = agent.act(obs) # type: ignore
+    action = action.squeeze()
+    
+    ## if it predicts gripper closed, I want to learn where it thought to do this
+      
+
+    obs, reward, done = task_env.step(action)
+
+    gripper = Object.get_object("Panda_gripper")
+    target = Object.get_object("grasp_cube")
+    distance = np.linalg.norm(gripper.get_position() - target.get_position())
+    
+
+    if action[-1] <= 0.5:
+      gripper_image_path = f"outputs/run-grasp-with-agent/{now()}/{print_index if print_index is not None else ''}"
+
+      gripper_image_paths.append(gripper_image_path)
+
+      os.makedirs(gripper_image_path, exist_ok=True)
+
+
+
+      plot_cameras(agent.cam_type, obs, f"{agent.cam_type}-closed_at_{distance:.4f}-g_pred_({action[-1]:.4f})", gripper_image_path)
+      
+    distances.append(distance)
+    
+    ## NOTE: no within_err_dist, so the task is only completed if the object is acutally grasped
+    if done: 
+      break
+    
+  return {
+    "distances": distances, 
+    "task_params": task_params,
+    "gripper_image_paths": gripper_image_paths
+    },  done  
+
+def plot_cameras(cam_type: CamType, obs: Observation, plot_title: str, save_folder: str):
+
+  to_plot: list[CamType] = [ct for ct in CamType.uniques() ]# if ct & cam_type] ## plot all for now?
+  if len(to_plot) <= 0:
+    raise ValueError("[task_utils - plot_cameras] No Cameras were given to plot")
+  
+  plots = {
+    str(ct): pick_obs_from_cam(ct, obs, normalise_rgb=False) ## for plotting no reason to normalise 
+    for ct in to_plot
+   }
+
+  
+  fig, axs = plt.subplots(1, len(to_plot), figsize=(3 * len(to_plot), 3))
+  fig.suptitle(plot_title, fontsize=14)
+
+  ## needed because subplts returns a single `Axes` or a list depending fig rows/cols
+  if len(to_plot) == 1:
+    axs = [axs]
+
+  for (s, img), ax in zip(plots.items(), axs):
+    ax.imshow(img)
+    ax.set_title(s)
+    ax.axis("off")
+
+  plt.savefig(f"{save_folder}/{plot_title}-{cam_type}.png", bbox_inches="tight")
+  plt.close()
+
+
+
+
+    
+
+  plt.subplots(1, len(to_plot), )
+
+  
