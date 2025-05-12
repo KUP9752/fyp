@@ -58,8 +58,8 @@ class VisionRandom(Task):
       self.picked_scale = self.scale or np.random.uniform(MIN_SCALE, MAX_SCALE, (1))[0]
       dist = self.wrist_dist or np.random.uniform(MIN_Z_DIST, MAX_Z_DIST, (1))[0]
       
-      print(f"[vision_static] scale: {self.picked_scale} {'(picked at creation)' if self.scale else '(random)'}")
-      print(f"[vision_static] dist: {dist} {'(picked at creation)' if self.wrist_dist else '(random)'}")
+      print(f"[vision_random] scale: {self.picked_scale} {'(picked at creation)' if self.scale else '(random)'}")
+      print(f"[vision_random] dist: {dist} {'(picked at creation)' if self.wrist_dist else '(random)'}")
       
       self.grasp_target_visual.scale_object(
         self.picked_scale,

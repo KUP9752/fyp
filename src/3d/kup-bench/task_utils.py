@@ -224,18 +224,21 @@ def run_grasp_with_agent(
   max_eplen: int | Literal["demo_max"] = "demo_max",
   training_params: dict = {},
   task_params: dict = {},
-  print_index: Optional[int] = None
+  print_index: Optional[int] = None,
+  task_env: Optional[TaskEnvironment] = None ## pass a task environemnt to skip the retraining bit, policy must alreay be trained!
 ) -> tuple[dict, bool]:
   
-  task_env, demos = demos_and_train_for_task(
-    env,
-    task, #type: ignore[arg-type]
-    agent,
-    demos,
-    save_model=True,
-    training_params = training_params,
-    task_params = task_params
-  )
+  ## Train the agent if it is None
+  if task_env is None:
+    task_env, demos = demos_and_train_for_task(
+      env,
+      task, #type: ignore[arg-type]
+      agent,
+      demos,
+      save_model=True,
+      training_params = training_params,
+      task_params = task_params
+    )
   
   ## if max len is not specified make it the max of the givem demo
   if max_eplen == "demo_max":
@@ -316,11 +319,5 @@ def plot_cameras(cam_type: CamType, obs: Observation, plot_title: str, save_fold
   plt.savefig(f"{save_folder}/{plot_title}-{cam_type}.png", bbox_inches="tight")
   plt.close()
 
-
-
-
-    
-
-  plt.subplots(1, len(to_plot), )
 
   

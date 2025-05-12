@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 import numpy as np
 
 import torch 
@@ -14,6 +14,7 @@ from tqdm import tqdm as progress
 from lib.cam_type import CamType
 
 from modules.demo_obs_dataset import DemoObsDataset
+from modules.demo_dataset import DemoDataset
 
 from lib.utils import GRIPPER_CLOSE, GRIPPER_OPEN
 
@@ -76,7 +77,7 @@ class SimplePolicy(nn.Module):
             lr: float = 0.01,
             shuffle_data = False, 
             shuffle_obs_in_demo = True,
-            model_path: Optional[str] = None
+            model_path: Optional[str] = None,
   ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Camera: {self.cam_type}")
@@ -161,25 +162,37 @@ class SimpleGraspPolicy(SimplePolicy):
   def train_policy(self, 
     demos: list[Demo],
     epochs: int = 200,
-    minibatch_size: int = 32, ## size of the observations currently being used
+    minibatch_size: int = 1, ## size of the observations currently being used
     lr: float = 0.01,
     shuffle_data = False, 
     shuffle_obs_in_demo = True,
     model_path: Optional[str] = None,
     lambda_grasp_loss: float = 1.,
-    lock_loader_seed: Optional[int] = None
+    lock_loader_seed: Optional[int] = None,
+    dataset_to_use: Literal["obs", "demo"] = "obs"
+    
   ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Camera: {self.cam_type}")
     
-    print(f"Training Params: \n\t{epochs = }, \n\t{minibatch_size = }, \n\t{lr = }, \n\t{model_path = }, \n\t{shuffle_data = },\n\t{shuffle_obs_in_demo = },\n\t{'seeded loader' if lock_loader_seed is not None else 'random loader'} \n\t{device}\n")
+    print(f"Training Params: \n\t{epochs = }, \n\t{minibatch_size = }, \n\t{lr = }, \n\t{model_path = }, \n\t{shuffle_data = },\n\t{shuffle_obs_in_demo = },\n\t {dataset_to_use = }, \n\t{'seeded loader' if lock_loader_seed is not None else 'random loader'} \n\t{device}\n")
     
     
     model = self.to(device)
     # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
     
     ## 'cat' makes sure to return all the images fuxed together (batch_size, 3 * num_cam, W, H)
-    dataset = DemoObsDataset(demos, self.cam_type, shuffle_obs=shuffle_obs_in_demo, get_type="cat")
+    if dataset_to_use == "obs":
+      dataset = DemoObsDataset(demos, self.cam_type, shuffle_obs=shuffle_obs_in_demo, get_type="cat")
+    elif dataset_to_use == "demo":
+      dataset = DemoDataset(demos, self.cam_type, get_type="cat")
+      minibatch_size = 1 ## force 1 as the demo lengths can be different
+      ## NOTE: Ensure batch size is interms of demos now
+    else: 
+      raise ValueError(f"[simple_policy - SimpleGraspPolicy - train_policy] wrong dataset to use, '{dataset_to_use}' does not exist")
+
+
+
     if lock_loader_seed is not None:
       loader = DataLoader(dataset,
         batch_size=minibatch_size,
@@ -217,6 +230,10 @@ class SimpleGraspPolicy(SimplePolicy):
       total_pose_loss, total_grasp_loss = 0., 0.
       
       for inputs, labels in loader:
+
+        if dataset_to_use == "demo":
+          inputs, labels = inputs.squeeze(), labels.squeeze()
+
         inputs, labels = inputs.to(device), labels.to(device)
         # print(f"{inputs.shape =}")
         # print(f"{labels.shape =}")

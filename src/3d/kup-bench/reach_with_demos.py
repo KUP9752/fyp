@@ -76,6 +76,9 @@ LABELS = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
                'keyboard', 'cell phone', 'microwave', 'oven', 'toaster',
                'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors',
                'teddy bear', 'hair drier', 'toothbrush']
+
+
+
 # === Perception Modules ===
 from torchvision.transforms import functional as F
 from torchvision.models.detection import maskrcnn_resnet50_fpn
@@ -166,7 +169,7 @@ task
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
-demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos)
+demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
 demos
 
 
@@ -178,15 +181,16 @@ agent.policy
 # %%
 ## 5. Train
 training_params = {
-  "epochs": 1000,
-  "minibatch_size": 64,
+  "epochs": 800,
+  "minibatch_size": 256,
   "lr": 1e-3,
   "shuffle_obs_in_demo": False,
-  "shuffle_data": False,
+  "shuffle_data": True,
+  "dataset_to_use": "demo"
   # "lambda_grasp_loss": 20
 }
 
-ingest_num = 5
+ingest_num = 10
 
 print(f"-> Using {ingest_num} demos")
 
@@ -195,10 +199,12 @@ agent.save_model(model_path)
 
 #%%
 # load_str = "models/grasp/rwd-reach-10-demos-wrist-Vision_Static-simple_grasp_policy--worked-with-scale0.4-dist-0.5_May09_14-57.pth"
+load_str = "models/grasp/rwd-reach-10-demos-wrist-Vision_Random-simple_grasp_policy--_May12_14-02.pth"
 
 
+## Vision_Static | l_shoulder
 ## interesting l_shoulder only model claps before grabbing
-load_str = "/all-models/task-Vision_Static-demo-1-cam-l_shoulder--_May11_16-24.pth"
+# load_str = "/all-models/task-Vision_Static-demo-1-cam-l_shoulder--_May11_16-24.pth"
 
 
 agent.policy.load_state_dict(torch.load(f"/home/kup/Desktop/code/fyp/src/3d/kup-bench/{load_str}"))
@@ -216,7 +222,7 @@ while not done:
   
   action, att_weights = agent.act(obs)
   # print(f"{att_weights = }")
-  
+    
   action = action.squeeze(0)
   print(f"{action.shape =}")
   print(f"{action[-1] =}")
@@ -238,7 +244,7 @@ while not done:
   if count == 100:
     break
   
-print({f"Done Successfull! done in {count} steps" if done else "Failed!"})
+print(f"Done Successfull! done in {count} steps" if done else "Failed!")
 print(f"Final distance: {distances[-1]}")
 
 # %% Reset Task Env
@@ -378,9 +384,15 @@ env.shutdown()
 # %%
 ## Random Testing Cell
 import torch
+from modules.demo_dataset import DemoDataset
+from torch.utils.data import DataLoader
 
-cam_type = CamType.WRIST | CamType.LEFT_SHOULDER | CamType.RIGHT_SHOULDER
-to_save: list[CamType] = [ct for ct in CamType.uniques() if ct & cam_type]
-print(to_save)
+dataset = DemoDataset(demos, cam_type= cam_type, get_type="cat")
+loader = DataLoader(dataset, shuffle = True)
+len(dataset)
+for inputs, labels in loader:
+  inputs, labels = inputs.squeeze(), labels.squeeze()
+  print(f"{inputs.shape =}")
+  print(f"{labels.shape =}")
 
-
+  

@@ -10,17 +10,20 @@ from seed import SEED
 
 from lib.utils import pick_obs_from_cam
 
+
 class DemoObsDataset(Dataset):
   def __init__(self,
     demos: list[Demo],
     cam_type: CamType,
     shuffle_obs: bool,
-    get_type: Literal["cat", "stack"]
+    get_type: Literal["cat", "stack"],
+    rgb_transform = None,
   ):
     
     if get_type not in ["cat", "stack"]:
       raise ValueError("[demo_obs_dataset] 'get_type' is assigned an incorrect option")
     self.get_type = get_type
+    self.rgb_transform = rgb_transform
     
     self.cam_type = cam_type
     self.all_data = []
@@ -48,6 +51,10 @@ class DemoObsDataset(Dataset):
       if self.cam_type & ct:
         image = torch.tensor(pick_obs_from_cam(ct, obs, normalise_rgb=True), dtype= torch.float32)
         image = torch.permute(image, (2, 0, 1)) ## 64, 64, 3 -> 3, 64, 64
+        ## TODO: depth and depth transform?
+        if self.rgb_transform:
+          image = self.rgb_transform(image)
+          
         images.append(image)
       
     if not images:
