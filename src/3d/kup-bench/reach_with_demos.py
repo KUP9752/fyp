@@ -25,6 +25,7 @@ from rlbench.tasks.simple_grasp import SimpleGrasp as Grasp_Simple
 from rlbench.tasks.grasp_and_move import GraspAndMove as Grasp_ThenMove
 ## Vision Experiments - Grasp
 from rlbench.tasks.vision_static import VisionStatic as Vision_Static
+from rlbench.tasks.vision_random import VisionRandom as Vision_Random
 
 
 from rlbench.backend.observation import Observation
@@ -57,7 +58,7 @@ from pprint import pprint
 set_seed()
 
 num_demos = 10
-cam_type = CamType.LEFT_SHOULDER
+cam_type = CamType.WRIST
 
 
 LABELS = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
@@ -136,7 +137,7 @@ env.launch()
 ## 3. Attach Task and create Agent
 pol_type = PolicyType.SIMPLE_GRASP
 
-task = Vision_Static
+task = Vision_Random
 # task = ReachNoObs_Central
 print(env.get_task.__code__.co_filename)
 
@@ -165,7 +166,7 @@ task
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
-demos: list[Demo] = task_env.get_demos(1, live_demos=live_demos)
+demos: list[Demo] = task_env.get_demos(num_demos, live_demos=live_demos)
 demos
 
 
@@ -185,8 +186,9 @@ training_params = {
   # "lambda_grasp_loss": 20
 }
 
-ingest_num = num_demos
+ingest_num = 5
 
+print(f"-> Using {ingest_num} demos")
 
 agent.ingest(demos[:ingest_num], **training_params) ## trains here
 agent.save_model(model_path)
@@ -242,7 +244,6 @@ print(f"Final distance: {distances[-1]}")
 # %% Reset Task Env
 fig, axs = plt.subplots(1, 3, figsize=(9, 3))
 images = [obs.wrist_rgb, obs.left_shoulder_rgb, obs.right_shoulder_rgb]
-if 
 for ax, img in zip(axs, images):
   ax.imshow(img)
   ax.set_title("")
