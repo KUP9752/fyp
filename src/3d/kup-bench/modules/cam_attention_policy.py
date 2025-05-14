@@ -14,7 +14,9 @@ from tqdm import tqdm as progress
 from lib.cam_type import CamType
 
 from modules.demo_obs_dataset import DemoObsDataset
-from modules.multi_cam_cnn import MultiCamCnn, CNNEncoder
+from modules.cnns.multi_cam_cnn import MultiCamCnn
+from modules.cnns.cnn_encoder import CNNEncoder
+
 
 class PolicyHead(nn.Module):
     def __init__(self, feature_dim, action_dim, hidden_dim=256):
@@ -88,7 +90,7 @@ class CamAttentionPolicy(nn.Module):
     if is_multi_cnn:
       self.conv_encode = MultiCamCnn(cam_type)
     else:
-      self.conv_encode = CNNEncoder()
+      self.conv_encode = CNNEncoder(in_channels = 3)
     
     self.cam_attention = CameraAttention(feat_dim, cam_att_hidden_dim)
     self.policy_head = PolicyHead(feat_dim, action_shape)
