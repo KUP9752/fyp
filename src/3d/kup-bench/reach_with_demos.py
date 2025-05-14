@@ -135,7 +135,6 @@ action_mode = MoveArmThenGripper(
 env = Environment(
     action_mode, DATASET, obs_config, False)
 env.launch()
-
 #%%
 ## 3. Attach Task and create Agent
 pol_type = PolicyType.SIMPLE_GRASP
@@ -158,7 +157,6 @@ except RuntimeError:
   
 # agent = Agent(env.action_shape[0], pol_type, cam_type, target_rgb = target_rgb)
 agent = Agent(env.action_shape[0], pol_type, cam_type, grasp_thresh = 0.5)
-
 model_name = f"rwd-reach-{num_demos}-demos-{cam_type}-{get_task_name(task)}-{pol_type}--{now()}"
 model_path = f"./all-models/reach-with-demos/{model_name}.pth"
 print(model_name)
@@ -181,12 +179,12 @@ agent.policy
 # %%
 ## 5. Train
 training_params = {
-  "epochs": 800,
-  "minibatch_size": 256,
+  "epochs": 2000,
   "lr": 1e-3,
   "shuffle_obs_in_demo": False,
   "shuffle_data": True,
-  "dataset_to_use": "demo"
+  "dataset_to_use": "demo",
+  "minibatch_size": 9,
   # "lambda_grasp_loss": 20
 }
 
@@ -206,7 +204,7 @@ load_str = "models/grasp/rwd-reach-10-demos-wrist-Vision_Random-simple_grasp_pol
 ## interesting l_shoulder only model claps before grabbing
 # load_str = "/all-models/task-Vision_Static-demo-1-cam-l_shoulder--_May11_16-24.pth"
 
-
+load_str = "all-models/task-Vision_Random-demo-10-cam-wrist--_May14_14-59.pth"
 agent.policy.load_state_dict(torch.load(f"/home/kup/Desktop/code/fyp/src/3d/kup-bench/{load_str}"))
 
 # %% Auto task Execution
@@ -230,6 +228,8 @@ while not done:
   obs, reward, done = task_env.step(action)
   gripper = Object.get_object("Panda_gripper")
   target = Object.get_object(target_name)
+
+  
   
   # vis_score = check_visibility("cam_wrist", "target")
   
@@ -332,8 +332,14 @@ target = Object.get_object(target_name)
 
 pc = obs.wrist_point_cloud
 print(f"{pc.shape = }")
-plt.imshow(obs.wrist_rgb)
-plt.imshow(obs.wrist_depth)
+# plt.imshow(obs.wrist_rgb)
+
+ds = obs.wrist_depth
+print(f"{ds.shape = }")
+print(f"{(ds < 0.1).shape =}")
+
+plt.imshow(ds < 0.1 )
+
 # show_pc(pc.reshape(-1, 3))
   
 
@@ -385,14 +391,31 @@ env.shutdown()
 ## Random Testing Cell
 import torch
 from modules.demo_dataset import DemoDataset
+from modules.demo_obs_dataset import  DemoObsDataset
 from torch.utils.data import DataLoader
 
-dataset = DemoDataset(demos, cam_type= cam_type, get_type="cat")
-loader = DataLoader(dataset, shuffle = True)
-len(dataset)
+def collate(batch):
+  
+  inputs, labels = zip(*batch) ## unzips the labels and batch
+
+  return torch.cat(inputs, dim=0), torch.cat(labels, dim = 0)
+
+dataset = DemoObsDataset(demos, cam_type= cam_type, get_type="cat", shuffle_obs=True)
+# dataset = DemoDataset(demos, cam_type= cam_type, get_type="cat")
+# loader = DataLoader(dataset, shuffle = True, batch_size = 2, collate_fn=collate)
+loader = DataLoader(dataset, shuffle = False, batch_size=128)
+print(f"{len(dataset) = }")
+count = 0
+
 for inputs, labels in loader:
   inputs, labels = inputs.squeeze(), labels.squeeze()
   print(f"{inputs.shape =}")
   print(f"{labels.shape =}")
 
-  
+
+  print()
+  count += 1
+count
+#%%
+
+

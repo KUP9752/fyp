@@ -125,6 +125,8 @@ class SimpleGraspPolicy(SimplePolicy):
     
     self.grasp_thresh = grasp_thresh
     
+    # if cam_type & CamType.WRISTDE
+
     self.fc = None
     
     self.action_head = nn.Sequential(
@@ -158,6 +160,16 @@ class SimpleGraspPolicy(SimplePolicy):
     action = torch.cat([pose, grasp], dim = 1) ## get (batch_size, 8)
     return action, {}
 
+
+  ## this is used whent he "demo" options is selected for dataset, so we can catch the demos randomly but process in batch size
+  def _collate_demos(self, batch):
+    ## batch: [(tensor, tensor)] for inputs, labels
+    inputs, labels = zip(*batch) #unzip the tuple list
+
+    ## concat on the batch axis, preserve order of input to label
+    return torch.cat(inputs, dim=0), torch.cat(labels, dim=0)
+
+
   ## override
   def train_policy(self, 
     demos: list[Demo],
@@ -168,7 +180,7 @@ class SimpleGraspPolicy(SimplePolicy):
     shuffle_obs_in_demo = True,
     model_path: Optional[str] = None,
     lambda_grasp_loss: float = 1.,
-    lock_loader_seed: Optional[int] = None,
+    lock_loader_seed: Optional[int] = None, ## NOTE: disabled, not using
     dataset_to_use: Literal["obs", "demo"] = "obs"
     
   ):
@@ -184,26 +196,30 @@ class SimpleGraspPolicy(SimplePolicy):
     ## 'cat' makes sure to return all the images fuxed together (batch_size, 3 * num_cam, W, H)
     if dataset_to_use == "obs":
       dataset = DemoObsDataset(demos, self.cam_type, shuffle_obs=shuffle_obs_in_demo, get_type="cat")
+      loader = DataLoader(dataset, batch_size = minibatch_size, shuffle=shuffle_data)
     elif dataset_to_use == "demo":
       dataset = DemoDataset(demos, self.cam_type, get_type="cat")
-      minibatch_size = 1 ## force 1 as the demo lengths can be different
+
+      ## NOTE: shuffle_data here shuffles demos but preserver obs order
+      if minibatch_size > len(demos):
+        raise IndexError(f"[simple_policy - SimpleGraspPolicy - train_policy] Using a minibatch_size, {minibatch_size},  greated than given demos ({len(demos)}) is this correct?")
+      loader = DataLoader(dataset, batch_size= minibatch_size, shuffle = shuffle_data, collate_fn=self._collate_demos) 
       ## NOTE: Ensure batch size is interms of demos now
     else: 
       raise ValueError(f"[simple_policy - SimpleGraspPolicy - train_policy] wrong dataset to use, '{dataset_to_use}' does not exist")
 
 
-
-    if lock_loader_seed is not None:
-      loader = DataLoader(dataset,
-        batch_size=minibatch_size,
-        shuffle=shuffle_data,
-        generator=torch.manual_seed(lock_loader_seed)
-       ) ## shuffling makes it worse
-    else:
-      loader = DataLoader(dataset,
-        batch_size=minibatch_size,
-        shuffle=shuffle_data
-       ) 
+    # if lock_loader_seed is not None:
+    #   loader = DataLoader(dataset,
+    #     batch_size=minibatch_size,
+    #     shuffle=shuffle_data,
+    #     generator=torch.manual_seed(lock_loader_seed)
+    #    ) ## shuffling makes it worse
+    # else:
+    #   loader = DataLoader(dataset,
+    #     batch_size=minibatch_size,
+    #     shuffle=shuffle_data
+    #    ) 
     
     # grasp_labels = torch.tensor([labels[-1] for _, labels in dataset], dtype = torch.float32)
     
