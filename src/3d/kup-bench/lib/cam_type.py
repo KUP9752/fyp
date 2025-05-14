@@ -5,6 +5,7 @@ class CamType(Flag):
   WRIST = auto()
   LEFT_SHOULDER = auto()
   RIGHT_SHOULDER = auto()
+  WRIST_DEPTH = auto() ## NOTE: closer means lower float value, in meters i think
   
   def __str__(self):
     parts = []
@@ -14,6 +15,8 @@ class CamType(Flag):
       parts.append("l_shoulder")
     if self & CamType.RIGHT_SHOULDER:
       parts.append("r_shoulder")
+    if self & CamType.WRIST_DEPTH:
+      parts.append("wrist_depth")
     
     return "+".join(parts)
   

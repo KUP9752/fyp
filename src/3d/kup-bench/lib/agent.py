@@ -1,7 +1,8 @@
-from typing import Literal
+from typing import Callable, Literal
 
 from modules.policy.simple_policy import SimplePolicy
 from modules.policy.simple_grasp_policy import SimpleGraspPolicy
+from modules.policy.depth_grasp_policy import DepthGraspPolicy
 from modules.policy.cam_attention_policy import CamAttentionPolicy
 
 from rlbench.demo import Demo
@@ -24,14 +25,23 @@ class Agent(object):
       self.cam_type = cam_type
       self.action_shape = action_shape
       self.policy_type = policy_type
-      
+
+      ## aggregation method later on when acting
+      self.tensor_agg: Callable[[list[torch.Tensor]], torch.Tensor]
+
       match policy_type:
         case PolicyType.SIMPLE:
           self.policy = SimplePolicy(action_shape, cam_type)
+          self.tensor_agg = self._catter
         case PolicyType.SIMPLE_GRASP:
           self.policy = SimpleGraspPolicy(action_shape, cam_type, **policy_args)
+          self.tensor_agg = self._catter
+        case PolicyType.DEPTH_GRASP:
+          self.policy = DepthGraspPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+          self.tensor_agg = self._catter
         case PolicyType.CAM_ATTENTION:
           self.policy = CamAttentionPolicy(action_shape, cam_type, **policy_args) ## NOTE: other varaible settings here
+          self.tensor_agg = self._stacker
         case _: 
           raise ValueError(f"[agent - Agent] cannot find policy type {policy_type}")
 
@@ -47,21 +57,13 @@ class Agent(object):
     def ingest(self, demos: list[Demo], **training_params):
       self.policy.train_policy(demos, **training_params)
       
-    ## this is abstracted out for observing and printing etc
-    # def _infer_move(self, observation: torch.Tensor): ## will return whatever the policy returns, wanted to take the match case out of main `act` function
-    #   with torch.no_grad():
-    #     policy_ret = self.policy(observation)
-        
-    #   match self.policy_type:
-    #     case PolicyType.SIMPLE:
-    #       return policy_ret
-    #     case PolicyType.CAM_ATTENTION:
-    #       pred, att_weights = policy_ret
-    #       return pred, att_weights
-    #     case _ :
-    #       raise ValueError(f"[agent - _infer_move] unknown PolicyType ({self.policy_type})")  
-      
-      
+    ## Following hidden functions are for assigning them to `self.tensor_agg`
+    def _catter(self, ts: list[torch.Tensor]) -> torch.Tensor:  
+      return torch.cat(ts, dim = 0)
+    
+    def _stacker(self, ts: list[torch.Tensor]) -> torch.Tensor:
+      return torch.stack(ts, dim = 0)
+    
     ## Inference Call
     def act(self, obs:  Observation) -> tuple[torch.Tensor, dict]: ## possibly returns other things
       # gripper = [1.0]  # Always open
@@ -69,7 +71,7 @@ class Agent(object):
       
       self.policy.eval()
       images = []
-      ## wrist -> ls -> rs
+      ## wrist -> ls -> rs -> wd
       for ct in CamType.uniques():
         if self.cam_type & ct:
           image = torch.tensor(pick_obs_from_cam(ct, obs, normalise_rgb = True), dtype= torch.float32)
@@ -79,19 +81,12 @@ class Agent(object):
       if not images:
         raise ValueError("[agent] - act] No images selected !")
       
-      match self.policy_type:
-        case PolicyType.SIMPLE:
-          ## cat on the colours channel (3 * num_cams, W, H)
-          torch_obs = torch.cat(images, dim = 0)  
-        case PolicyType.SIMPLE_GRASP:
-          torch_obs = torch.cat(images, dim = 0)
-        case PolicyType.CAM_ATTENTION:
-          ## stacked on new channel (num_cams, 3, W, H)
-          torch_obs = torch.stack(images, dim = 0)  
-        ## NOTE: add more types as implemented
-        case _:
-          raise ValueError(f"[agent - act] Unknown 'policy_type' (f{self.policy_type}) for collating tensors")
-        
+      if self.tensor_agg is None:
+        raise ValueError(f"[agent - act] Tensor aggregation method was not set in the constructor!")
+      
+      torch_obs = self.tensor_agg(images)
+
+
       torch_obs = torch_obs.unsqueeze(0) ## add a batch dimension (1, ...)
       
       with torch.no_grad():

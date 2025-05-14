@@ -61,7 +61,12 @@ def get_task_name(task) -> str:
   else:
     raise ValueError("[utils - get_task_name] Task not found!")
 
-def pick_obs_from_cam(cam_type: CamType, obs: Observation, normalise_rgb: bool = True) -> np.ndarray:
+def ndarray_min_max_norm(arr: np.ndarray, eps = 1e-8) -> np.ndarray:
+  min_val = arr.min()
+  max_val = arr.max()
+  return (arr - min_val) / (max_val - min_val + eps)
+
+def pick_obs_from_cam(cam_type: CamType, obs: Observation, normalise_rgb: bool = True, normalise_depth: bool = True) -> np.ndarray:
   match cam_type:
     case CamType.WRIST:
       return (obs.wrist_rgb / 255) if normalise_rgb else obs.wrist_rgb
@@ -69,9 +74,19 @@ def pick_obs_from_cam(cam_type: CamType, obs: Observation, normalise_rgb: bool =
       return (obs.left_shoulder_rgb / 255) if normalise_rgb else obs.left_shoulder_rgb
     case CamType.RIGHT_SHOULDER:
       return (obs.right_shoulder_rgb / 255) if normalise_rgb else obs.right_shoulder_rgb
+    ## NOTE: depth normalisation is min-max here, if we want to keep the meanings of metres in the model, maybe use log etc??
+    case CamType.WRIST_DEPTH:
+      depth_arr = ndarray_min_max_norm(obs.wrist_depth) if normalise_depth else obs.wrist_depth 
+      w, h = depth_arr.shape
+      return np.reshape(depth_arr, (w, h, 1)) ## expand the channel dinemsion
     case _:
       raise ValueError(f"[utils - pick_obs_from_cam] Unknown CamType ({cam_type})")
 
 def now(format = "_%B%d_%H-%M") -> str:
   return strftime(format)
-  
+
+def params_string(**params):
+  s = "\n\t"
+  for k, v in params.items():
+    s+= f"{k} = {v},\n\t"
+  return s

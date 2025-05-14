@@ -25,12 +25,9 @@ class SimpleGraspPolicy(SimplePolicy):
     
     self.grasp_thresh = grasp_thresh
     
-    if cam_type & CamType.WRIST_DEPTH:
-      self.depth_cnn = CNNEncoder()
-
     self.fc = None
     
-    self.action_head = nn.Sequential(
+    self.move_head = nn.Sequential(
       nn.Flatten(),
       nn.Linear(self.flat_size, 200),
       nn.ReLU(inplace=False),
@@ -55,7 +52,7 @@ class SimpleGraspPolicy(SimplePolicy):
     
   def forward(self, image):
     feats = self.conv(image)
-    pose = self.action_head(feats)
+    pose = self.move_head(feats)
     grasp = self.grasp_head(feats)
     
     action = torch.cat([pose, grasp], dim = 1) ## get (batch_size, 8)
@@ -78,7 +75,7 @@ class SimpleGraspPolicy(SimplePolicy):
     minibatch_size: int = 1, ## size of the observations currently being used
     lr: float = 0.01,
     shuffle_data = False, 
-    shuffle_obs_in_demo = True,
+    shuffle_obs_in_demo = False,
     model_path: Optional[str] = None,
     lambda_grasp_loss: float = 1.,
     lock_loader_seed: Optional[int] = None, ## NOTE: disabled, not using
@@ -103,11 +100,11 @@ class SimpleGraspPolicy(SimplePolicy):
 
       ## NOTE: shuffle_data here shuffles demos but preserver obs order
       if minibatch_size > len(demos):
-        raise IndexError(f"[simple_policy - SimpleGraspPolicy - train_policy] Using a minibatch_size, {minibatch_size},  greated than given demos ({len(demos)}) is this correct?")
+        raise IndexError(f"[simple_grasp_policy - SimpleGraspPolicy - train_policy] Using a minibatch_size, {minibatch_size},  greated than given demos ({len(demos)}) is this correct?")
       loader = DataLoader(dataset, batch_size= minibatch_size, shuffle = shuffle_data, collate_fn=self._collate_demos) 
       ## NOTE: Ensure batch size is interms of demos now
     else: 
-      raise ValueError(f"[simple_policy - SimpleGraspPolicy - train_policy] wrong dataset to use, '{dataset_to_use}' does not exist")
+      raise ValueError(f"[simple_grasp_policy - SimpleGraspPolicy - train_policy] wrong dataset to use, '{dataset_to_use}' does not exist")
 
 
     # if lock_loader_seed is not None:
