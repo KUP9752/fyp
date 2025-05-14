@@ -13,6 +13,8 @@ from rlbench.backend.observation import Observation
 from tqdm import tqdm as progress
 from lib.cam_type import CamType
 
+from modules.cnns.cnn_encoder import CNNEncoder
+
 from modules.demo_obs_dataset import DemoObsDataset
 from modules.demo_dataset import DemoDataset
 
@@ -125,7 +127,8 @@ class SimpleGraspPolicy(SimplePolicy):
     
     self.grasp_thresh = grasp_thresh
     
-    # if cam_type & CamType.WRISTDE
+    if cam_type & CamType.WRIST_DEPTH:
+      self.depth_cnn = CNNEncoder()
 
     self.fc = None
     

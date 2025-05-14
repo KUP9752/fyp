@@ -1,6 +1,7 @@
 from typing import Literal
-from modules.simple_policy import SimplePolicy, SimpleGraspPolicy
-from modules.cam_attention_policy import CamAttentionPolicy
+
+from modules.policy.simple_policy import SimplePolicy, SimpleGraspPolicy
+from modules.policy.cam_attention_policy import CamAttentionPolicy
 
 from rlbench.demo import Demo
 from rlbench.backend.observation import Observation
