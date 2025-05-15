@@ -27,7 +27,7 @@ class SimpleGraspPolicy(SimplePolicy):
     
     self.fc = None
     
-    self.move_head = nn.Sequential(
+    self.action_head = nn.Sequential(
       nn.Flatten(),
       nn.Linear(self.flat_size, 200),
       nn.ReLU(inplace=False),
@@ -52,7 +52,7 @@ class SimpleGraspPolicy(SimplePolicy):
     
   def forward(self, image):
     feats = self.conv(image)
-    pose = self.move_head(feats)
+    pose = self.action_head(feats)
     grasp = self.grasp_head(feats)
     
     action = torch.cat([pose, grasp], dim = 1) ## get (batch_size, 8)
