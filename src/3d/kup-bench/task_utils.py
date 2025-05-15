@@ -68,7 +68,7 @@ def demos_and_train_for_task(
   
   
   if save_model:
-    model_name = f"task-{task_name}-demo-{demo_count}-cam-{agent.cam_type}"
+    model_name = f"policy-{agent.policy_type}-task-{task_name}-demo-{demo_count}-cam-{agent.cam_type}"
     model_path = f"./all-models/{model_name}--{now()}.pth"
     agent.save_model(model_path)
   
@@ -319,5 +319,52 @@ def plot_cameras(cam_type: CamType, obs: Observation, plot_title: str, save_fold
   plt.savefig(f"{save_folder}/{plot_title}-{cam_type}.png", bbox_inches="tight")
   plt.close()
 
+## give a pretrained agent to make it run through the given obstacles
+def run_determined_grasp_with_agent(
+    # env: Environment, 
+    # task: type[Task], 
+    task_env: TaskEnvironment,
+    agent: Agent, 
+    rec_demos: list[Demo],
+    max_eplen: int | Literal["demo_max"] = "demo_max",
+    # task_params: dict = {}, ## doesnt need task params because the `reset_to_demo` needs the task_env to have already been created with the correct params
+):
+  if max_eplen == "demo_max":
+    max_eplen = max(list(map(len, rec_demos)))
 
-  
+  obs: Observation
+  results: list[dict] = []
+
+  agent.policy.to("cpu")
+  for rec_demo in rec_demos:
+    _, obs = task_env.reset_to_demo(rec_demo) 
+    done = False
+    gripper_image_paths = []
+    distances = []
+
+    for _ in range(max_eplen):
+      action, _ = agent.act(obs)
+      action = action.squeeze()
+      obs, reward, done = task_env.step(action)
+      gripper = Object.get_object("Panda_gripper")
+      target = Object.get_object("grasp_cube")
+      distance = np.linalg.norm(gripper.get_position() - target.get_position())
+
+      if action[-1] <= 0.5:
+        gripper_image_path = f"outputs/run-grasp-with-agent/{now()}"
+        gripper_image_paths.append(gripper_image_path)
+        os.makedirs(gripper_image_path, exist_ok=True)
+        plot_cameras(agent.cam_type, obs, f"{agent.cam_type}-closed_at_{distance:.4f}-g_pred_({action[-1]:.4f})", gripper_image_path)
+        
+      distances.append(distance)
+      if done: break
+    results.append({
+      "done": done,
+      "distances": distances,
+      "gripper_image_paths": gripper_image_paths,
+      "max_eplen": max_eplen
+    })
+
+  return results
+
+

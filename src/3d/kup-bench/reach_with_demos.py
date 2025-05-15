@@ -51,14 +51,14 @@ from lib.agent import Agent
 from lib.cam_type import CamType
 from lib.policy_type import PolicyType
 
-from lib.utils import get_task_name, now
+from lib.utils import get_task_name, now, params_string
 from seed import set_seed
 from pprint import pprint
 
 set_seed()
 
 num_demos = 10
-cam_type = CamType.WRIST
+cam_type = CamType.WRIST #| CamType.WRIST_DEPTH
 
 
 LABELS = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
@@ -137,9 +137,9 @@ env = Environment(
 env.launch()
 #%%
 ## 3. Attach Task and create Agent
-pol_type = PolicyType.SIMPLE_GRASP
+pol_type = PolicyType.DEPTH_GRASP
 
-task = Vision_Random
+task = Vision_Static
 # task = ReachNoObs_Central
 print(env.get_task.__code__.co_filename)
 
@@ -156,36 +156,40 @@ except RuntimeError:
   target_rgb = None
   
 # agent = Agent(env.action_shape[0], pol_type, cam_type, target_rgb = target_rgb)
-agent = Agent(env.action_shape[0], pol_type, cam_type, grasp_thresh = 0.5)
+agent = Agent(
+  env.action_shape[0],
+  pol_type, cam_type,
+  grasp_thresh = 0.5,
+  config = "depth_ch"
+)
+
 model_name = f"rwd-reach-{num_demos}-demos-{cam_type}-{get_task_name(task)}-{pol_type}--{now()}"
 model_path = f"./all-models/reach-with-demos/{model_name}.pth"
 print(model_name)
-task
+agent.policy
 # %%
 ## 4. Request Demos
 # demos = []
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
-demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
+demos: list[Demo] = task_env.get_demos(1, live_demos=live_demos)
 demos
-
 
 # # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
 # # print(f"{demos = } | {type(demos) = } | {len(demos) = }")
 # print(f"Observations len: {list(map(len, demos))}")
 # %%
-agent.policy
-# %%
 ## 5. Train
 training_params = {
-  "epochs": 2000,
+  "epochs": 10000,
+  "minibatch_size": 1,
   "lr": 1e-3,
   "shuffle_obs_in_demo": False,
   "shuffle_data": True,
+  # "lock_loader_seed": 1,
   "dataset_to_use": "demo",
-  "minibatch_size": 9,
-  # "lambda_grasp_loss": 20
+  "lambda_grasp_loss": 10
 }
 
 ingest_num = 10
@@ -197,16 +201,17 @@ agent.save_model(model_path)
 
 #%%
 # load_str = "models/grasp/rwd-reach-10-demos-wrist-Vision_Static-simple_grasp_policy--worked-with-scale0.4-dist-0.5_May09_14-57.pth"
-load_str = "models/grasp/rwd-reach-10-demos-wrist-Vision_Random-simple_grasp_policy--_May12_14-02.pth"
+# load_str = "models/grasp/rwd-reach-10-demos-wrist-Vision_Random-simple_grasp_policy--_May12_14-02.pth"
 
 
 ## Vision_Static | l_shoulder
 ## interesting l_shoulder only model claps before grabbing
 # load_str = "/all-models/task-Vision_Static-demo-1-cam-l_shoulder--_May11_16-24.pth"
 
-load_str = "all-models/task-Vision_Random-demo-10-cam-wrist--_May14_14-59.pth"
+load_str = "models/grasp/very-good-simple-grasp--task-Vision_Random-demo-10-cam-wrist--demo_dataset-10_batch-2000 epochs.pth"
 agent.policy.load_state_dict(torch.load(f"/home/kup/Desktop/code/fyp/src/3d/kup-bench/{load_str}"))
-
+#%%
+task_env = env.get_task(Vision_Static)
 # %% Auto task Execution
 agent.policy.to("cpu")
 # task_env = env.get_task(ReachNoObs_Central)
@@ -220,7 +225,7 @@ while not done:
   
   action, att_weights = agent.act(obs)
   # print(f"{att_weights = }")
-    
+
   action = action.squeeze(0)
   print(f"{action.shape =}")
   print(f"{action[-1] =}")
@@ -294,10 +299,11 @@ def run_segmenter():
   # print(f"score {label}")
     
   plt.imshow(im)
-
+#%%
 agent.policy.to("cpu")
 # task_env = env.get_task(ReachNoObs_Central)
 _, obs = task_env.reset()
+
 count = 0
 done = False
 distances = []
@@ -351,27 +357,6 @@ if done:
   print(f"Final distance: {distances[-1]}")
 
 
-# checkImage(obs.wrist_rgb)
-#%%
-## Getting the initial camera positions per task
-# tasks = [SideR, SideL, Central]
-# for task in tasks:
-#   task_env = env.get_task(task)
-#   _, obs = task_env.reset()
-  
-#   plt.imshow(obs.wrist_rgb)
-#   plt.savefig(f"images/wrist-{task.__name__}.png")
-#   plt.close()
-  
-#   plt.imshow(obs.left_shoulder_rgb)
-#   plt.savefig(f"images/lshoulder-{task.__name__}.png")
-#   plt.close()
-  
-#   plt.imshow(obs.right_shoulder_rgb)
-#   plt.savefig(f"images/rshoulder-{task.__name__}.png")
-#   plt.close()
-
-
 #%%
 # 7. Manipulate object positions and calculate distances.
 
@@ -400,22 +385,23 @@ def collate(batch):
 
   return torch.cat(inputs, dim=0), torch.cat(labels, dim = 0)
 
-dataset = DemoObsDataset(demos, cam_type= cam_type, get_type="cat", shuffle_obs=True)
-# dataset = DemoDataset(demos, cam_type= cam_type, get_type="cat")
+cam_type = CamType.WRIST
+# dataset = DemoObsDataset(demos, cam_type= cam_type | CamType.WRIST_DEPTH, get_type="cat", shuffle_obs=True)
+dataset = DemoDataset(demos, cam_type= cam_type, get_type="cat")
 # loader = DataLoader(dataset, shuffle = True, batch_size = 2, collate_fn=collate)
-loader = DataLoader(dataset, shuffle = False, batch_size=128)
+loader = DataLoader(dataset, shuffle = True, batch_size=1, generator=torch.manual_seed(42))
 print(f"{len(dataset) = }")
 count = 0
 
 for inputs, labels in loader:
   inputs, labels = inputs.squeeze(), labels.squeeze()
-  print(f"{inputs.shape =}")
-  print(f"{labels.shape =}")
-
+  # print(f"{inputs.shape =}")
+  # print(f"{labels.shape =}")
 
   print()
   count += 1
 count
+
 #%%
-
-
+for i in range(30):
+  print(i % 15)
