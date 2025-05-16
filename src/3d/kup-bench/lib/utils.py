@@ -1,9 +1,12 @@
 from lib.cam_type import CamType
 
 from rlbench.backend.observation import Observation
+from rlbench.demo import Demo
 
 import numpy as np
 from time import strftime
+
+import pickle
 
 # Tasks
 ## No Obstacle
@@ -90,3 +93,22 @@ def params_string(**params):
   for k, v in params.items():
     s+= f"{k} = {v},\n\t"
   return s
+
+def save_demos(demos: list[Demo], filename: str) -> None:
+  states = []
+  for demo in demos:
+    states.append(
+      (demo.random_seed, demo._observations[0].misc["variation_index"])
+    )
+  with open(f"{filename}-{now()}", "wb") as f:
+    pickle.dump(states, f)
+
+## returns a FAKE demo (no observations) and the misc['variation_index'] for observations to restore state of the target object
+def load_demos(filename: str) -> list[tuple[Demo, int]]:
+  print(f"[task_utils - load_demos] WARNING! Loaded demos are *FAKE*, need to be restored by using `task_env.restore_to_demo()`")
+  with open(f"{filename}", "rb") as f:
+    states   = pickle.load(f)
+  fake_demos = [(Demo([], seed, None), var) for seed, var in states]
+
+  print(f"[task_utils - load_demos] WARNING! USE: `task_env.restore_to_demo(demo, obs_variation_index = var)`")
+  return fake_demos

@@ -162,8 +162,12 @@ class TaskEnvironment(object):
                     'Could not collect demos. Maybe a problem with the task?')
         return demos
 
-    def reset_to_demo(self, demo: Demo) -> (List[str], Observation):
+    def reset_to_demo(self, demo: Demo, obs_variation_index = None) -> (List[str], Observation):
         demo.restore_state()
-        variation_index = demo._observations[0].misc["variation_index"]
+        if obs_variation_index is not None:
+            variation_index = obs_variation_index
+        else:
+          variation_index = demo._observations[0].misc["variation_index"]
+            
         self.set_variation(variation_index)
         return self.reset(demo)
