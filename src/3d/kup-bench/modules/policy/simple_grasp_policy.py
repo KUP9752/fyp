@@ -49,14 +49,19 @@ class SimpleGraspPolicy(SimplePolicy):
       nn.Linear(64, 1),
       # nn.Sigmoid() ## remove for raw logits, lets see that it predicts now
     )
-    
-  def forward(self, image):
-    feats = self.conv(image)
+  
+
+  def _feats_to_action(self, feats) -> torch.Tensor:
     pose = self.action_head(feats)
     grasp = self.grasp_head(feats)
     
     action = torch.cat([pose, grasp], dim = 1) ## get (batch_size, 8)
-    return action, {}
+    return action
+  
+  def forward(self, image):
+    feats = self.conv(image)
+    
+    return self._feats_to_action(feats), {}
 
 
   ## this is used whent he "demo" options is selected for dataset, so we can catch the demos randomly but process in batch size

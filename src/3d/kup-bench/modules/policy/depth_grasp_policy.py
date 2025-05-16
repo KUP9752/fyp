@@ -50,19 +50,54 @@ class DepthGraspPolicy(SimpleGraspPolicy):
         self.conv = CNNEncoder(in_channels = num_ch) ## 3 * num_cams + 1 * depth_cam
         ## should need nothing else?
       case "depth_feats":
-        self._1 = 1
+        ## separate conv for the images w + ls + rs (like SimpleGraspPolicy)
+        ## but run depth through its own encoder, then undfuse with a separate MLP (or integrate into the later heads?)
+        
+        self.depth_conv = CNNEncoder(in_channels=1) ## depth has one channel
+        ## don't want it too deep, will feed into the next MLPs for prediction action and gripper
+        self.fuser = nn.Sequential(
+          # nn.Flatten(), ## already flatttened in `forward()` call
+          nn.Linear(self.flat_size * 2, self.flat_size * 2),
+          nn.BatchNorm1d(self.flat_size * 2),
+          nn.ReLU(inplace=False),
+          nn.Dropout(0.3),
+          nn.Linear(self.flat_size * 2, self.flat_size) ## same output to fit other MLPs later
+        )
       case "all_sep":
         self._2 = 1
       case _: 
         raise ValueError(f"[depth_grasp_policy - DepthGraspPolicy] config '{config}' is unknown!")
     self.config = config
 
-  def forward(self, image):
+  def forward(self, image) -> tuple[torch.Tensor, dict]:
+    ## image: shape = (batch_size, chs, w, h) where chs = 3 * (given cams) + 1 (depth)
+    ## so depth is always the final dimension (easier to do it this way for now, might change later)
     match self.config:
       case "depth_ch":
         return super().forward(image)
       case "depth_feats":
-        raise NotImplementedError(f"[depth_grasp_policy - forward]")
+        if not (self.cam_type & CamType.WRIST_DEPTH):
+          raise ValueError(f"[depth_grasp_policy] Policy cam_type does not include '{CamType.WRIST_DEPTH}' -> current: '{self.cam_type}'")
+        
+        images = image[:, :-1, :, :] ## take all rgb cams
+        ## take wrist depth //NOTE: only depth cam currently
+        depth = image[:, -1, :, :].unsqueeze(dim=1) # for (B, w, h) -> (B, 1, w, h)
+        
+        ## feats have shape (B, 128, 2, 2)
+        ims_feats: torch.Tensor = self.conv(images) 
+        depth_feats: torch.Tensor = self.depth_conv(depth)
+
+        ##  flatten them before concat -> (B, 512)
+        ims_feats = ims_feats.view(ims_feats.shape[0], -1)
+        depth_feats = depth_feats.view(depth_feats.shape[0], -1)
+
+        ## concat flat vectors
+        cated = torch.cat([ims_feats, depth_feats], dim = 1) ## cat on ch
+        fused_feats = self.fuser(cated)
+
+        return self._feats_to_action(fused_feats), {}
+
+        ## TODO: There can be smarter ways to fuse these?? maybe dynamically weight what cam to use, is this for 'all_sep'??
       case "all_sep":
         raise NotImplementedError(f"[depth_grasp_policy - forward]")
       case _: 

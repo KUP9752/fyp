@@ -22,7 +22,7 @@ class CNNEncoder(nn.Module):
       nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=0),
       nn.MaxPool2d(kernel_size=(2, 2), stride=2, padding=0),
       nn.ReLU(inplace=False),
-      # 128 2 2
+      # 128 2 2 : (B, 128, 2, 2)
     )
     
     

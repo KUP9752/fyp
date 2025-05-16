@@ -58,7 +58,8 @@ from pprint import pprint
 set_seed()
 
 num_demos = 10
-cam_type = CamType.WRIST #| CamType.WRIST_DEPTH
+# cam_type = CamType.WRIST #| CamType.WRIST_DEPTH
+
 
 
 LABELS = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
@@ -139,6 +140,8 @@ env.launch()
 ## 3. Attach Task and create Agent
 pol_type = PolicyType.DEPTH_GRASP
 
+cam_type = CamType.WRIST | CamType.WRIST_DEPTH
+
 task = Vision_Static
 # task = ReachNoObs_Central
 print(env.get_task.__code__.co_filename)
@@ -160,7 +163,7 @@ agent = Agent(
   env.action_shape[0],
   pol_type, cam_type,
   grasp_thresh = 0.5,
-  config = "depth_ch"
+  config = "depth_feats"
 )
 
 model_name = f"rwd-reach-{num_demos}-demos-{cam_type}-{get_task_name(task)}-{pol_type}--{now()}"
@@ -188,8 +191,8 @@ training_params = {
   "shuffle_obs_in_demo": False,
   "shuffle_data": True,
   # "lock_loader_seed": 1,
-  "dataset_to_use": "demo",
-  "lambda_grasp_loss": 10
+  # "dataset_to_use": "demo",
+  # "lambda_grasp_loss": 10
 }
 
 ingest_num = 10
@@ -403,5 +406,10 @@ for inputs, labels in loader:
 count
 
 #%%
-for i in range(30):
-  print(i % 15)
+import numpy as np
+import torch
+
+t = torch.empty((12, 128, 2, 2))
+t2 = torch.empty((12, 128, 2, 2))
+c = torch.cat([t, t2], dim = 1)
+c.shape
