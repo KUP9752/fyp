@@ -29,10 +29,12 @@ class DepthGraspPolicy(SimpleGraspPolicy):
     config: Literal["depth_ch", "depth_feats", "all_sep"],
     cam_type = CamType.WRIST,
     grasp_thresh = 0.5,
+    opts: dict = {}
   ):
     super().__init__(action_shape, cam_type, grasp_thresh)
     # super(DepthGraspPolicy, self).__init__() ##if inherining nn.Module
     # self.grasp_thresh = grasp_thresh
+    self.opts = opts
 
     match config:
       case "depth_ch":
@@ -55,14 +57,21 @@ class DepthGraspPolicy(SimpleGraspPolicy):
         
         self.depth_conv = CNNEncoder(in_channels=1) ## depth has one channel
         ## don't want it too deep, will feed into the next MLPs for prediction action and gripper
-        self.fuser = nn.Sequential(
-          # nn.Flatten(), ## already flatttened in `forward()` call
-          nn.Linear(self.flat_size * 2, self.flat_size * 2),
-          nn.BatchNorm1d(self.flat_size * 2),
-          nn.ReLU(inplace=False),
-          nn.Dropout(0.3),
-          nn.Linear(self.flat_size * 2, self.flat_size) ## same output to fit other MLPs later
-        )
+        if self.opts["gated_fuse"]:
+          ## gate: 2 * (B, 128, 2, 2) => (B, 128, 2, 2)
+          self.gate = nn.Sequential(
+            nn.Conv2d(256, 128, kernel_size=1), 
+            nn.Sigmoid() ## gating
+          )
+        else:
+          self.fuser = nn.Sequential(
+            # nn.Flatten(), ## already flatttened in `forward()` call
+            nn.Linear(self.flat_size * 2, self.flat_size * 2),
+            nn.BatchNorm1d(self.flat_size * 2),
+            nn.ReLU(inplace=False),
+            nn.Dropout(0.3),
+            nn.Linear(self.flat_size * 2, self.flat_size) ## same output to fit other MLPs later
+          )
       case "all_sep":
         self._2 = 1
       case _: 
@@ -86,19 +95,26 @@ class DepthGraspPolicy(SimpleGraspPolicy):
         ## feats have shape (B, 128, 2, 2)
         ims_feats: torch.Tensor = self.conv(images) 
         depth_feats: torch.Tensor = self.depth_conv(depth)
+        
+        if self.opts["gated_fuse"]:
+          cated = torch.cat([ims_feats, depth_feats], dim = 1) # (B, 128, 2, 2)
+          gate = self.gate(cated) 
+          fused_feats = gate * ims_feats + (1 - gate) * depth_feats
+        else:
+          ##  flatten them before concat -> (B, 512)
+          ims_feats = ims_feats.view(ims_feats.shape[0], -1)
+          depth_feats = depth_feats.view(depth_feats.shape[0], -1)
+          cated = torch.cat([ims_feats, depth_feats], dim = 1) 
+          ## cated: (B, self.feat_size * 2) -> (B, 1024) 
+          fused_feats = self.fuser(cated) # (B, 512)
 
-        ##  flatten them before concat -> (B, 512)
-        ims_feats = ims_feats.view(ims_feats.shape[0], -1)
-        depth_feats = depth_feats.view(depth_feats.shape[0], -1)
-
-        ## concat flat vectors
-        cated = torch.cat([ims_feats, depth_feats], dim = 1) ## cat on ch
-        fused_feats = self.fuser(cated)
-
-        return self._feats_to_action(fused_feats), {}
-
-        ## TODO: There can be smarter ways to fuse these?? maybe dynamically weight what cam to use, is this for 'all_sep'??
+        return self._feats_to_action(fused_feats), {"opts": self.opts}
+        ## TODO: depending on how this works, we can add other losses (similarity matrtix between rgb wrist and depth wrist?? somehow incorporate?)
+        ## gating? use the fusion conv as a wrighting mevchanism -> `fused_feat = fuser(x) * rgb_feats + (1 - fuser(x)) * depth_feats`, simple attention to what the fuser thinks is important
+        ## multiscale fusion?? -> merge at differnet levels, within the conv? conv -> merge -> conv -> merge etc?
+        ## contrasive learning? compare the wrist_rgb and d as they go down the network
       case "all_sep":
+        ## TODO: There can be smarter ways to fuse these?? maybe dynamically weight what cam to use, is this for 'all_sep'??
         raise NotImplementedError(f"[depth_grasp_policy - forward]")
       case _: 
         raise ValueError(f"[depth_grasp_policy - forward] config '{self.config}' is unknown!")
