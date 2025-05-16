@@ -94,14 +94,19 @@ def params_string(**params):
     s+= f"{k} = {v},\n\t"
   return s
 
-def save_demos(demos: list[Demo], filename: str) -> None:
+def save_demos(demos: list[Demo], filename: str) -> str:
   states = []
   for demo in demos:
     states.append(
       (demo.random_seed, demo._observations[0].misc["variation_index"])
     )
-  with open(f"{filename}-{now()}", "wb") as f:
+
+  full_filename = f"{filename}-{now()}.pkl"
+  with open(full_filename, "wb") as f:
     pickle.dump(states, f)
+
+  return full_filename
+
 
 ## returns a FAKE demo (no observations) and the misc['variation_index'] for observations to restore state of the target object
 def load_demos(filename: str) -> list[tuple[Demo, int]]:
