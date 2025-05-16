@@ -149,7 +149,7 @@ class CamAttentionPolicy(nn.Module):
     
     for ct in CamType.uniques(): ## in order of declaration
       if self.cam_type & ct:
-        image = images[:, curr_index, :, :, :]
+        image = images[:, curr_index, :, :, :] # (B, idx, ch, w, h)
         feats = self.conv_encode(image, ct) if self.is_multi_cnn else self.conv_encode(image)
         
         to_stack.append(feats)  

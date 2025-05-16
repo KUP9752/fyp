@@ -20,6 +20,8 @@ class MultiCamCnn(nn.Module):
       cnns[f"{CamType.LEFT_SHOULDER}"] = CNNEncoder(in_channels = 3)
     if cam_type & CamType.RIGHT_SHOULDER:
       cnns[f"{CamType.RIGHT_SHOULDER}"] = CNNEncoder(in_channels = 3)
+    if cam_type & CamType.WRIST_DEPTH:
+      cnns[f"{CamType.WRIST_DEPTH}"] = CNNEncoder(in_channels = 1)
     
     self.out_shape = (128, 2, 2) ## this is per CNNEncoder
     
