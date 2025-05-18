@@ -1,0 +1,5 @@
+,task_name,agent_name,demo_type,task_params,demo_index,is_success,final_distance,min_distance,max_eplen,gripper_image_paths
+0,Vision_Random,agent-policy:depth_grasp_policy-cams:wrist-policy:depth_grasp_policy-config:depth_ch-opts:{'gated_fuse': None},control,"{'scale': 1.0, 'wrist_cam_distance': 0.6}",0,False,0.6975671832002618,0.6974929267849068,69,[]
+1,Vision_Random,agent-policy:depth_grasp_policy-cams:wrist+wrist_depth-policy:depth_grasp_policy-config:depth_ch-opts:{'gated_fuse': None},control,"{'scale': 1.0, 'wrist_cam_distance': 0.6}",0,False,0.6975900259353603,0.6974979255521856,69,[]
+2,Vision_Random,agent-policy:depth_grasp_policy-cams:wrist+wrist_depth-policy:depth_grasp_policy-config:depth_feats-opts:{'gated_fuse': None},control,"{'scale': 1.0, 'wrist_cam_distance': 0.6}",0,False,0.6975579207710769,0.6974955674552777,69,[]
+3,Vision_Random,agent-policy:depth_grasp_policy-cams:wrist+wrist_depth-policy:depth_grasp_policy-config:depth_feats-opts:{'gated_fuse': True},control,"{'scale': 1.0, 'wrist_cam_distance': 0.6}",0,False,0.697552084114697,0.6974977965464795,69,[]
