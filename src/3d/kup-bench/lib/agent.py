@@ -17,7 +17,7 @@ from lib.utils import pick_obs_from_cam
 
 class Agent(object):
     def __init__(self,
-      action_shape,
+      action_shape: int,
       policy_type: PolicyType,
       cam_type = CamType.WRIST,
       **policy_args, 
@@ -44,11 +44,11 @@ class Agent(object):
           self.tensor_agg = self._stacker
         case _: 
           raise ValueError(f"[agent - Agent] cannot find policy type {policy_type}")
-    def __repr__(self) -> str:
-      return f"agent-policy:{self.policy_type}-cams:{self.cam_type}"
-
     def __str__(self) -> str:
-      return f"Agent(policy_type={self.policy_type}, cam_type={self.cam_type})"
+      return f"agent-policy:{self.policy_type}-cams:{self.cam_type}-policy:{self.policy}"
+
+    def __repr__(self) -> str:
+      return f"Agent(policy_type={self.policy_type}, cam_type={self.cam_type}, policy={self.policy})"
     
     def save_model(self, model_path: str):
       torch.save(self.policy.state_dict(), f'{model_path}')

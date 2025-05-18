@@ -24,12 +24,19 @@ from modules.demo_dataset import DemoDataset
 
 
 class DepthGraspPolicy(SimpleGraspPolicy): 
+
+  def __str__(self):
+    return f"depth_grasp_policy-config:{self.config}-opts:{self.opts}"
+  
+  def __repr__(self):
+    return f"DepthGraspPolicy(config={self.config}, opts={self.opts})"
+  
   def __init__(self,
     action_shape: int, 
     config: Literal["depth_ch", "depth_feats", "all_sep"],
     cam_type = CamType.WRIST,
     grasp_thresh = 0.5,
-    opts: dict = {}
+    opts: dict = {"gated_fuse": None} ## set all defaults to none so I don't have to try/catch everytime
   ):
     super().__init__(action_shape, cam_type, grasp_thresh)
     # super(DepthGraspPolicy, self).__init__() ##if inherining nn.Module
@@ -54,9 +61,12 @@ class DepthGraspPolicy(SimpleGraspPolicy):
       case "depth_feats":
         ## separate conv for the images w + ls + rs (like SimpleGraspPolicy)
         ## but run depth through its own encoder, then undfuse with a separate MLP (or integrate into the later heads?)
+        if not (self.cam_type & CamType.WRIST_DEPTH):
+          raise ValueError(f"[depth_grasp_policy] Policy cam_type does not include '{CamType.WRIST_DEPTH}' -> current: '{self.cam_type}'")
         
         self.depth_conv = CNNEncoder(in_channels=1) ## depth has one channel
         ## don't want it too deep, will feed into the next MLPs for prediction action and gripper
+        ## TODO: multiscale fusion
         if self.opts["gated_fuse"]:
           ## gate: 2 * (B, 128, 2, 2) => (B, 128, 2, 2)
           self.gate = nn.Sequential(
@@ -95,7 +105,7 @@ class DepthGraspPolicy(SimpleGraspPolicy):
         ## feats have shape (B, 128, 2, 2)
         ims_feats: torch.Tensor = self.conv(images) 
         depth_feats: torch.Tensor = self.depth_conv(depth)
-        
+
         if self.opts["gated_fuse"]:
           cated = torch.cat([ims_feats, depth_feats], dim = 1) # (B, 128, 2, 2)
           gate = self.gate(cated) 
