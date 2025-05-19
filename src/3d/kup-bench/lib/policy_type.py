@@ -4,6 +4,7 @@ class PolicyType(Enum):
   SIMPLE = auto()
   SIMPLE_GRASP = auto()
   DEPTH_GRASP = auto()
+  RESNET_GRASP = auto()
   CAM_ATTENTION = auto()
   
   def __str__(self) -> str:
@@ -14,6 +15,8 @@ class PolicyType(Enum):
         return "simple_grasp_policy"
       case PolicyType.DEPTH_GRASP:
         return "depth_grasp_policy"
+      case PolicyType.RESNET_GRASP:
+        return "resnet_grasp_policy"
       case PolicyType.CAM_ATTENTION:
         return "cam_attn_policy"
       case _:
