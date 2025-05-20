@@ -7,7 +7,8 @@ FALLBACK = "resnet18"
 class ResNetEncoder(nn.Module):
   def __init__(self,
     in_channels = 3,
-    resnet_name: str = FALLBACK
+    resnet_name: str = FALLBACK,
+    kernel_size = None,
   ):
     super(ResNetEncoder, self).__init__()
     
@@ -21,11 +22,12 @@ class ResNetEncoder(nn.Module):
 
 
     ## modifying to add whatever in channels I want
+
     og: nn.Conv2d = self.feats.conv1 
     self.feats.conv1 = self.conv1 = nn.Conv2d(
       in_channels=in_channels, 
       out_channels=og.out_channels, 
-      kernel_size=3, 
+      kernel_size=kernel_size if kernel_size is not None else og.kernel_size, 
       stride=og.stride, 
       padding=og.padding, 
       bias=og.bias is not None
@@ -46,5 +48,5 @@ class ResNetEncoder(nn.Module):
     x = self.feats.layer2(x)
     x = self.feats.layer3(x)
     x = self.feats.layer4(x)
-
+    ## NOTE: resnet has a classification head after this
     return x
