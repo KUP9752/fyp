@@ -117,12 +117,13 @@ class ResNetGraspPolicy(nn.Module):
 
     self.grasp_head = nn.Sequential(
       nn.Flatten(),
-      nn.Linear(self.flat_size, 1028), ## flat size is 512/2048 * 4
+      nn.Linear(self.flat_size, 256), ## flat size is 512/2048 * 4
       nn.ReLU(inplace=False),
       nn.Dropout(0.2),
-      nn.Linear(1028, 256),
-      nn.ReLU(inplace=False),
-      nn.Dropout(0.2),
+      ## NOTE: I think this was too complicated, too deep, make it simpler like the `simple_grasp_policy` => works better
+      # nn.Linear(1028, 256),
+      # nn.ReLU(inplace=False),
+      # nn.Dropout(0.2),
       nn.Linear(256, 64),
       nn.ReLU(inplace=False),
       nn.Linear(64, 1) 
