@@ -138,7 +138,7 @@ env = Environment(
 env.launch()
 #%%
 ## 3. Attach Task and create Agent
-pol_type = PolicyType.DEPTH_GRASP
+pol_type = PolicyType.RNN_GRASP
 
 cam_type = CamType.WRIST | CamType.WRIST_DEPTH
 
@@ -156,7 +156,7 @@ smaller_task_params = {
   "wrist_cam_distance": 0.3
 }
 
-task_env = env.get_task(task_class = task, **smaller_task_params)
+task_env = env.get_task(task_class = task, **task_params)
 # task_env = env.get_task(task_class = task)
 target_name = "grasp_cube"
 
@@ -169,16 +169,21 @@ except RuntimeError:
   target_rgb = None
   
 # agent = Agent(env.action_shape[0], pol_type, cam_type, target_rgb = target_rgb)
+# agent = Agent(
+#   env.action_shape[0],
+#   pol_type, cam_type,
+#   # grasp_thresh = 0.5,
+#   config = "depth_feats",
+#   opts = {
+#     "gated_fuse": True, 
+#     "resnet_name": "resnet18",
+#     "kernel_size": 3
+#   }
+# )
 agent = Agent(
   env.action_shape[0],
-  pol_type, cam_type,
-  grasp_thresh = 0.5,
-  config = "depth_feats",
-  opts = {
-    "gated_fuse": True, 
-    "resnet_name": "resnet18",
-    "kernel_size": 3
-  }
+  pol_type, cam_type, merge_feats = False
+
 )
 
 model_name = f"rwd-reach-{num_demos}-demos-{cam_type}-{get_task_name(task)}-{pol_type}--{now()}"
@@ -191,7 +196,8 @@ agent.policy
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
-demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
+demos: list[Demo] = task_env.get_demos(2, live_demos=live_demos)
+# test_demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
 demos
 
 # # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
@@ -230,47 +236,58 @@ load_str = "models/grasp/very-good-simple-grasp--task-Vision_Random-demo-10-cam-
 agent.policy.load_state_dict(torch.load(f"/home/kup/Desktop/code/fyp/src/3d/kup-bench/{load_str}"))
 #%%
 task_env = env.get_task(task,  **task_params)
-# %% Auto task Execution
+# %% 
+# Auto task Execution
 agent.policy.to("cpu")
 # task_env = env.get_task(ReachNoObs_Central)
+dones = 0
+# _, obs = task_env.reset()
 
-_, obs = task_env.reset()
-count = 0
-done = False
+for demo in range(len(demos)):
+  _, obs = task_env.reset()
+# for demo in test_demos:
+#   _, obs = task_env.reset_to_demo(demo)
+  count = 0
+  done = False
 
-distances = []
-while not done:
-  obs: Observation
-  
-  action, att_weights = agent.act(obs)
-  # print(f"{att_weights = }")
+  distances = []
+  while not done:
+    obs: Observation
+    
+    action, att_weights = agent.act(obs)
+    # print(f"{att_weights = }")
 
-  action = action.squeeze(0)
-  print(f"{action.shape =}")
-  print(f"{action[-1] =}")
-  # print(f"{action.shape = }")
-  obs, reward, done = task_env.step(action)
-  gripper = Object.get_object("Panda_gripper")
-  target = Object.get_object(target_name)
+    action = action.squeeze(0)
+    # print(f"{action.shape =}")
+    # print(f"{action[-1] =}")
+    # print(f"{action.shape = }")
+    obs, reward, done = task_env.step(action)
+    gripper = Object.get_object("Panda_gripper")
+    target = Object.get_object(target_name)
 
 
+    
+    
+    # vis_score = check_visibility("cam_wrist", "target")
+    
+    # print(f"{vis_score = }")
+    
+    
+    distance = np.linalg.norm(gripper.get_position() - target.get_position())
+    distances.append(distance)
+    # print(f"{done = }")
+    
+    count += 1
+    if done:
+      dones += 1
+    if count == 100:
+      break
+    
+  print(f"Done Successfull! done in {count} steps" if done else "Failed!")
+  print(f"Final distance: {distances[-1]}")
+
+  print(f"Success = {dones}/{len(test_demos)}")
   
-  
-  # vis_score = check_visibility("cam_wrist", "target")
-  
-  # print(f"{vis_score = }")
-  
-  
-  distance = np.linalg.norm(gripper.get_position() - target.get_position())
-  distances.append(distance)
-  # print(f"{done = }")
-  
-  count += 1
-  if count == 100:
-    break
-  
-print(f"Done Successfull! done in {count} steps" if done else "Failed!")
-print(f"Final distance: {distances[-1]}")
 
 # %% Reset Task Env
 fig, axs = plt.subplots(1, 3, figsize=(9, 3))
@@ -398,29 +415,59 @@ import torch
 from modules.demo_dataset import DemoDataset
 from modules.demo_obs_dataset import  DemoObsDataset
 from torch.utils.data import DataLoader
+from torch.nn.utils.rnn import pad_sequence
 
 def collate(batch):
-  
-  inputs, labels = zip(*batch) ## unzips the labels and batch
+    ## batch contains [(input, labels)] where each input is a complete demo (in terms of the data in sequence rgb for example)
+    ## input: (t, ch, w, h) 
+    inputs, labels = zip(*batch)
+    [print(f"{input.shape}") for input in inputs]
 
-  return torch.cat(inputs, dim=0), torch.cat(labels, dim = 0)
+    ## enforcing types for later
+    print(f"{len(labels) =}")
+    
+    real_lengths = torch.LongTensor([inp.shape[0] for inp in inputs])
+    print(f"{real_lengths.shape =}")
+    
+    inputs_padded = pad_sequence(inputs, batch_first=True) ## CHECK: if it gives (B, t, ch, w, h)
+    print(f"{inputs_padded.shape = }")
+
+    labels_padded = pad_sequence(labels, batch_first=True) ## CHECK: if it gives (B, t, ch, w, h)
+    print(f"{labels_padded.shape = }")
+
+
+    ## need to return shape (B, t, ch, w, h) for the input and labels
+    ## also returning lenths for LSTM use later
+    return inputs_padded, labels_padded, real_lengths
 
 cam_type = CamType.WRIST
 # dataset = DemoObsDataset(demos, cam_type= cam_type | CamType.WRIST_DEPTH, get_type="cat", shuffle_obs=True)
 dataset = DemoDataset(demos, cam_type= cam_type, get_type="cat")
-# loader = DataLoader(dataset, shuffle = True, batch_size = 2, collate_fn=collate)
-loader = DataLoader(dataset, shuffle = True, batch_size=1, generator=torch.manual_seed(42))
-print(f"{len(dataset) = }")
+loader = DataLoader(
+  dataset,
+  shuffle = True,
+  batch_size=10,
+  collate_fn=collate,
+  generator=torch.manual_seed(42)
+)
 count = 0
-
-for inputs, labels in loader:
-  inputs, labels = inputs.squeeze(), labels.squeeze()
-  # print(f"{inputs.shape =}")
-  # print(f"{labels.shape =}")
+print("hello")
+for inputs, labels, lengths in loader:
+  pred_action = torch.rand((2, 8))
+  print(f"{lengths.shape = }")
+  print(f"{labels.shape = }")
+  print(f"{inputs.size(0) = }")
+  sdd = torch.arange(inputs.size(0))
+  print(f"{sdd.shape = }")
+  print(f"{sdd = }")
+  
+  idx = lengths - 1
+  true_labels = labels[torch.arange(inputs.size(0)), idx]
+  # true_labels = labels[:, idx]
+  print(f"{true_labels.shape =}")
+  
 
   print()
-  count += 1
-count
 
 #%%
 import numpy as np

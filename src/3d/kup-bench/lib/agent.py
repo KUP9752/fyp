@@ -5,6 +5,7 @@ from modules.policy.simple_grasp_policy import SimpleGraspPolicy
 from modules.policy.depth_grasp_policy import DepthGraspPolicy
 from modules.policy.cam_attention_policy import CamAttentionPolicy
 from modules.policy.resnet_grasp_policy import ResNetGraspPolicy
+from modules.policy.rnn_grasp_policy import RNNGraspPolicy
 
 from rlbench.demo import Demo
 from rlbench.backend.observation import Observation
@@ -42,6 +43,9 @@ class Agent(object):
           self.tensor_agg = self._catter
         case PolicyType.RESNET_GRASP:
           self.policy = ResNetGraspPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+          self.tensor_agg = self._catter
+        case PolicyType.RNN_GRASP:
+          self.policy = RNNGraspPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
           self.tensor_agg = self._catter
         case PolicyType.CAM_ATTENTION:
           self.policy = CamAttentionPolicy(action_shape, cam_type, **policy_args) ## NOTE: other varaible settings here
