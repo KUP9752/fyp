@@ -142,11 +142,21 @@ pol_type = PolicyType.DEPTH_GRASP
 
 cam_type = CamType.WRIST | CamType.WRIST_DEPTH
 
-task = Vision_Static
+task = Vision_Random
 # task = ReachNoObs_Central
 print(env.get_task.__code__.co_filename)
 
-task_env = env.get_task(task_class = task, scale = 1, wrist_cam_distance = 0.5)
+task_params = {
+  "scale": 1.,
+  "wrist_cam_distance": 0.6
+}
+
+smaller_task_params = {
+  "scale": 0.5,
+  "wrist_cam_distance": 0.3
+}
+
+task_env = env.get_task(task_class = task, **smaller_task_params)
 # task_env = env.get_task(task_class = task)
 target_name = "grasp_cube"
 
@@ -163,7 +173,12 @@ agent = Agent(
   env.action_shape[0],
   pol_type, cam_type,
   grasp_thresh = 0.5,
-  config = "depth_feats"
+  config = "depth_feats",
+  opts = {
+    "gated_fuse": True, 
+    "resnet_name": "resnet18",
+    "kernel_size": 3
+  }
 )
 
 model_name = f"rwd-reach-{num_demos}-demos-{cam_type}-{get_task_name(task)}-{pol_type}--{now()}"
@@ -176,7 +191,7 @@ agent.policy
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
-demos: list[Demo] = task_env.get_demos(1, live_demos=live_demos)
+demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
 demos
 
 # # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
@@ -185,8 +200,8 @@ demos
 # %%
 ## 5. Train
 training_params = {
-  "epochs": 10000,
-  "minibatch_size": 1,
+  "epochs": 400,
+  "minibatch_size": 10,
   "lr": 1e-3,
   "shuffle_obs_in_demo": False,
   "shuffle_data": True,
@@ -203,7 +218,7 @@ agent.ingest(demos[:ingest_num], **training_params) ## trains here
 agent.save_model(model_path)
 
 #%%
-# load_str = "models/grasp/rwd-reach-10-demos-wrist-Vision_Static-simple_grasp_policy--worked-with-scale0.4-dist-0.5_May09_14-57.pth"
+# load_st#r = "models/grasp/rwd-reach-10-demos-wrist-Vision_Static-simple_grasp_policy--worked-with-scale0.4-dist-0.5_May09_14-57.pth"
 # load_str = "models/grasp/rwd-reach-10-demos-wrist-Vision_Random-simple_grasp_policy--_May12_14-02.pth"
 
 
@@ -214,7 +229,7 @@ agent.save_model(model_path)
 load_str = "models/grasp/very-good-simple-grasp--task-Vision_Random-demo-10-cam-wrist--demo_dataset-10_batch-2000 epochs.pth"
 agent.policy.load_state_dict(torch.load(f"/home/kup/Desktop/code/fyp/src/3d/kup-bench/{load_str}"))
 #%%
-task_env = env.get_task(Vision_Static)
+task_env = env.get_task(task,  **task_params)
 # %% Auto task Execution
 agent.policy.to("cpu")
 # task_env = env.get_task(ReachNoObs_Central)
@@ -222,6 +237,7 @@ agent.policy.to("cpu")
 _, obs = task_env.reset()
 count = 0
 done = False
+
 distances = []
 while not done:
   obs: Observation
@@ -236,6 +252,7 @@ while not done:
   obs, reward, done = task_env.step(action)
   gripper = Object.get_object("Panda_gripper")
   target = Object.get_object(target_name)
+
 
   
   
