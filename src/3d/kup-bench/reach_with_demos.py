@@ -217,7 +217,7 @@ demos
 # %%
 ## 5. Train
 training_params = {
-  "epochs": 1000,
+  "epochs": 500,
   "minibatch_size": 10,
   "lr": 1e-3,
   "shuffle_obs_in_demo": False,
@@ -260,7 +260,6 @@ for demo in range(len(demos)):
 #   _, obs = task_env.reset_to_demo(demo)
   count = 0
   done = False
-
   distances = []
   while not done:
     obs: Observation
@@ -355,28 +354,86 @@ _, obs = task_env.reset()
 count = 0
 done = False
 distances = []
+def plot_attn(attn_weights, sample, head):
+  B, H, N, _ = attn_weights.shape
+
+  # attention map from token i to j
+  attn_map = attn_weights[sample, head].detach().cpu().numpy()  # (N, N)
+
+  plt.figure(figsize=(6, 6))
+  plt.imshow(attn_map, cmap='viridis')
+  plt.title(f'Attention map (sample {sample}, head {head})')
+  plt.xlabel('Key token')
+  plt.ylabel('Query token')
+  plt.colorbar()
+  plt.tight_layout()
+  plt.show()
+
+def final_attn(weights):
+  # weights: (1, num_heads, 64, 64)
+  attn_weights = weights[0]  # Remove batch dim → (8, 64, 64)
+
+  # You likely have a flattened 8x8 feature map → reshape each 64 to (8, 8)
+  H = W = 8  # assuming square spatial shape from 8x8 features
+
+  fig, axs = plt.subplots(2, 4, figsize=(16, 8))
+
+  for i in range(8):  # loop over 8 heads
+      # Get attention map for head i: shape (64, 64)
+      attn_map = attn_weights[i].detach().cpu()  # (64, 64)
+
+      # Let's pick one query location to visualize attention from that point to all keys
+      query_index = 32  # center pixel
+      attention_from_query = attn_map[query_index]  # (64,)
+      attention_2d = attention_from_query.reshape(H, W)  # (8, 8)
+
+      ax = axs[i // 4, i % 4]
+      im = ax.imshow(attention_2d, cmap='viridis')
+      ax.set_title(f"Head {i}")
+      ax.axis('off')
+      fig.colorbar(im, ax=ax)
+
+  plt.suptitle("Attention from center pixel (index 32) across 8 heads")
+  plt.tight_layout()
+  plt.show()
+
+def plot_attn_bar(attn_weights, sample, token_id, head, grid_size):
+
+  attn_map = attn_weights[sample, head, token_id]  # shape: (N,)
+  attn_grid = attn_map.view(grid_size, grid_size)
+
+  plt.imshow(attn_grid, cmap='plasma')
+  plt.title(f'Where token {token_id} attends (Head {head})')
+  plt.colorbar()
 # %% 
+agent.policy.attn_dtor.attn.num_heads
+#%%
 # Single Step
 obs: Observation
-action, att_weights = agent.act(obs)
-print(f"{att_weights = }")
-  
+action, rets = agent.act(obs)
 action = action.squeeze(0)
-signal = sim.simGetFloatSignal("wrist_target_vis_binary")
-print(f"{signal = }")
-task_env
 
 
-action = torch.Tensor([
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.,
-    0.
-  ])
+rgb_attn = rets["rgb_attn_weights"]
+depth_attn = rets["depth_attn_weights"]
+
+print(f"{rgb_attn.shape = }")
+print(f"{depth_attn.shape = }")
+  
+plot_attn(rgb_attn, 0, 0)
+# plot_attn_bar(rgb_attn, 0, 0, 0, 64)
+
+# action = torch.Tensor([
+#     0.,
+#     0.,
+#     0.,
+#     0.,
+#     0.,
+#     0.,
+#     0.,
+#     0.
+#   ])
+
 print(f"{action.shape = }")
 
 # run_segmenter()
@@ -384,17 +441,6 @@ obs, reward, done = task_env.step(action)
 gripper = Object.get_object("Panda_gripper")
 target = Object.get_object(target_name)
 
-pc = obs.wrist_point_cloud
-print(f"{pc.shape = }")
-# plt.imshow(obs.wrist_rgb)
-
-ds = obs.wrist_depth
-print(f"{ds.shape = }")
-print(f"{(ds < 0.1).shape =}")
-
-plt.imshow(ds < 0.1 )
-
-# show_pc(pc.reshape(-1, 3))
   
 
 distance = np.linalg.norm(gripper.get_position() - target.get_position())
