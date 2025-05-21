@@ -97,13 +97,13 @@ class RNNGraspPolicy(nn.Module):
     labels: torch.Tensor
 
     real_lengths = torch.LongTensor([inp.shape[0] for inp in inputs])
-    print(f"[rnn_grasp_policy - _collate_demos] {real_lengths.shape =}")
+    # print(f"[rnn_grasp_policy - _collate_demos] {real_lengths.shape =}")
     
     inputs_padded = pad_sequence(inputs, batch_first=True) ## CHECK: if it gives (B, t, ch, w, h)
-    print(f"[rnn_grasp_policy - _collate_demos] {inputs_padded.shape = }")
+    # print(f"[rnn_grasp_policy - _collate_demos] {inputs_padded.shape = }")
 
     labels_padded = pad_sequence(labels, batch_first=True) ## CHECK: if it gives (B, t, ch, w, h)
-    print(f"[rnn_grasp_policy - _collate_demos] {labels_padded.shape = }")
+    # print(f"[rnn_grasp_policy - _collate_demos] {labels_padded.shape = }")
 
 
     ## need to return shape (B, t, ch, w, h) for the input and labels
@@ -163,11 +163,11 @@ class RNNGraspPolicy(nn.Module):
       total_pose_loss, total_grasp_loss = 0., 0.
       
       for inputs, labels, lengths in loader:
-        print(f"Now in (train)")
+        # print(f"Now in (train)")
         
-        print(f"{inputs.shape = }")
-        print(f"{labels.shape = }")
-        print(f"{lengths.shape = }")
+        # print(f"{inputs.shape = }")
+        # print(f"{labels.shape = }")
+        # print(f"{lengths.shape = }")
 
         inputs, labels, lengths = inputs.to(device), labels.to(device), lengths.to(device)
         # print(f"{inputs.shape =}") 
@@ -177,16 +177,16 @@ class RNNGraspPolicy(nn.Module):
         
         
         pred_actions, _ = model(inputs)
-        print(f"{pred_actions.shape = }")
-        print(f"{_['new_state'] = }")
+        # print(f"{pred_actions.shape = }")
+        # print(f"{_['new_state'] = }")
         
         # print(f"{pred_actions.shape = }")
         
         ## [:, x] to preserve the batch shape (batch_size, X)
         idx = lengths - 1 ## index of the last real timeestep of each demo
-        print(f"{idx.shape = }")
+        # print(f"{idx.shape = }")
         true_label = labels[torch.arange(inputs.size(0)), idx] ## take batch_num of (from seq) (B, action_size)
-        print(f"{true_label.shape = }")
+        # print(f"{true_label.shape = }")
         
         ##TODO: THis now trains, however is this the right way to do this?? should I be checking that actino and adding to loss at every step?
         pose_loss = mse_loss(pred_actions[:, :-1], true_label[:, :-1]) ## only the pose not he gripper action

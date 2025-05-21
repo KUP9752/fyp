@@ -100,6 +100,9 @@ class Agent(object):
 
 
       torch_obs = torch_obs.unsqueeze(0) ## add a batch dimension (1, ...)
+
+      if self.policy_type == PolicyType.RNN_GRASP:
+        torch_obs  = torch_obs.unsqueeze(0) # add the time series dimention
       
       with torch.no_grad():
         pred, rest = self.policy(torch_obs)

@@ -138,7 +138,7 @@ env = Environment(
 env.launch()
 #%%
 ## 3. Attach Task and create Agent
-pol_type = PolicyType.RNN_GRASP
+pol_type = PolicyType.DEPTH_GRASP
 
 cam_type = CamType.WRIST | CamType.WRIST_DEPTH
 
@@ -168,7 +168,19 @@ except RuntimeError:
   print(f"'target' doesn't exist meaning this is a different task")
   target_rgb = None
   
+## simple policy
 # agent = Agent(env.action_shape[0], pol_type, cam_type, target_rgb = target_rgb)
+##depth grasp agent
+agent = Agent(
+  env.action_shape[0],
+  pol_type, cam_type,
+  grasp_thresh = 0.5,
+  config = "attn",
+  opts = {
+    "gated_fuse": True, 
+  }
+)
+# ##resnet agent
 # agent = Agent(
 #   env.action_shape[0],
 #   pol_type, cam_type,
@@ -180,11 +192,10 @@ except RuntimeError:
 #     "kernel_size": 3
 #   }
 # )
-agent = Agent(
-  env.action_shape[0],
-  pol_type, cam_type, merge_feats = False
-
-)
+# agent = Agent(
+#   env.action_shape[0],
+#   pol_type, cam_type, merge_feats = False
+# )
 
 model_name = f"rwd-reach-{num_demos}-demos-{cam_type}-{get_task_name(task)}-{pol_type}--{now()}"
 model_path = f"./all-models/reach-with-demos/{model_name}.pth"
@@ -196,7 +207,7 @@ agent.policy
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
-demos: list[Demo] = task_env.get_demos(2, live_demos=live_demos)
+demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
 # test_demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
 demos
 
@@ -206,7 +217,7 @@ demos
 # %%
 ## 5. Train
 training_params = {
-  "epochs": 400,
+  "epochs": 1000,
   "minibatch_size": 10,
   "lr": 1e-3,
   "shuffle_obs_in_demo": False,
@@ -286,7 +297,7 @@ for demo in range(len(demos)):
   print(f"Done Successfull! done in {count} steps" if done else "Failed!")
   print(f"Final distance: {distances[-1]}")
 
-  print(f"Success = {dones}/{len(test_demos)}")
+  # print(f"Success = {dones}/{len(test_demos)}")
   
 
 # %% Reset Task Env

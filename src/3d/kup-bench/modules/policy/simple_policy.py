@@ -21,19 +21,19 @@ class SimplePolicy(nn.Module):
     self.cam_type = cam_type
     print(f"[simple_policy] - Policy] Using {self.cam_type} as camera type")
     
-    num_cams = 0
+    self.num_rgb_cams = 0
     if cam_type & CamType.WRIST:
-      num_cams += 1
+      self.num_rgb_cams += 1
     if cam_type & CamType.LEFT_SHOULDER:
-      num_cams += 1
+      self.num_rgb_cams += 1
     if cam_type & CamType.RIGHT_SHOULDER:
-      num_cams += 1
+      self.num_rgb_cams += 1
     
-    if num_cams == 0:
+    if self.num_rgb_cams == 0:
       raise ValueError("[simple_policy] - Policy] No cameras selected!")
     
     self.conv = nn.Sequential(
-      nn.Conv2d(in_channels=3 * num_cams, out_channels=32, kernel_size=3, stride=1, padding=0),
+      nn.Conv2d(in_channels=3 * self.num_rgb_cams, out_channels=32, kernel_size=3, stride=1, padding=0),
       nn.MaxPool2d(kernel_size=(2, 2), stride=2, padding=0),
       nn.ReLU(inplace=False),
       nn.Conv2d(in_channels=32, out_channels=48, kernel_size=3, stride=1, padding=0),

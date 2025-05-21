@@ -12,7 +12,8 @@ from tqdm import tqdm as progress
 from lib.cam_type import CamType
 from lib.utils import params_string
 
-from modules.cnns.cnn_encoder import CNNEncoder
+from modules.cnns.cnn_encoder import CNNEncoder, ConvEncoder
+from modules.cnns.cross_modal_attn import CrossModalAttention
 from modules.policy.simple_grasp_policy import SimpleGraspPolicy
 
 
@@ -24,24 +25,25 @@ from modules.demo_dataset import DemoDataset
 
 
 class DepthGraspPolicy(SimpleGraspPolicy): 
+  default_opts = {
+    "gated_fuse": True, 
+    "attn_num_heads": 8
+  }
 
-  def __str__(self):
-    return f"depth_grasp_policy-config:{self.config}-opts:{self.opts}"
-  
-  def __repr__(self):
-    return f"DepthGraspPolicy(config={self.config}, opts={self.opts})"
-  
   def __init__(self,
     action_shape: int, 
-    config: Literal["depth_ch", "depth_feats", "all_sep"],
+    config: Literal["depth_ch", "depth_feats", "attn"],
     cam_type = CamType.WRIST,
     grasp_thresh = 0.5,
-    opts: dict = {"gated_fuse": None} ## set all defaults to none so I don't have to try/catch everytime
+    opts: dict = {} ## set all defaults to none so I don't have to try/catch everytime
+    ## "gated_fuse" set to 'True' because it works well
   ):
     super().__init__(action_shape, cam_type, grasp_thresh)
     # super(DepthGraspPolicy, self).__init__() ##if inherining nn.Module
     # self.grasp_thresh = grasp_thresh
-    self.opts = opts
+    
+    ## keeps all defaults that are not overriden in opts
+    self.opts = self.default_opts | opts
 
     match config:
       case "depth_ch":
@@ -64,7 +66,8 @@ class DepthGraspPolicy(SimpleGraspPolicy):
         if not (self.cam_type & CamType.WRIST_DEPTH):
           raise ValueError(f"[depth_grasp_policy] Policy cam_type does not include '{CamType.WRIST_DEPTH}' -> current: '{self.cam_type}'")
         
-        self.depth_conv = CNNEncoder(in_channels=1) ## depth has one channel
+        self.rgb_enc = self.conv
+        self.depth_enc = CNNEncoder(in_channels=1) ## depth has one channel
         ## don't want it too deep, will feed into the next MLPs for prediction action and gripper
         ## TODO: multiscale fusion
         if self.opts["gated_fuse"]:
@@ -82,52 +85,114 @@ class DepthGraspPolicy(SimpleGraspPolicy):
             nn.Dropout(0.3),
             nn.Linear(self.flat_size * 2, self.flat_size) ## same output to fit other MLPs later
           )
-      case "all_sep":
-        self._2 = 1
+      case "attn":
+        if not (self.cam_type & CamType.WRIST_DEPTH):
+          raise ValueError(f"[depth_grasp_policy] 'attn': Policy cam_type does not include '{CamType.WRIST_DEPTH}' -> current: '{self.cam_type}'")
+        
+        if self.opts["attn_num_heads"] is None or not isinstance(self.opts["attn_num_heads"], int):
+          raise ValueError(f"[depth_grasp_policy - (DepthGraspPolicy)] 'attn_num_heads' in 'opts' must be an integer")
+
+        self.conv = None
+        self.depth_conv = None
+
+        self.rgb_enc = ConvEncoder(self.num_rgb_cams * 3, 32, 128)
+        self.depth_enc = ConvEncoder(self.num_rgb_cams, 32, 128)
+
+        self.embed_size = self.flat_size // 4 ## 512 / 4 = 128
+        self.attn_dtor = CrossModalAttention(self.embed_size, num_heads = self.opts["attn_num_heads"])
+        self.attn_rtod = CrossModalAttention(self.embed_size, num_heads = self.opts["attn_num_heads"])
+
+        self.fuser = nn.Sequential(
+          nn.Conv2d(self.embed_size * 2, self.embed_size * 2, kernel_size=1, bias=False),
+          nn.BatchNorm2d(self.embed_size * 2),
+          nn.ReLU(),
+          nn.Conv2d(self.embed_size * 2, self.flat_size, kernel_size=3, bias=False),
+          nn.BatchNorm2d(self.flat_size),
+          nn.ReLU(),
+        )
+
+        self.gl_pool = nn.AdaptiveAvgPool2d((1, 1)) ## (B, C, 1, 1)
+        # this can then be fed into the MLPs
       case _: 
-        raise ValueError(f"[depth_grasp_policy - DepthGraspPolicy] config '{config}' is unknown!")
+        raise ValueError(f"[depth_grasp_policy - (DepthGraspPolicy)] config '{config}' is unknown!")
     self.config = config
 
+  def __str__(self):
+    return f"depth_grasp_policy-config:{self.config}-opts:{self.opts}"
+  
+  def __repr__(self):
+    return f"DepthGraspPolicy(config={self.config}, opts={self.opts})"
+  
   def forward(self, image) -> tuple[torch.Tensor, dict]:
     ## image: shape = (batch_size, chs, w, h) where chs = 3 * (given cams) + 1 (depth)
     ## so depth is always the final dimension (easier to do it this way for now, might change later)
-    match self.config:
-      case "depth_ch":
-        return super().forward(image)
-      case "depth_feats":
-        if not (self.cam_type & CamType.WRIST_DEPTH):
-          raise ValueError(f"[depth_grasp_policy] Policy cam_type does not include '{CamType.WRIST_DEPTH}' -> current: '{self.cam_type}'")
-        
-        images = image[:, :-1, :, :] ## take all rgb cams
-        ## take wrist depth //NOTE: only depth cam currently
-        depth = image[:, -1, :, :].unsqueeze(dim=1) # for (B, w, h) -> (B, 1, w, h)
-        
-        ## feats have shape (B, 128, 2, 2)
-        ims_feats: torch.Tensor = self.conv(images) 
-        depth_feats: torch.Tensor = self.depth_conv(depth)
+    if self.config in ["depth_ch"]:
+      return super().forward(image)
 
-        if self.opts["gated_fuse"]:
-          cated = torch.cat([ims_feats, depth_feats], dim = 1) # (B, 128, 2, 2)
-          gate = self.gate(cated) 
-          fused_feats = gate * ims_feats + (1 - gate) * depth_feats
-        else:
-          ##  flatten them before concat -> (B, 512)
-          ims_feats = ims_feats.view(ims_feats.shape[0], -1)
-          depth_feats = depth_feats.view(depth_feats.shape[0], -1)
-          cated = torch.cat([ims_feats, depth_feats], dim = 1) 
-          ## cated: (B, self.feat_size * 2) -> (B, 1024) 
-          fused_feats = self.fuser(cated) # (B, 512)
+    if self.config in ["depth_feats", "attn"]:
+      if not (self.cam_type & CamType.WRIST_DEPTH):
+        raise ValueError(f"[depth_grasp_policy - forward] 'depth_feats': Policy cam_type does not include '{CamType.WRIST_DEPTH}' -> current: '{self.cam_type}'")
+      
+      images = image[:, :-1, :, :] ## take all rgb cams
+      ## take wrist depth //NOTE: only depth cam currently
+      depth = image[:, -1, :, :].unsqueeze(dim=1) # for (B, w, h) -> (B, 1, w, h)
+      rgb_feats: torch.Tensor = self.rgb_enc(images) 
+      depth_feats: torch.Tensor = self.depth_enc(depth)
 
-        return self._feats_to_action(fused_feats), {"opts": self.opts}
-        ## TODO: depending on how this works, we can add other losses (similarity matrtix between rgb wrist and depth wrist?? somehow incorporate?)
-        ## gating? use the fusion conv as a wrighting mevchanism -> `fused_feat = fuser(x) * rgb_feats + (1 - fuser(x)) * depth_feats`, simple attention to what the fuser thinks is important
-        ## multiscale fusion?? -> merge at differnet levels, within the conv? conv -> merge -> conv -> merge etc?
-        ## contrasive learning? compare the wrist_rgb and d as they go down the network
-      case "all_sep":
-        ## TODO: There can be smarter ways to fuse these?? maybe dynamically weight what cam to use, is this for 'all_sep'??
-        raise NotImplementedError(f"[depth_grasp_policy - forward]")
-      case _: 
-        raise ValueError(f"[depth_grasp_policy - forward] config '{self.config}' is unknown!")
+      print(f"{rgb_feats.shape }")
+      print(f"{depth_feats.shape }")
+
+      match self.config:
+        case "depth_feats":
+          ## feats have shape (B, 128, 2, 2)
+          if self.opts["gated_fuse"]:
+            cated = torch.cat([rgb_feats, depth_feats], dim = 1) # (B, 128, 2, 2)
+            gate = self.gate(cated) 
+            fused_feats = gate * rgb_feats + (1 - gate) * depth_feats
+          else:
+            ##  flatten them before concat -> (B, 512)
+            rgb_feats = rgb_feats.view(rgb_feats.shape[0], -1)
+            depth_feats = depth_feats.view(depth_feats.shape[0], -1)
+            cated = torch.cat([rgb_feats, depth_feats], dim = 1) 
+            ## cated: (B, self.feat_size * 2) -> (B, 1024) 
+            fused_feats = self.fuser(cated) # (B, 512)
+
+          return self._feats_to_action(fused_feats), {"opts": self.opts}
+          ## TODO: depending on how this works, we can add other losses (similarity matrtix between rgb wrist and depth wrist?? somehow incorporate?)
+          ## gating? use the fusion conv as a wrighting mevchanism -> `fused_feat = fuser(x) * rgb_feats + (1 - fuser(x)) * depth_feats`, simple attention to what the fuser thinks is important
+          ## multiscale fusion?? -> merge at differnet levels, within the conv? conv -> merge -> conv -> merge etc?
+          ## contrasive learning? compare the wrist_rgb and d as they go down the network
+        case "attn":
+
+
+          rgb_attn, rgb_ret = self.attn_dtor(depth_feats, rgb_feats)
+          depth_attn, depth_ret = self.attn_dtor(rgb_feats, depth_feats)
+
+          print(f"{rgb_attn.shape = }")
+          print(f"{depth_attn.shape = }")
+          
+
+          ##residal fuse
+          rgb_fused = rgb_feats + rgb_attn
+          depth_fused = depth_feats + depth_attn
+
+          print(f"{rgb_fused.shape = }")
+          print(f"{depth_fused.shape = }")
+
+          combined = torch.cat([rgb_fused, depth_fused], dim = 1)
+          print(f"{combined.shape = }")
+          fused = self.fuser(combined)
+          print(f"{fused.shape = }")
+          pooled_feats = self.gl_pool(fused)
+          print(f"{pooled_feats.shape = }")
+
+          return self._feats_to_action(pooled_feats), {
+            "opts": self.opts, 
+            "rgb_attn_weights": rgb_ret["attn_weights"],
+            "depth_attn_weights": depth_ret["attn_weights"]
+          }
+        
+    raise ValueError(f"[depth_grasp_policy - forward] config '{self.config}' is unknown!")
 
   def train_policy(self,
     demos: list[Demo],
