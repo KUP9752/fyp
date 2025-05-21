@@ -175,7 +175,7 @@ agent = Agent(
   env.action_shape[0],
   pol_type, cam_type,
   grasp_thresh = 0.5,
-  config = "attn",
+  config = "depth_ch",
   opts = {
     "gated_fuse": True, 
   }
@@ -217,7 +217,7 @@ demos
 # %%
 ## 5. Train
 training_params = {
-  "epochs": 500,
+  "epochs": 1000,
   "minibatch_size": 10,
   "lr": 1e-3,
   "shuffle_obs_in_demo": False,
@@ -264,8 +264,9 @@ for demo in range(len(demos)):
   while not done:
     obs: Observation
     
-    action, att_weights = agent.act(obs)
-    # print(f"{att_weights = }")
+    action, rets = agent.act(obs)
+    rgb_attn = rets["rgb_attn_weights"]
+    depth_attn = rets["depth_attn_weights"]
 
     action = action.squeeze(0)
     # print(f"{action.shape =}")
@@ -274,7 +275,6 @@ for demo in range(len(demos)):
     obs, reward, done = task_env.step(action)
     gripper = Object.get_object("Panda_gripper")
     target = Object.get_object(target_name)
-
 
     
     
@@ -419,8 +419,13 @@ depth_attn = rets["depth_attn_weights"]
 
 print(f"{rgb_attn.shape = }")
 print(f"{depth_attn.shape = }")
+
   
-plot_attn(rgb_attn, 0, 0)
+final_attn(rgb_attn)
+plt.imshow(obs.wrist_rgb)
+
+final_attn(depth_attn)
+plt.imshow(obs.wrist_depth)
 # plot_attn_bar(rgb_attn, 0, 0, 0, 64)
 
 # action = torch.Tensor([
