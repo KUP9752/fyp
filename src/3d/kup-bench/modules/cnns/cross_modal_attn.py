@@ -10,7 +10,7 @@ class CrossModalAttention(nn.Module):
     ):
       super(CrossModalAttention, self).__init__()
       assert embed_dim % num_heads == 0, f"[cross_modal_attn - (CrossModalAttention)]'embed_dim' must be divisible by 'num_heads'"
-      print(f"{num_heads = }")
+
       self.attn = nn.MultiheadAttention(
         embed_dim=embed_dim,
         num_heads=num_heads,
@@ -24,9 +24,6 @@ class CrossModalAttention(nn.Module):
       q = query_feats.flatten(2).permute(2, 0, 1)
       k = key_feats.flatten(2).permute(2, 0, 1)
       v = k
-      print(f"[CMA] {q.shape = }")
-      print(f"[CMA] {k.shape = }")
-      print(f"[CMA] {v.shape = }")
 
       # Attention
       out, weights = self.attn(
@@ -36,12 +33,7 @@ class CrossModalAttention(nn.Module):
         need_weights = True,
         average_attn_weights = False
       )
-
-
-      print(f"[CMA] {weights.shape = }")
-      
-
       # Reshape back: (B, C, H, W)
       out = out.permute(1, 2, 0).view(B, ch, h, w)
-      print(f"[CMA] {out.shape = }")
+      
       return out, {"attn_weights": weights}

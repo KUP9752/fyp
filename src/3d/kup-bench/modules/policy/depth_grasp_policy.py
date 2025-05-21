@@ -139,9 +139,6 @@ class DepthGraspPolicy(SimpleGraspPolicy):
       rgb_feats: torch.Tensor = self.rgb_enc(images) 
       depth_feats: torch.Tensor = self.depth_enc(depth)
 
-      print(f"{rgb_feats.shape }")
-      print(f"{depth_feats.shape }")
-
       match self.config:
         case "depth_feats":
           ## feats have shape (B, 128, 2, 2)
@@ -163,28 +160,17 @@ class DepthGraspPolicy(SimpleGraspPolicy):
           ## multiscale fusion?? -> merge at differnet levels, within the conv? conv -> merge -> conv -> merge etc?
           ## contrasive learning? compare the wrist_rgb and d as they go down the network
         case "attn":
-
-
           rgb_attn, rgb_ret = self.attn_dtor(depth_feats, rgb_feats)
-          depth_attn, depth_ret = self.attn_dtor(rgb_feats, depth_feats)
+          depth_attn, depth_ret = self.attn_rtod(rgb_feats, depth_feats)
 
-          print(f"{rgb_attn.shape = }")
-          print(f"{depth_attn.shape = }")
-          
-
-          ##residal fuse
+          ##residal fuse ## TODO add a learnable parameter here?
+          #ie depth_fused = α * depth_feats + (1−α) * depth_attn
           rgb_fused = rgb_feats + rgb_attn
           depth_fused = depth_feats + depth_attn
 
-          print(f"{rgb_fused.shape = }")
-          print(f"{depth_fused.shape = }")
-
           combined = torch.cat([rgb_fused, depth_fused], dim = 1)
-          print(f"{combined.shape = }")
           fused = self.fuser(combined)
-          print(f"{fused.shape = }")
           pooled_feats = self.gl_pool(fused)
-          print(f"{pooled_feats.shape = }")
 
           return self._feats_to_action(pooled_feats), {
             "opts": self.opts, 
@@ -253,15 +239,10 @@ class DepthGraspPolicy(SimpleGraspPolicy):
           inputs, labels = inputs.squeeze(), labels.squeeze()
 
         inputs, labels = inputs.to(device), labels.to(device)
-        # print(f"{inputs.shape =}") 
-        # print(f"{labels.shape =}")
         
         optimiser.zero_grad()
-        
-        
         pred_actions, _ = model(inputs)
-        # print(f"{pred_actions.shape = }")
-        
+
         ## [:, x] to preserve the batch shape (batch_size, X)
         pose_loss = mse_loss(pred_actions[:, :-1], labels[:, :-1]) ## only the pose not he gripper action
         grasp_loss = bce_loss(pred_actions[:, -1], labels[:, -1])
@@ -277,8 +258,6 @@ class DepthGraspPolicy(SimpleGraspPolicy):
         loss = (total_pose_loss + lambda_grasp_loss * total_grasp_loss) / len(loader)
 
         self.losses[epoch] = loss
-        # N = len(loader)
-        # print(f"Epoch {epoch}: PoseLoss={total_pose_loss/N:.4f}, GraspLoss={total_grasp_loss/N:.4f}")
       
     print(f"Done Training Policy on {len(demos)} Demos") 
     
