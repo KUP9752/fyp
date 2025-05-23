@@ -84,10 +84,18 @@ class RNNEncoder(nn.Module):
       ## concat on the feature dimension -> (B, T, im + d = 1024)
       feats = torch.cat([im_feats, depth_feats], dim = -1) 
     else: 
-      image = image.view(b * t, -1)
+      image = image.view(b * t, ch, w, h)
+      # print(f"{image.shape}")
+      
       im_feats = self.rgb_conv(image)  ##(B * T, 512) ## flatteened by -1
+      # print(f"{im_feats.shape}")
+
       im_feats = im_feats.view(b, t, -1) ## (B, T, 512)
+      # print(f"{im_feats.shape}")
+
       feats = im_feats
+      # print(f"{feats.shape}")
+
     
     rnn_ret, new_state = self.rnn(feats, hidden_state)
 
