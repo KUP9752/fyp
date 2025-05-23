@@ -175,9 +175,11 @@ agent = Agent(
   env.action_shape[0],
   pol_type, cam_type,
   grasp_thresh = 0.5,
-  config = "depth_ch",
+  config = "attn",
   opts = {
     "gated_fuse": True, 
+    "attn_deep_fuse": True,
+    # "no_feats": True
   }
 )
 # ##resnet agent
@@ -224,7 +226,7 @@ training_params = {
   "shuffle_data": True,
   # "lock_loader_seed": 1,
   # "dataset_to_use": "demo",
-  # "lambda_grasp_loss": 10
+  "lambda_grasp_loss": 1
 }
 
 ingest_num = 10
@@ -243,10 +245,34 @@ agent.save_model(model_path)
 ## interesting l_shoulder only model claps before grabbing
 # load_str = "/all-models/task-Vision_Static-demo-1-cam-l_shoulder--_May11_16-24.pth"
 
-load_str = "models/grasp/very-good-simple-grasp--task-Vision_Random-demo-10-cam-wrist--demo_dataset-10_batch-2000 epochs.pth"
-agent.policy.load_state_dict(torch.load(f"/home/kup/Desktop/code/fyp/src/3d/kup-bench/{load_str}"))
+# load_str = "models/grasp/very-good-simple-grasp--task-Vision_Random-demo-10-cam-wrist--demo_dataset-10_batch-2000 epochs.pth"
+# agent.policy.load_state_dict(torch.load(f"/home/kup/Desktop/code/fyp/src/3d/kup-bench/{load_str}"))
 #%%
 task_env = env.get_task(task,  **task_params)
+#%% 
+def plot_featmap(feat, title_add=""):
+  # Assume rgb_out is a tensor of shape (1, 128, 8, 8)
+  feat_maps = feat.squeeze(0)  # shape: (128, 8, 8)
+
+  # Choose how many feature maps you want to visualize (e.g., first 32)
+  num_maps = 32
+  maps_to_show = feat_maps[:num_maps]
+
+  # Plot in a grid
+  n_cols = 8
+  n_rows = num_maps // n_cols
+
+  plt.figure(figsize=(n_cols * 2, n_rows * 2))
+  for i in range(num_maps):
+      plt.subplot(n_rows, n_cols, i + 1)
+      plt.imshow(maps_to_show[i].detach().cpu().numpy(), cmap='viridis')
+      plt.title(f'Ch {i}')
+      plt.axis('off')
+
+  plt.suptitle(f"First 32 Channels of give feats, {title_add}")
+  plt.tight_layout()
+  plt.show()
+  
 # %% 
 # Auto task Execution
 agent.policy.to("cpu")
@@ -265,8 +291,15 @@ for demo in range(len(demos)):
     obs: Observation
     
     action, rets = agent.act(obs)
-    rgb_attn = rets["rgb_attn_weights"]
-    depth_attn = rets["depth_attn_weights"]
+    rgb_out = rets["rgb_fused"]
+    rgb_unfsuedout = rets["rgb_unfused"]
+    depth_out = rets["depth_fused"]
+
+    # plt.imshow(obs.wrist_depth)
+    # plt.imshow(obs.wrist_rgb)
+    # plot_featmap(rgb_out, "RGB feats (fused w/ attn)")
+    # plot_featmap(rgb_unfsuedout, "RGB feats (not fused)")
+    # plot_featmap(depth_out)
 
     action = action.squeeze(0)
     # print(f"{action.shape =}")
