@@ -81,10 +81,10 @@ class RNNGraspPolicy(nn.Module):
     return torch.cat([pose, grasp], dim = 1) ## (b, 8)
 
   
-  def forward(self, image) -> tuple[torch.Tensor, dict]:
+  def forward(self, image, lengths) -> tuple[torch.Tensor, dict]:
     ## image: (B, T, ch, w, h)
-    feats, new_state = self.feats_encode(image)
-    return self._feats_to_action(feats), {"new_state": new_state}
+    feats, rnn_dict = self.feats_encode(image, lengths)
+    return self._feats_to_action(feats), rnn_dict
   
   ## Passed to DemoDataset's DataLoader, so that the mismatch shaped demos can be padded accordingly
   def _collate_demos(self, batch):

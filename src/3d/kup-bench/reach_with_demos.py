@@ -194,10 +194,12 @@ agent = Agent(
 #     "kernel_size": 3
 #   }
 # )
-# agent = Agent(
-#   env.action_shape[0],
-#   pol_type, cam_type, merge_feats = False
-# )
+agent = Agent(
+  env.action_shape[0],
+  policy_type=PolicyType.RNN_GRASP,
+  cam_type = CamType.WRIST,
+  merge_feats = False
+)
 
 model_name = f"rwd-reach-{num_demos}-demos-{cam_type}-{get_task_name(task)}-{pol_type}--{now()}"
 model_path = f"./all-models/reach-with-demos/{model_name}.pth"
@@ -209,7 +211,7 @@ agent.policy
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
-demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
+demos: list[Demo] = task_env.get_demos(2, live_demos=live_demos)
 # test_demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
 demos
 
