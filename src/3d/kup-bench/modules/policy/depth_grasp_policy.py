@@ -27,7 +27,8 @@ from modules.demo_dataset import DemoDataset
 class DepthGraspPolicy(SimpleGraspPolicy): 
   default_opts = {
     "gated_fuse": True, 
-    "attn_num_heads": 8
+    "attn_num_heads": 8,
+    "attn_deep_fuse": False,
   }
 
   def __init__(self,
@@ -99,19 +100,44 @@ class DepthGraspPolicy(SimpleGraspPolicy):
         self.depth_enc = ConvEncoder(self.num_rgb_cams, 32, 128)
 
         self.embed_size = self.flat_size // 4 ## 512 / 4 = 128
+
         self.attn_dtor = CrossModalAttention(self.embed_size, num_heads = self.opts["attn_num_heads"])
         self.attn_rtod = CrossModalAttention(self.embed_size, num_heads = self.opts["attn_num_heads"])
 
-        self.fuser = nn.Sequential(
-          nn.Conv2d(self.embed_size * 2, self.embed_size * 2, kernel_size=1, bias=False),
-          nn.BatchNorm2d(self.embed_size * 2),
-          nn.ReLU(),
-          nn.Conv2d(self.embed_size * 2, self.flat_size, kernel_size=3, bias=False),
-          nn.BatchNorm2d(self.flat_size),
-          nn.ReLU(),
-        )
+        ## fusing and pooling seems to not have enough capacity to contain all the movement, make this deeper
+        if self.opts["attn_deep_fuse"]:
+          
+          ## thinking of 3 convs so 256 -> 192 -> 128
+          middle_dim = self.embed_size + ((self.embed_size * 2) - self.embed_size) // 2 ## should be 192
 
-        self.gl_pool = nn.AdaptiveAvgPool2d((1, 1)) ## (B, C, 1, 1)
+          ## NOTE: maxpool2d is a cheaper less memory intensive operation, 
+          ## stride=2 means that the  downsampling has learnable parameters attached to it, aiding in feature extractio
+          self.fuser = nn.Sequential(
+            ## initial fusing layer from non deep_fuse
+            nn.Conv2d(self.embed_size * 2, self.embed_size * 2, kernel_size=1, bias=False),
+            nn.BatchNorm2d(self.embed_size * 2),
+            nn.ReLU(),
+            ## (B, 256, 8, 8)
+            nn.Conv2d(self.embed_size * 2, middle_dim, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(middle_dim),
+            nn.ReLU(),
+            ## (B, 192, 4, 4)
+            nn.Conv2d(middle_dim, self.embed_size, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(self.embed_size),
+            nn.ReLU(),
+            ## (B, 128, 2, 2)
+          )
+        else:
+          self.fuser = nn.Sequential(
+            nn.Conv2d(self.embed_size * 2, self.embed_size * 2, kernel_size=1, bias=False),
+            nn.BatchNorm2d(self.embed_size * 2),
+            nn.ReLU(),
+            nn.Conv2d(self.embed_size * 2, self.flat_size, kernel_size=3, bias=False),
+            nn.BatchNorm2d(self.flat_size),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d((1, 1)) ## (B, C, 1, 1)
+          )
+
         # this can then be fed into the MLPs
       case _: 
         raise ValueError(f"[depth_grasp_policy - (DepthGraspPolicy)] config '{config}' is unknown!")
@@ -160,6 +186,7 @@ class DepthGraspPolicy(SimpleGraspPolicy):
           ## multiscale fusion?? -> merge at differnet levels, within the conv? conv -> merge -> conv -> merge etc?
           ## contrasive learning? compare the wrist_rgb and d as they go down the network
         case "attn":
+
           rgb_attn, rgb_ret = self.attn_dtor(depth_feats, rgb_feats)
           depth_attn, depth_ret = self.attn_rtod(rgb_feats, depth_feats)
 
@@ -167,15 +194,21 @@ class DepthGraspPolicy(SimpleGraspPolicy):
           #ie depth_fused = α * depth_feats + (1−α) * depth_attn
           rgb_fused = rgb_feats + rgb_attn
           depth_fused = depth_feats + depth_attn
-
+          
           combined = torch.cat([rgb_fused, depth_fused], dim = 1)
-          fused = self.fuser(combined)
-          pooled_feats = self.gl_pool(fused)
 
-          return self._feats_to_action(pooled_feats), {
+          fused_feats = self.fuser(combined) ## also does pooling
+
+          return self._feats_to_action(fused_feats), {
             "opts": self.opts, 
             "rgb_attn_weights": rgb_ret["attn_weights"],
-            "depth_attn_weights": depth_ret["attn_weights"]
+            "depth_attn_weights": depth_ret["attn_weights"],
+            "rgb_attn_out": rgb_attn,
+            "depth_attn_out": depth_attn,
+            "rgb_fused": rgb_fused,
+            "depth_fused": depth_fused,
+            "rgb_unfused": rgb_feats,
+            "depth_unfused": depth_feats
           }
         
     raise ValueError(f"[depth_grasp_policy - forward] config '{self.config}' is unknown!")
