@@ -153,9 +153,6 @@ class RNNEncoder(nn.Module):
 
     rnn_out, _ = pad_packed_sequence(packed_out, batch_first=True)
 
-    print(f"{h_n.shape = }")
-    print(f"{c_n.shape = }")
-
     # final_enc = h_n[-1]
     # print(f"{final_enc.shape = }")
 

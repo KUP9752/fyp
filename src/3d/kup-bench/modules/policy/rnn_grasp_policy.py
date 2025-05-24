@@ -196,8 +196,6 @@ class RNNGraspPolicy(nn.Module):
         
         pred_actions, _ = model(inputs, lengths)
         B, t, ad = pred_actions.shape
-        print(f"{pred_actions.shape = }")
-
 
         ## [:, x] to preserve the batch shape (batch_size, X)
 
