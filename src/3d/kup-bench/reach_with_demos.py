@@ -153,7 +153,7 @@ task_params = {
 
 smaller_task_params = {
   "scale": 0.5,
-  "wrist_cam_distance": 0.3
+  "wrist_cam_distance": 0.8
 }
 
 task_env = env.get_task(task_class = task, **task_params)
@@ -171,17 +171,20 @@ except RuntimeError:
 ## simple policy
 # agent = Agent(env.action_shape[0], pol_type, cam_type, target_rgb = target_rgb)
 ##depth grasp agent
-agent = Agent(
-  env.action_shape[0],
-  pol_type, cam_type,
-  grasp_thresh = 0.5,
-  config = "attn",
-  opts = {
-    "gated_fuse": True, 
-    "attn_deep_fuse": True,
-    # "no_feats": True
-  }
-)
+wd = CamType.WRIST | CamType.WRIST_DEPTH
+all_cams = CamType.LEFT_SHOULDER | CamType.RIGHT_SHOULDER | CamType.WRIST_DEPTH
+
+# agent = Agent(
+#   env.action_shape[0],
+#   policy_type=PolicyType.DEPTH_GRASP,
+#   cam_type= wd, 
+#   grasp_thresh = 0.5,
+#   config = "attn",
+#     opts = {
+#     "attn_deep_fuse": True,
+#   }
+# )
+
 # ##resnet agent
 # agent = Agent(
 #   env.action_shape[0],
@@ -197,21 +200,25 @@ agent = Agent(
 agent = Agent(
   env.action_shape[0],
   policy_type=PolicyType.RNN_GRASP,
-  cam_type = CamType.WRIST,
+  cam_type = wd,
   merge_feats = False
 )
 
-model_name = f"rwd-reach-{num_demos}-demos-{cam_type}-{get_task_name(task)}-{pol_type}--{now()}"
+
+model_name = f"rwd-{get_task_name(task)}-{agent}--{now()}"
 model_path = f"./all-models/reach-with-demos/{model_name}.pth"
 print(model_name)
 agent.policy
 # %%
+task_env = env.get_task(task_class = task, **task_params)
+task_env.reset()
+#%%
 ## 4. Request Demos
 # demos = []
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
-demos: list[Demo] = task_env.get_demos(2, live_demos=live_demos)
+demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
 # test_demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
 demos
 
@@ -293,9 +300,9 @@ for demo in range(len(demos)):
     obs: Observation
     
     action, rets = agent.act(obs)
-    rgb_out = rets["rgb_fused"]
-    rgb_unfsuedout = rets["rgb_unfused"]
-    depth_out = rets["depth_fused"]
+    # rgb_out = rets["rgb_fused"]
+    # rgb_unfsuedout = rets["rgb_unfused"]
+    # depth_out = rets["depth_fused"]
 
     # plt.imshow(obs.wrist_depth)
     # plt.imshow(obs.wrist_rgb)

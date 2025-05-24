@@ -2,6 +2,7 @@ from typing import Literal, Optional
 
 import torch
 import torch.nn as nn
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from torch.nn.utils.rnn import pack_padded_sequence
 from lib.cam_type import CamType
 from modules.cnns.cnn_encoder import CNNEncoder
@@ -148,15 +149,18 @@ class RNNEncoder(nn.Module):
       feats, lengths.cpu(), batch_first=True, enforce_sorted=False
     )
 
-    rnn_ret, (h_n, c_n) = self.rnn(packed_in, hidden_state)
-    # print(f"{h_n.shape = }")
-    # print(f"{c_n.shape = }")
+    packed_out, (h_n, c_n) = self.rnn(packed_in, hidden_state)
 
-    final_enc = h_n[-1]
+    rnn_out, _ = pad_packed_sequence(packed_out, batch_first=True)
+
+    print(f"{h_n.shape = }")
+    print(f"{c_n.shape = }")
+
+    # final_enc = h_n[-1]
     # print(f"{final_enc.shape = }")
 
-    return final_enc, {
-      "rnn_ret": rnn_ret, ## NOTE: this will need pad_packed_sequence to unpack, if per frame information is needed
+    return rnn_out, {
+      "rnn_ret": rnn_out, ## might be useful to have down the line 
       "h_n": h_n,
       "h_c": c_n
     } ## returns the final last time step of rnn

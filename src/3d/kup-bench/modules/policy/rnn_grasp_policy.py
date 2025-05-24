@@ -90,11 +90,19 @@ class RNNGraspPolicy(nn.Module):
 
     ## this means inference, training will provide lengths
     if lengths is None:
-      feats, rnn_dict = self.feats_encode.inference_forward(image, hidden_state=hidden_state)
-    else:
-      feats, rnn_dict = self.feats_encode(image, lengths)
-      
-    return self._feats_to_action(feats), rnn_dict
+      feats, infer_dict = self.feats_encode.inference_forward(image, hidden_state=hidden_state)
+      return self._feats_to_action(feats), infer_dict
+    
+    B, t, _, _, _ = image.shape
+
+    ## NOTE: now gives the entire sequence
+    rnn_out, rnn_dict = self.feats_encode(image, lengths)
+    
+    flat = rnn_out.reshape(B * t, -1)
+    preds = self._feats_to_action(flat)
+    preds = preds.view(B, t, -1)
+    
+    return preds, rnn_dict
   
   ## Passed to DemoDataset's DataLoader, so that the mismatch shaped demos can be padded accordingly
   def _collate_demos(self, batch):
@@ -187,20 +195,35 @@ class RNNGraspPolicy(nn.Module):
         
         
         pred_actions, _ = model(inputs, lengths)
-        # print(f"{pred_actions.shape = }")
-        # print(f"{_['new_state'] = }")
-        
-        # print(f"{pred_actions.shape = }")
-        
+        B, t, ad = pred_actions.shape
+        print(f"{pred_actions.shape = }")
+
+
         ## [:, x] to preserve the batch shape (batch_size, X)
-        idx = lengths - 1 ## index of the last real timeestep of each demo
-        # print(f"{idx.shape = }")
-        true_label = labels[torch.arange(inputs.size(0)), idx] ## take batch_num of (from seq) (B, action_size)
-        # print(f"{true_label.shape = }")
-        
-        ##TODO: THis now trains, however is this the right way to do this?? should I be checking that actino and adding to loss at every step?
-        pose_loss = mse_loss(pred_actions[:, :-1], true_label[:, :-1]) ## only the pose not he gripper action
-        grasp_loss = bce_loss(pred_actions[:, -1], true_label[:, -1])
+
+        mask = torch.arange(t)[None, :].to(device) < lengths[:, None]
+        ## compare each time index to eaech seq's length
+        # mask[b, t] = True if t < lengths[b] otherwise False
+
+        pred_pose = pred_actions[:, :-1]   # (B, T, ...)
+        true_pose = labels[:, :-1]
+
+        pred_grasp = pred_actions[:,  -1]  # (B, T) 
+        true_grasp = labels[:, -1]
+
+        pose_err = mse_loss(pred_pose, true_pose)       
+        grasp_err = bce_loss(pred_grasp, true_grasp)  
+
+        ## sum over pose dims
+        pose_err = pose_err.sum(dim = -1) ## (B, t)
+        pose_err  = pose_err * mask.float()
+        grasp_err = grasp_err * mask.float()
+
+        ## average over valid frames
+        num_valid = mask.sum()
+        pose_loss = pose_err.sum() / num_valid
+        grasp_loss = grasp_err.sum() / num_valid
+
         
         loss = pose_loss + lambda_grasp_loss * grasp_loss
         
