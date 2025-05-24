@@ -80,10 +80,20 @@ class RNNGraspPolicy(nn.Module):
 
     return torch.cat([pose, grasp], dim = 1) ## (b, 8)
 
-  
-  def forward(self, image, lengths) -> tuple[torch.Tensor, dict]:
+
+  def forward(self, 
+    image, 
+    lengths: Optional[torch.Tensor] = None,
+    hidden_state: Optional[tuple] = None
+  ) -> tuple[torch.Tensor, dict]:
     ## image: (B, T, ch, w, h)
-    feats, rnn_dict = self.feats_encode(image, lengths)
+
+    ## this means inference, training will provide lengths
+    if lengths is None:
+      feats, rnn_dict = self.feats_encode.inference_forward(image, hidden_state=hidden_state)
+    else:
+      feats, rnn_dict = self.feats_encode(image, lengths)
+      
     return self._feats_to_action(feats), rnn_dict
   
   ## Passed to DemoDataset's DataLoader, so that the mismatch shaped demos can be padded accordingly
@@ -176,7 +186,7 @@ class RNNGraspPolicy(nn.Module):
         optimiser.zero_grad()
         
         
-        pred_actions, _ = model(inputs)
+        pred_actions, _ = model(inputs, lengths)
         # print(f"{pred_actions.shape = }")
         # print(f"{_['new_state'] = }")
         

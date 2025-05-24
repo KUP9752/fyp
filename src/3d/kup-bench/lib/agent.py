@@ -47,11 +47,13 @@ class Agent(object):
         case PolicyType.RNN_GRASP:
           self.policy = RNNGraspPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
           self.tensor_agg = self._catter
+          self.prev_state = None
         case PolicyType.CAM_ATTENTION:
           self.policy = CamAttentionPolicy(action_shape, cam_type, **policy_args) ## NOTE: other varaible settings here
           self.tensor_agg = self._stacker
         case _: 
           raise ValueError(f"[agent - Agent] cannot find policy type {policy_type}")
+        
     def __str__(self) -> str:
       return f"agent-policy:{self.policy_type}-cams:{self.cam_type}-policy:{self.policy}"
 
@@ -76,12 +78,28 @@ class Agent(object):
     def _stacker(self, ts: list[torch.Tensor]) -> torch.Tensor:
       return torch.stack(ts, dim = 0)
     
+    def reset_episode(self):
+      ## No other reason to reset state currently
+      if self.policy_type == PolicyType.RNN_GRASP:
+        self.prev_state = None
+
+    def _act_rnn(self, obs_tensor: torch.Tensor) -> tuple[torch.Tensor, dict]:
+      assert self.policy_type == PolicyType.RNN_GRASP, f"[agent - (act_rnn) sequential act RNN function is called with a policy that is not RNN]"
+
+      with torch.no_grad():
+        action, rets = self.policy(
+          obs_tensor, 
+          hidden_state=self.prev_state,
+          lengths = None ## not passing 'lengths' on purpose to force the inference branch of policy
+        )
+      self.prev_state = (rets["h"], rets["c"])
+
+      return action, rets
+
     ## Inference Call
     def act(self, obs:  Observation) -> tuple[torch.Tensor, dict]: ## possibly returns other things
-      # gripper = [1.0]  # Always open
-      # return np.concatenate([arm, gripper], axis=-1)
       
-      self.policy.eval()
+      ## === Gather the `Obserevation` as tensor data
       images = []
       ## wrist -> ls -> rs -> wd
       for ct in CamType.uniques():
@@ -98,11 +116,15 @@ class Agent(object):
       
       torch_obs = self.tensor_agg(images)
 
-
       torch_obs = torch_obs.unsqueeze(0) ## add a batch dimension (1, ...)
 
+      ## === Model Prediciton
+      self.policy.eval()
+
+      ### this is a sequence model, so delegate to the other act method
+      ## NOTE: add other sequence based models here
       if self.policy_type == PolicyType.RNN_GRASP:
-        torch_obs  = torch_obs.unsqueeze(0) # add the time series dimention
+        return self._act_rnn(torch_obs)
       
       with torch.no_grad():
         pred, rest = self.policy(torch_obs)
