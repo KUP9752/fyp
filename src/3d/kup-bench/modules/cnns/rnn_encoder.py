@@ -17,7 +17,7 @@ class RNNEncoder(nn.Module):
     hidden_size = 256,
     num_layers = 2,
     batch_first = True, ## keep this true the dataloader handles it as batch first so, (B, t, ...)
-    is_bidir = False
+    is_bidir = False ## dont need it to be bidirectional ever i dont think
     # cnn_encoder_opts: dict = {} ## introduce if need to pass more settings
   ):
     super(RNNEncoder, self).__init__()

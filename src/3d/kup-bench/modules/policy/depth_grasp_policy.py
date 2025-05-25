@@ -12,23 +12,19 @@ from tqdm import tqdm as progress
 from lib.cam_type import CamType
 from lib.utils import params_string
 
-from modules.cnns.cnn_encoder import CNNEncoder, ConvEncoder
-from modules.cnns.cross_modal_attn import CrossModalAttention
+from modules.cnns.cnn_encoder import CNNEncoder
+from modules.cnns.cross_attn_feats import CrossAttentionFeatures
 from modules.policy.simple_grasp_policy import SimpleGraspPolicy
-
-
 
 from modules.demo_obs_dataset import DemoObsDataset
 from modules.demo_dataset import DemoDataset
 
 ## Making a separate class/file here for this differnet than `SimpleGrasp` just so it is more convenient to tweak and experiment with
-
-
 class DepthGraspPolicy(SimpleGraspPolicy): 
   default_opts = {
     "gated_fuse": True, 
     "attn_num_heads": 8,
-    "attn_deep_fuse": False,
+    "attn_deep_fuse": True, ## works better
   }
 
   def __init__(self,
@@ -93,50 +89,13 @@ class DepthGraspPolicy(SimpleGraspPolicy):
         if self.opts["attn_num_heads"] is None or not isinstance(self.opts["attn_num_heads"], int):
           raise ValueError(f"[depth_grasp_policy - (DepthGraspPolicy)] 'attn_num_heads' in 'opts' must be an integer")
 
-        self.conv = None
-        self.depth_conv = None
-
-        self.rgb_enc = ConvEncoder(in_channels=self.num_rgb_cams * 3)
-        self.depth_enc = ConvEncoder(in_channels = 1)
-
-        self.embed_size = self.flat_size // 4 ## 512 / 4 = 128
-
-        self.attn_dtor = CrossModalAttention(self.embed_size, num_heads = self.opts["attn_num_heads"])
-        self.attn_rtod = CrossModalAttention(self.embed_size, num_heads = self.opts["attn_num_heads"])
-
-        ## fusing and pooling seems to not have enough capacity to contain all the movement, make this deeper
-        if self.opts["attn_deep_fuse"]:
-          
-          ## thinking of 3 convs so 256 -> 192 -> 128
-          middle_dim = self.embed_size + ((self.embed_size * 2) - self.embed_size) // 2 ## should be 192
-
-          ## NOTE: maxpool2d is a cheaper less memory intensive operation, 
-          ## stride=2 means that the  downsampling has learnable parameters attached to it, aiding in feature extractio
-          self.fuser = nn.Sequential(
-            ## initial fusing layer from non deep_fuse
-            nn.Conv2d(self.embed_size * 2, self.embed_size * 2, kernel_size=1, bias=False),
-            nn.BatchNorm2d(self.embed_size * 2),
-            nn.ReLU(),
-            ## (B, 256, 8, 8)
-            nn.Conv2d(self.embed_size * 2, middle_dim, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(middle_dim),
-            nn.ReLU(),
-            ## (B, 192, 4, 4)
-            nn.Conv2d(middle_dim, self.embed_size, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(self.embed_size),
-            nn.ReLU(),
-            ## (B, 128, 2, 2)
-          )
-        else:
-          self.fuser = nn.Sequential(
-            nn.Conv2d(self.embed_size * 2, self.embed_size * 2, kernel_size=1, bias=False),
-            nn.BatchNorm2d(self.embed_size * 2),
-            nn.ReLU(),
-            nn.Conv2d(self.embed_size * 2, self.flat_size, kernel_size=3, bias=False),
-            nn.BatchNorm2d(self.flat_size),
-            nn.ReLU(),
-            nn.AdaptiveAvgPool2d((1, 1)) ## (B, C, 1, 1)
-          )
+        self.attn_feats = CrossAttentionFeatures(
+          rgb_channels=self.num_rgb_cams * 3,
+          embed_size = self.flat_size // 4,
+          feat_size=self.flat_size,
+          attn_num_heads=self.opts["attn_num_heads"],
+          is_deep_fuse= self.opts["attn_deep_fuse"]
+        )
 
         # this can then be fed into the MLPs
       case _: 
@@ -162,12 +121,11 @@ class DepthGraspPolicy(SimpleGraspPolicy):
       images = image[:, :-1, :, :] ## take all rgb cams
       ## take wrist depth //NOTE: only depth cam currently
       depth = image[:, -1, :, :].unsqueeze(dim=1) # for (B, w, h) -> (B, 1, w, h)
-      
-      rgb_feats: torch.Tensor = self.rgb_enc(images) 
-      depth_feats: torch.Tensor = self.depth_enc(depth)
 
       match self.config:
         case "depth_feats":
+          rgb_feats: torch.Tensor = self.rgb_enc(images) 
+          depth_feats: torch.Tensor = self.depth_enc(depth)
           ## feats have shape (B, 128, 2, 2)
           if self.opts["gated_fuse"]:
             cated = torch.cat([rgb_feats, depth_feats], dim = 1) # (B, 128, 2, 2)
@@ -188,29 +146,9 @@ class DepthGraspPolicy(SimpleGraspPolicy):
           ## contrasive learning? compare the wrist_rgb and d as they go down the network
         case "attn":
 
-          rgb_attn, rgb_ret = self.attn_dtor(depth_feats, rgb_feats)
-          depth_attn, depth_ret = self.attn_rtod(rgb_feats, depth_feats)
+          fused_feats, attn_ret = self.attn_feats(images, depth)
 
-          ##residal fuse ## TODO add a learnable parameter here?
-          #ie depth_fused = α * depth_feats + (1−α) * depth_attn
-          rgb_fused = rgb_feats + rgb_attn
-          depth_fused = depth_feats + depth_attn
-          
-          combined = torch.cat([rgb_fused, depth_fused], dim = 1)
-
-          fused_feats = self.fuser(combined) ## also does pooling
-
-          return self._feats_to_action(fused_feats), {
-            "opts": self.opts, 
-            "rgb_attn_weights": rgb_ret["attn_weights"],
-            "depth_attn_weights": depth_ret["attn_weights"],
-            "rgb_attn_out": rgb_attn,
-            "depth_attn_out": depth_attn,
-            "rgb_fused": rgb_fused,
-            "depth_fused": depth_fused,
-            "rgb_unfused": rgb_feats,
-            "depth_unfused": depth_feats
-          }
+          return self._feats_to_action(fused_feats), attn_ret | { "opts": self.opts }
         
     raise ValueError(f"[depth_grasp_policy - forward] config '{self.config}' is unknown!")
 
