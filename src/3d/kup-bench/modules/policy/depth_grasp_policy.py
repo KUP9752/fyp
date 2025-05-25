@@ -96,8 +96,8 @@ class DepthGraspPolicy(SimpleGraspPolicy):
         self.conv = None
         self.depth_conv = None
 
-        self.rgb_enc = ConvEncoder(self.num_rgb_cams * 3, 32, 128)
-        self.depth_enc = ConvEncoder(self.num_rgb_cams, 32, 128)
+        self.rgb_enc = ConvEncoder(in_channels=self.num_rgb_cams * 3)
+        self.depth_enc = ConvEncoder(in_channels = 1)
 
         self.embed_size = self.flat_size // 4 ## 512 / 4 = 128
 
@@ -162,6 +162,7 @@ class DepthGraspPolicy(SimpleGraspPolicy):
       images = image[:, :-1, :, :] ## take all rgb cams
       ## take wrist depth //NOTE: only depth cam currently
       depth = image[:, -1, :, :].unsqueeze(dim=1) # for (B, w, h) -> (B, 1, w, h)
+      
       rgb_feats: torch.Tensor = self.rgb_enc(images) 
       depth_feats: torch.Tensor = self.depth_enc(depth)
 
