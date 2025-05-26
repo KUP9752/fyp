@@ -4,24 +4,26 @@ import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from torch.nn.utils.rnn import pack_padded_sequence
+
 from lib.cam_type import CamType
 from modules.cnns.cnn_encoder import CNNEncoder
-
-
+from modules.cnns.cross_attn_feats import CrossAttentionFeatures
 class RNNEncoder(nn.Module):
   def __init__(self,
     cam_type: CamType,
-    merge_feats: bool = True, ## merge means explicit merging before lstm, otherwise shove all into lstm
     ## lstm options, pass as a dict when creating
     encoding_size = 512, ## default ouutput of CNNEncoder
     hidden_size = 256,
     num_layers = 2,
     batch_first = True, ## keep this true the dataloader handles it as batch first so, (B, t, ...)
-    is_bidir = False ## dont need it to be bidirectional ever i dont think
+    is_bidir = False, ## dont need it to be bidirectional ever i dont think
+    config: Literal["depth_feats", "attn"] = "depth_feats",
+    attn_opts: dict = {}
     # cnn_encoder_opts: dict = {} ## introduce if need to pass more settings
   ):
     super(RNNEncoder, self).__init__()
-
+    self.config = config
+    
     self.cam_type = cam_type
     num_ch = 0
     if cam_type & CamType.WRIST:
@@ -40,18 +42,35 @@ class RNNEncoder(nn.Module):
 
       ## explicit merging of features before the LSTM
     ## TODO: encoding size can be expanded to be something other than the flat size for the merge_feats branch?
-    if merge_feats:
-      raise NotImplementedError(f"[lstm_encoder (LSTMEncoder)] will do at some point")
-    else: 
-      encoding_size = self.flat_size
+    match self.config:
+      case "depth_feats":
+        encoding_size = self.flat_size
+        assert encoding_size == self.flat_size, f"[rnn_encoder - (RNNEncoder)] encoding_size ({encoding_size}) != flat_size ({self.flat_size})"
+      case "attn":
+        if not (self.cam_type & CamType.WRIST_DEPTH):
+          raise ValueError(f"[rnn_encoder (RNNEncoder)] Policy cam_type does not include '{CamType.WRIST_DEPTH}' -> current: '{self.cam_type}'")
+        
+        ## making this smaller than before
+        encoding_size = encoding_size // 4
+
+        self.attn_feats = CrossAttentionFeatures(
+          rgb_channels=num_ch,
+          embed_size = self.flat_size,
+          feat_size = encoding_size,
+          **attn_opts
+          # attn_num_heads = 8 ## default
+          # is_deep_fuse= True ## also default
+        )
+        print(f"[rnn-encoder] attn opts: {num_ch = }, embed_size = {self.flat_size = }, {encoding_size = }, {attn_opts = }")
+        
+      case _:
+        raise ValueError(f"[rnn_encoder (RNNEncoder)] wrong value for 'config' ({self.config})")
     ## maybe this is unnecessary
     # self.flatten = nn.Sequential(
     #   nn.Flatten(),
     #   nn.Linear(self.flat_size, encoding_size),
     #   nn.ReLU(inplace=False)
     # )
-
-    assert encoding_size == self.flat_size, f"[rnn_encoder - (RNNEncoder)] encoding_size ({encoding_size}) != flat_size ({self.flat_size})"
 
     self.rnn = nn.LSTM(
       input_size = encoding_size, 
@@ -71,26 +90,34 @@ class RNNEncoder(nn.Module):
       # print(f"{rgb.shape = }")
       # print(f"{depth.shape = }")
 
-
       ## TODO: view manipulation here?? conv wants (B, C, W, H)
       rgb = rgb.view(b * t, ch - 1, w, h)
       depth = depth.view(b * t, 1, w, h)
-      # print(f"{rgb.shape = }")
-      # print(f"{depth.shape = }")
-      
-      im_feats = self.rgb_conv(rgb)  ##(B * T, 128, 2, 2)  
-      depth_feats = self.depth_conv(depth)## (B * T, 128, 2, 2)
-      # print(f"{im_feats.shape = }")
-      # print(f"{depth_feats.shape = }")
 
-      ## -1 at the end flattens the vectors
-      im_feats = im_feats.view(b, t, -1) ## (B, T, 512)
-      depth_feats = depth_feats.view(b, t, -1) ## (B, T, 512)
-      ## concat on the feature dimension -> (B, T, im + d = 1024)
-      feats = torch.cat([im_feats, depth_feats], dim = -1) 
-      # print(f"{feats.shape = }")
-      return feats
+      match self.config:
+        case "depth_feats":
+          im_feats = self.rgb_conv(rgb)  ##(B * T, 128, 2, 2)  
+          depth_feats = self.depth_conv(depth)## (B * T, 128, 2, 2)
+
+          ## -1 at the end flattens the vectors
+          im_feats = im_feats.view(b, t, -1) ## (B, T, 512)
+          depth_feats = depth_feats.view(b, t, -1) ## (B, T, 512)
+          ## concat on the feature dimension -> (B, T, im + d = 1024)
+          feats = torch.cat([im_feats, depth_feats], dim = -1) 
+
+          return feats, {}
+        
+        case "attn":
+          feats, ret_dict = self.attn_feats(rgb, depth)
+          print(f"(attn) {feats.shape = }")
+          return feats, ret_dict
+          
+        case _:
+          raise ValueError(f"[rnn_encoder (get_feats)] wrong value for 'config' ({self.config})")
+        
+      
     else: 
+      ## there is not 'attn' branch when there is not depth involved
       image = image.view(b * t, ch, w, h)
       # print(f"{image.shape = }")
       
@@ -100,7 +127,7 @@ class RNNEncoder(nn.Module):
       im_feats = im_feats.view(b, t, -1) ## (B, T, 512)
       # print(f"{im_feats.shape = }")
 
-      return im_feats
+      return im_feats, {}
     
   ## Not needed to separate with `forward()` but feels nicer to know which branch we are taking 3 classes removed from the task
   def inference_forward(self, 
@@ -111,7 +138,7 @@ class RNNEncoder(nn.Module):
     # print(f"{image.shape = }")
     image =  image.unsqueeze(0) ## (1, 1, ..) add seq_len = 1
     # print(f"{image.shape = } (reshaped)")
-    feats = self._get_feats(image) ## (1, ..) size because now its inference
+    feats, _ = self._get_feats(image) ## (1, ..) size because now its inference
     # print(f"{feats.shape = }")
     feats =  feats.view(1, 1, -1) ## (1, 1, ..) add seq_len = 1
     # print(f"{feats.shape = } (reshaped)")
@@ -140,7 +167,7 @@ class RNNEncoder(nn.Module):
     ## we want these of shape: (B, t, c, w, h)
     ## t is the time series that is going to be fed into the lstm, so we want some ordering now from dataset
     # print("[forward()]")
-    feats = self._get_feats(image)    
+    feats, _ = self._get_feats(image)    
     # print(f"{feats.shape = }")
     
 

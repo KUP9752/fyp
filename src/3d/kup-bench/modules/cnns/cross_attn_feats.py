@@ -22,8 +22,8 @@ class CrossAttentionFeatures(nn.Module):
     self.feat_size = feat_size
     self.is_deep_fuse = is_deep_fuse
 
-    self.rgb_enc = ConvEncoder(in_channels=rgb_channels)
-    self.depth_enc = ConvEncoder(in_channels = 1)
+    self.rgb_enc = ConvEncoder(in_channels=rgb_channels, out_channels = embed_size)
+    self.depth_enc = ConvEncoder(in_channels = 1, out_channels = embed_size)
 
     self.attn_dtor = CrossModalAttention(self.embed_size, num_heads = attn_num_heads)
     self.attn_rtod = CrossModalAttention(self.embed_size, num_heads = attn_num_heads)

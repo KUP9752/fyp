@@ -15,11 +15,7 @@ from lib.cam_type import CamType
 from lib.utils import params_string
 
 from modules.cnns.rnn_encoder import RNNEncoder
-from modules.policy.simple_grasp_policy import SimpleGraspPolicy
 
-
-
-from modules.demo_obs_dataset import DemoObsDataset
 from modules.demo_dataset import DemoDataset
 
 ## Making a separate class/file here for this differnet than `SimpleGrasp` just so it is more convenient to tweak and experiment with
@@ -28,26 +24,24 @@ from modules.demo_dataset import DemoDataset
 class RNNGraspPolicy(nn.Module): 
 
   def __str__(self):
-    return f"rnn_grasp_policy-merge_feats:{self.merge_feats}"
+    return f"rnn_grasp_policy-merge_feats:{self.rnn_opts}"
   
   def __repr__(self):
-    return f"RNNGraspPolicy(merge_feats={self.merge_feats})"
+    return f"RNNGraspPolicy(merge_feats={self.rnn_opts})"
   
   def __init__(self,
     action_shape: int, 
     cam_type: CamType,
-    merge_feats: bool = True,
     rnn_opts: Optional[dict] = None
   ):
     super(RNNGraspPolicy, self).__init__() ##if inherining nn.Module
-    
+    self.rnn_opts = rnn_opts
     self.cam_type = cam_type
-    self.merge_feats = merge_feats
 
     if rnn_opts is not None:
-      self.feats_encode = RNNEncoder(self.cam_type, merge_feats, **rnn_opts)
+      self.feats_encode = RNNEncoder(self.cam_type, **rnn_opts)
 
-    self.feats_encode = RNNEncoder(self.cam_type, merge_feats)
+    self.feats_encode = RNNEncoder(self.cam_type)
 
     self.feat_size = self.feats_encode.encoding_size
 
