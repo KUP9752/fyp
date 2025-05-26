@@ -24,10 +24,10 @@ from modules.demo_dataset import DemoDataset
 class RNNGraspPolicy(nn.Module): 
 
   def __str__(self):
-    return f"rnn_grasp_policy-merge_feats:{self.rnn_opts}"
+    return f"rnn_grasp_policy-rnn_opts:{self.rnn_opts}"
   
   def __repr__(self):
-    return f"RNNGraspPolicy(merge_feats={self.rnn_opts})"
+    return f"RNNGraspPolicy(rnn_opts={self.rnn_opts})"
   
   def __init__(self,
     action_shape: int, 
