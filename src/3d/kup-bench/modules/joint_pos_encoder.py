@@ -26,4 +26,4 @@ class JointPosEncoder(nn.Module):
   def forward(self, joint_angles):
     # joint_angles: (B, 7)
 
-    return self.fc(joint_angles)
+    return self.fc(joint_angles), {}
