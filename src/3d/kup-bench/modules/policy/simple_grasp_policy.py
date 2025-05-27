@@ -11,7 +11,7 @@ from rlbench.demo import Demo
 from tqdm import tqdm as progress
 from lib.cam_type import CamType
 
-from modules.cnns.cnn_encoder import CNNEncoder
+from modules.joint_pos_encoder import JointPosEncoder
 from modules.policy.simple_policy import SimplePolicy
 
 
@@ -19,16 +19,36 @@ from modules.dataset.demo_obs_dataset import DemoObsDataset
 from modules.dataset.demo_dataset import DemoDataset
 
 class SimpleGraspPolicy(SimplePolicy):
+  def __str__(self):
+    return f"simple_grasp_policy-grasp_thresh:{self.grasp_thresh}-use_proprio:{self.use_proprio}-proprio_opts:{self.proprio_opts}"
+  
+  def __repr__(self):
+    return f"SimpleGraspPolicy(grasp_thresh={self.grasp_thresh}, use_proprio={self.use_proprio}, proprio_opts={self.proprio_opts})"
+  
   ## override
-  def __init__(self, action_shape: int, cam_type: CamType = CamType.WRIST, grasp_thresh: float = 0.5):
+  def __init__(self, 
+    action_shape: int, 
+    cam_type: CamType = CamType.WRIST,
+    grasp_thresh: float = 0.5,
+    use_proprio: bool = False,
+    proprio_opts: dict = {}
+  ):
     super().__init__(action_shape, cam_type)
     
     self.grasp_thresh = grasp_thresh
-    
+    self.use_proprio = use_proprio
+    self.proprio_opts = proprio_opts
+
     self.fc = None
+
+    if use_proprio:
+      self.jpos_feats = JointPosEncoder(**proprio_opts) if proprio_opts else JointPosEncoder()
+      self.flat_size += self.jpos_feats.output_size
+
     
+    self.flatten = nn.Flatten()
+
     self.action_head = nn.Sequential(
-      nn.Flatten(),
       nn.Linear(self.flat_size, 200),
       nn.ReLU(inplace=False),
       nn.Dropout(0.2),
@@ -41,7 +61,6 @@ class SimpleGraspPolicy(SimplePolicy):
     )
     
     self.grasp_head = nn.Sequential(
-      nn.Flatten(),
       nn.Linear(self.flat_size, 128),
       nn.ReLU(inplace=False),
       nn.Linear(128, 64),
@@ -51,26 +70,46 @@ class SimpleGraspPolicy(SimplePolicy):
     )
   
 
-  def _feats_to_action(self, feats) -> torch.Tensor:
+  def _feats_to_action(self, feats, proprio = None) -> tuple[torch.Tensor, dict]:
+    if proprio is None and self.use_proprio:
+      raise RuntimeError(f"[simple_grasp_policy - (feats_to_action)] Expecting proprio data but none given!")
+    ret_dict = {}
+    print(f"(at input) {feats.shape = }")
+    feats = self.flatten(feats)
+    print(f"(flattenede) {feats.shape = }")
+    if proprio is not None:
+      jfeats = self.jpos_feats(proprio)
+      print(f"{jfeats.shape = }")
+      feats  = torch.cat([feats, jfeats], dim = -1) ## cat on feature dimension
+      ret_dict = {"proprio_feats": jfeats}
+    
     pose = self.action_head(feats)
     grasp = self.grasp_head(feats)
     
     action = torch.cat([pose, grasp], dim = 1) ## get (batch_size, 8)
-    return action
+    return action, ret_dict
   
-  def forward(self, image):
-    feats = self.conv(image)
+  def forward(self, image, proprio = None) -> tuple[torch.Tensor, dict]:
+    if proprio is None and self.use_proprio:
+      raise RuntimeError(f"[simple_grasp_policy - forward] Expecting proprio data but none given!")
     
-    return self._feats_to_action(feats), {}
+    feats = self.conv(image)
+    return self._feats_to_action(feats, proprio)
 
 
   ## this is used whent he "demo" options is selected for dataset, so we can catch the demos randomly but process in batch size
   def _collate_demos(self, batch):
     ## batch: [(tensor, tensor)] for inputs, labels
-    inputs, labels = zip(*batch) #unzip the tuple list
+    inputs, labels, loader_dict = zip(*batch) #unzip the tuple list
+
+    ## NOTE: handle other dict entries as well
+    proprio = None
+    if self.use_proprio:
+      proprio = [d["proprio"] for d in loader_dict]## should always exist, might be empty
+      proprio = torch.cat(proprio, dim=0)
 
     ## concat on the batch axis, preserve order of input to label
-    return torch.cat(inputs, dim=0), torch.cat(labels, dim=0)
+    return torch.cat(inputs, dim=0), torch.cat(labels, dim=0), {"proprio": proprio}
 
 
   ## override
@@ -101,7 +140,7 @@ class SimpleGraspPolicy(SimplePolicy):
       dataset = DemoObsDataset(demos, self.cam_type, shuffle_obs=shuffle_obs_in_demo, get_type="cat")
       loader = DataLoader(dataset, batch_size = minibatch_size, shuffle=shuffle_data)
     elif dataset_to_use == "demo":
-      dataset = DemoDataset(demos, self.cam_type, get_type="cat")
+      dataset = DemoDataset(demos, self.cam_type, get_type="cat", use_proprio=self.use_proprio)
 
       ## NOTE: shuffle_data here shuffles demos but preserver obs order
       if minibatch_size > len(demos):
@@ -148,19 +187,25 @@ class SimpleGraspPolicy(SimplePolicy):
     for epoch in progress(range(epochs)):
       total_pose_loss, total_grasp_loss = 0., 0.
       
-      for inputs, labels in loader:
+      for inputs, labels, loader_dict in loader:
 
         if dataset_to_use == "demo":
           inputs, labels = inputs.squeeze(), labels.squeeze()
 
         inputs, labels = inputs.to(device), labels.to(device)
+
+        proprio_inputs = None
+        if self.use_proprio:
+          proprio_inputs = loader_dict["proprio"].squeeze()
+          proprio_inputs = proprio_inputs.to(device)
+
         # print(f"{inputs.shape =}")
         # print(f"{labels.shape =}")
         
         optimiser.zero_grad()
         
         
-        pred_actions, _ = model(inputs)
+        pred_actions, _ = model(inputs, proprio = proprio_inputs)
         # print(f"{pred_actions.shape = }")
         
         ## [:, x] to preserve the batch shape (batch_size, X)

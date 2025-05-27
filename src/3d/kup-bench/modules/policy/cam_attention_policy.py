@@ -225,7 +225,7 @@ class CamAttentionPolicy(nn.Module):
     self.losses = torch.empty(epochs, dtype=torch.float32, device = device)
     for epoch in progress(range(epochs)):
       running_loss = 0
-      for inputs, labels in loader:
+      for inputs, labels, loader_dict in loader:
         inputs, labels = inputs.to(device), labels.to(device)
         optimiser.zero_grad()
         pred_actions, extras = model(inputs)

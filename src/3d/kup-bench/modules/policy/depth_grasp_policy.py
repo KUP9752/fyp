@@ -15,6 +15,7 @@ from lib.utils import params_string
 from modules.cnns.cnn_encoder import CNNEncoder
 from modules.cnns.cross_attn_feats import CrossAttentionFeatures
 from modules.policy.simple_grasp_policy import SimpleGraspPolicy
+from modules.joint_pos_encoder import JointPosEncoder
 
 from modules.dataset.demo_obs_dataset import DemoObsDataset
 from modules.dataset.demo_dataset import DemoDataset
@@ -25,6 +26,8 @@ class DepthGraspPolicy(SimpleGraspPolicy):
     "gated_fuse": True, 
     "attn_num_heads": 8,
     "attn_deep_fuse": True, ## works better
+    "use_proprio": False, ## adding joint_positions
+    "proprio_opts": {} ## dict of kwargs
   }
 
   def __init__(self,
@@ -35,12 +38,18 @@ class DepthGraspPolicy(SimpleGraspPolicy):
     opts: dict = {} ## set all defaults to none so I don't have to try/catch everytime
     ## "gated_fuse" set to 'True' because it works well
   ):
-    super().__init__(action_shape, cam_type, grasp_thresh)
+    self.opts = self.default_opts | opts
+    super().__init__(
+      action_shape,
+      cam_type,
+      grasp_thresh,
+      use_proprio=self.opts["use_proprio"],
+      proprio_opts=self.opts["proprio_opts"]
+    )
     # super(DepthGraspPolicy, self).__init__() ##if inherining nn.Module
     # self.grasp_thresh = grasp_thresh
     
     ## keeps all defaults that are not overriden in opts
-    self.opts = self.default_opts | opts
 
     match config:
       case "depth_ch":
@@ -101,6 +110,10 @@ class DepthGraspPolicy(SimpleGraspPolicy):
       case _: 
         raise ValueError(f"[depth_grasp_policy - (DepthGraspPolicy)] config '{config}' is unknown!")
     self.config = config
+    
+    ## add proprioception data
+
+
 
   def __str__(self):
     return f"depth_grasp_policy-config:{self.config}-opts:{self.opts}"
@@ -108,7 +121,11 @@ class DepthGraspPolicy(SimpleGraspPolicy):
   def __repr__(self):
     return f"DepthGraspPolicy(config={self.config}, opts={self.opts})"
   
-  def forward(self, image) -> tuple[torch.Tensor, dict]:
+  def forward(self, image, proprio=None) -> tuple[torch.Tensor, dict]:
+    if proprio is None and self.opts["use_proprio"]:
+      raise RuntimeError(f"[depth_grasp_policy - forward] Expecting proprio data but none given!")
+    
+    ret_dict = {}
     ## image: shape = (batch_size, chs, w, h) where chs = 3 * (given cams) + 1 (depth)
     ## so depth is always the final dimension (easier to do it this way for now, might change later)
     if self.config in ["depth_ch"]:
@@ -138,17 +155,17 @@ class DepthGraspPolicy(SimpleGraspPolicy):
             cated = torch.cat([rgb_feats, depth_feats], dim = 1) 
             ## cated: (B, self.feat_size * 2) -> (B, 1024) 
             fused_feats = self.fuser(cated) # (B, 512)
-
-          return self._feats_to_action(fused_feats), {"opts": self.opts}
+            
           ## TODO: depending on how this works, we can add other losses (similarity matrtix between rgb wrist and depth wrist?? somehow incorporate?)
           ## gating? use the fusion conv as a wrighting mevchanism -> `fused_feat = fuser(x) * rgb_feats + (1 - fuser(x)) * depth_feats`, simple attention to what the fuser thinks is important
           ## multiscale fusion?? -> merge at differnet levels, within the conv? conv -> merge -> conv -> merge etc?
           ## contrasive learning? compare the wrist_rgb and d as they go down the network
         case "attn":
+          fused_feats, ret_dict = self.attn_feats(images, depth)
 
-          fused_feats, attn_ret = self.attn_feats(images, depth)
+      action, feats_ret = self._feats_to_action(fused_feats, proprio) # type: ignore - cannot be unbound
+      return action, ret_dict | feats_ret | { "opts": self.opts }
 
-          return self._feats_to_action(fused_feats), attn_ret | { "opts": self.opts }
         
     raise ValueError(f"[depth_grasp_policy - forward] config '{self.config}' is unknown!")
 
@@ -188,12 +205,17 @@ class DepthGraspPolicy(SimpleGraspPolicy):
 
     model = self.to(device)
 
-    dataset = DemoDataset(demos, cam_type=self.cam_type, get_type = "cat")
+    dataset = DemoDataset(demos,
+      cam_type=self.cam_type,
+      get_type = "cat",
+      use_proprio = self.use_proprio
+    )
+
     loader = DataLoader(
       dataset,
       batch_size=minibatch_size,
       shuffle=shuffle_data,
-      collate_fn=self._collate_demos,
+      collate_fn=self._collate_demos, ## uses parents collater, see `simple_grasp_policy._collate_demos`
       generator=torch.manual_seed(lock_loader_seed) if lock_loader_seed else None
     )
     
@@ -206,14 +228,19 @@ class DepthGraspPolicy(SimpleGraspPolicy):
     for epoch in progress(range(epochs)):
       total_pose_loss, total_grasp_loss = 0., 0.
       
-      for inputs, labels in loader:
+      for inputs, labels, loader_dict in loader:
         if dataset_to_use == "demo":
           inputs, labels = inputs.squeeze(), labels.squeeze()
+
+        proprio_inputs = None
+        if self.use_proprio:
+          proprio_inputs = loader_dict["proprio"].squeeze()
+          proprio_inputs = proprio_inputs.to(device)
 
         inputs, labels = inputs.to(device), labels.to(device)
         
         optimiser.zero_grad()
-        pred_actions, _ = model(inputs)
+        pred_actions, _ = model(inputs, proprio = proprio_inputs)
 
         ## [:, x] to preserve the batch shape (batch_size, X)
         pose_loss = mse_loss(pred_actions[:, :-1], labels[:, :-1]) ## only the pose not he gripper action

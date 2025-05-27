@@ -45,8 +45,10 @@ class RNNGraspPolicy(nn.Module):
 
     self.feat_size = self.feats_encode.encoding_size
 
+    ## following the `SimpleGraspPolicy` convention
+    self.flatten = nn.Flatten()
+
     self.action_head = nn.Sequential(
-      nn.Flatten(),
       nn.Linear(self.feat_size, 200),
       nn.ReLU(inplace=False),
       nn.Dropout(0.2),
@@ -59,7 +61,6 @@ class RNNGraspPolicy(nn.Module):
     )
 
     self.grasp_head = nn.Sequential(
-      nn.Flatten(),
       nn.Linear(self.feat_size, 128),
       nn.ReLU(inplace=False),
       nn.Linear(128, 64),
@@ -69,6 +70,8 @@ class RNNGraspPolicy(nn.Module):
 
 
   def _feats_to_action(self, feats) -> torch.Tensor:
+    feats = self.flatten(feats)
+
     pose = self.action_head(feats)
     grasp = self.grasp_head(feats)
 
@@ -102,7 +105,7 @@ class RNNGraspPolicy(nn.Module):
   def _collate_demos(self, batch):
     ## batch contains [(input, labels)] where each input is a complete demo (in terms of the data in sequence rgb for example)
     ## input: (t, ch, w, h) 
-    inputs, labels = zip(*batch)
+    inputs, labels, loader_dict = zip(*batch)
 
     ## enforcing types for later
     inputs: torch.Tensor
@@ -120,7 +123,9 @@ class RNNGraspPolicy(nn.Module):
 
     ## need to return shape (B, t, ch, w, h) for the input and labels
     ## also returning lenths for LSTM use later
-    return inputs_padded, labels_padded, real_lengths ## padded labels are the action at every step
+
+    ## NOTE the loader_dict might need extra handling here, see `simple_grasp_policy._collate_demos`
+    return inputs_padded, labels_padded, real_lengths, None ## padded labels are the action at every step
   
   def train_policy(self,
     demos: list[Demo],
@@ -174,7 +179,7 @@ class RNNGraspPolicy(nn.Module):
     for epoch in progress(range(epochs)):
       total_pose_loss, total_grasp_loss = 0., 0.
       
-      for inputs, labels, lengths in loader:
+      for inputs, labels, lengths, loader_dict in loader:
         # print(f"Now in (train)")
         
         # print(f"{inputs.shape = }")

@@ -76,4 +76,4 @@ class DemoObsDataset(Dataset):
     ## //NOTE: for downstream models/policies I am preserving the order of the selected camtypes
     ## its always WRIST > LEFT_SHOULDER > RIGHT_SHOULDER > ... (if they exist, otherwise miss the early ones)
     
-    return inputs, labels # type: ignore (unbound 'inputs' will raise in `__init__`)
+    return inputs, labels, {} # type: ignore (unbound 'inputs' will raise in `__init__`)

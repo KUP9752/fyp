@@ -142,7 +142,7 @@ pol_type = PolicyType.DEPTH_GRASP
 
 cam_type = CamType.WRIST | CamType.WRIST_DEPTH
 
-task = ReachObs_Random
+task = Vision_Random
 # task = ReachNoObs_Central
 print(env.get_task.__code__.co_filename)
 
@@ -174,16 +174,17 @@ except RuntimeError:
 wd = CamType.WRIST | CamType.WRIST_DEPTH
 all_cams = CamType.LEFT_SHOULDER | CamType.RIGHT_SHOULDER | CamType.WRIST_DEPTH
 
-# agent = Agent(
-#   env.action_shape[0],
-#   policy_type=PolicyType.DEPTH_GRASP,
-#   cam_type= wd, 
-#   grasp_thresh = 0.5,
-#   config = "attn",
-#     opts = {
-#     "attn_deep_fuse": True,
-#   }
-# )
+agent = Agent(
+  env.action_shape[0],
+  policy_type=PolicyType.SIMPLE_GRASP,
+  cam_type= CamType.WRIST, 
+  grasp_thresh = 0.5,
+  use_proprio = True
+  # config = "attn",
+  #   opts = {
+  #   "attn_deep_fuse": True,
+  # }
+)
 
 # agent = Agent(
 #   env.action_shape[0],
@@ -196,14 +197,14 @@ all_cams = CamType.LEFT_SHOULDER | CamType.RIGHT_SHOULDER | CamType.WRIST_DEPTH
 #     "kernel_size": 3
 #   }
 # )
-agent = Agent(
-  env.action_shape[0],
-  policy_type=PolicyType.RNN_GRASP,
-  cam_type = wd,
-  rnn_opts = {
-    "config": "attn"
-  }
-)
+# agent = Agent(
+#   env.action_shape[0],
+#   policy_type=PolicyType.RNN_GRASP,
+#   cam_type = wd,
+#   rnn_opts = {
+#     "config": "attn"
+#   }
+# )
 
 
 model_name = f"rwd-{get_task_name(task)}-{agent}--{now()}"
@@ -219,7 +220,7 @@ task_env.reset()
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
-demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
+demos: list[Demo] = task_env.get_demos(1, live_demos=live_demos)
 # test_demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
 demos
 
@@ -230,12 +231,12 @@ demos
 ## 5. Train
 training_params = {
   "epochs": 400,
-  "minibatch_size": 10,
+  "minibatch_size": 1,
   "lr": 1e-3,
   "shuffle_obs_in_demo": False,
   "shuffle_data": True,
   "lock_loader_seed": 1,
-  # "dataset_to_use": "demo",
+  "dataset_to_use": "demo",
   "lambda_grasp_loss": 1
 }
 
@@ -520,7 +521,7 @@ env.shutdown()
 ## Random Testing Cell
 import torch
 from modules.dataset.demo_dataset import DemoDataset
-from modules.demo_obs_dataset import  DemoObsDataset
+from modules.dataset.demo_obs_dataset import  DemoObsDataset
 from torch.utils.data import DataLoader
 from torch.nn.utils.rnn import pad_sequence
 

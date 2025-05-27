@@ -253,7 +253,7 @@ class ResNetGraspPolicy(nn.Module):
     for epoch in progress(range(epochs)):
       total_pose_loss, total_grasp_loss = 0., 0.
       
-      for inputs, labels in loader:
+      for inputs, labels, loader_dict in loader:
         if dataset_to_use == "demo":
           inputs, labels = inputs.squeeze(), labels.squeeze()
 

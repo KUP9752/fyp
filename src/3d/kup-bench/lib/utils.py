@@ -84,6 +84,13 @@ def pick_obs_from_cam(cam_type: CamType, obs: Observation, normalise_rgb: bool =
       return np.reshape(depth_arr, (w, h, 1)) ## expand the channel dinemsion
     case _:
       raise ValueError(f"[utils - pick_obs_from_cam] Unknown CamType ({cam_type})")
+    
+
+## get the joint angles, normalising to range [-1, 1] if wanted for rotation
+def pick_joint_angles(obs: Observation, normalise: bool = True) -> np.ndarray:
+  jangles = obs.joint_positions
+  return 2 * ndarray_min_max_norm(jangles) - 1 if normalise else jangles
+
 
 def now(format = "_%B%d_%H-%M") -> str:
   return strftime(format)

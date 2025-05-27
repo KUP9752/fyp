@@ -16,14 +16,14 @@ class DemoDataset(Dataset):
       cam_type: CamType, 
       get_type: Literal["cat", "stack"],
       rgb_transform = None,
-      has_joint_angles: bool = False,
+      use_proprio: bool = False,
   ):
     if get_type not in ["cat", "stack"]:
       raise ValueError(f"[demo_dataset - (init)] 'get_type' is assigned an incorrect option: {get_type}")
     
     self.get_type = get_type
     self.rgb_transform = rgb_transform
-    self.has_joint_angles = has_joint_angles
+    self.use_proprio = use_proprio
     self.cam_type = cam_type
     ## store in list of lists
     self.all_demos = []
@@ -68,7 +68,7 @@ class DemoDataset(Dataset):
       sequence.append(images)
 
       ## === extract the joint angles from the observation
-      if self.has_joint_angles:
+      if self.use_proprio:
         seq_jangles.append(
           torch.tensor(
             pick_joint_angles(obs, normalise = True), 
@@ -99,5 +99,9 @@ class DemoDataset(Dataset):
     inputs = torch.stack(batch, dim = 0)
     labels = torch.stack(seq_labels, dim = 0)
 
-    return inputs, labels
+    proprio = None
+    if self.use_proprio:
+      proprio =torch.stack(seq_jangles, dim = 0)
+
+    return inputs, labels, {"proprio": proprio}
   
