@@ -13,7 +13,7 @@ from rlbench.demo import Demo
 from tqdm import tqdm as progress
 from lib.cam_type import CamType
 
-from modules.demo_obs_dataset import DemoObsDataset
+from modules.dataset.demo_obs_dataset import DemoObsDataset
 from modules.cnns.multi_cam_cnn import MultiCamCnn
 from modules.cnns.cnn_encoder import CNNEncoder
 

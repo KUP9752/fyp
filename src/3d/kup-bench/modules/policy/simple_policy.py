@@ -12,7 +12,7 @@ from tqdm import tqdm as progress
 from lib.cam_type import CamType
 
 
-from modules.demo_obs_dataset import DemoObsDataset
+from modules.dataset.demo_obs_dataset import DemoObsDataset
 
 ## This is made for image sizes of 64x64 and now multi cam setups
 class SimplePolicy(nn.Module):

@@ -16,7 +16,7 @@ from lib.utils import params_string
 
 from modules.cnns.rnn_encoder import RNNEncoder
 
-from modules.demo_dataset import DemoDataset
+from modules.dataset.demo_dataset import DemoDataset
 
 ## Making a separate class/file here for this differnet than `SimpleGrasp` just so it is more convenient to tweak and experiment with
 

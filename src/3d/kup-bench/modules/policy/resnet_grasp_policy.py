@@ -17,8 +17,8 @@ from modules.policy.simple_grasp_policy import SimpleGraspPolicy
 
 from torchvision.models.resnet import Bottleneck, BasicBlock
 
-from modules.demo_obs_dataset import DemoObsDataset
-from modules.demo_dataset import DemoDataset
+from modules.dataset.demo_obs_dataset import DemoObsDataset
+from modules.dataset.demo_dataset import DemoDataset
 
 ## Making a separate class/file here for this differnet than `SimpleGrasp` just so it is more convenient to tweak and experiment with
 

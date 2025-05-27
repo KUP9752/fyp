@@ -42,6 +42,8 @@ class DemoObsDataset(Dataset):
 
   def __getitem__(self, idx):
     obs = self.all_data[idx]
+    # print(f"[data_obs_dataset - (getitem)] index selevted: {idx}")
+    
     ## NOTE: Hard coded only using 3 cameras currently
     images = []
     ## TODO: add some transformations and other augmentations to make generalisation better?

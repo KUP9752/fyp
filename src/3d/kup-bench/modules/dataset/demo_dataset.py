@@ -5,23 +5,25 @@ import numpy as np
 
 import torch
 from rlbench.demo import Demo
+from rlbench.backend.observation import Observation
 from lib.cam_type import CamType
 
-from lib.utils import pick_obs_from_cam
+from lib.utils import pick_obs_from_cam, pick_joint_angles
 
 class DemoDataset(Dataset):
   def __init__(self, 
       demos: list[Demo], 
       cam_type: CamType, 
       get_type: Literal["cat", "stack"],
-      rgb_transform = None
+      rgb_transform = None,
+      has_joint_angles: bool = False,
   ):
     if get_type not in ["cat", "stack"]:
       raise ValueError(f"[demo_dataset - (init)] 'get_type' is assigned an incorrect option: {get_type}")
     
     self.get_type = get_type
     self.rgb_transform = rgb_transform
-    
+    self.has_joint_angles = has_joint_angles
     self.cam_type = cam_type
     ## store in list of lists
     self.all_demos = []
@@ -38,11 +40,16 @@ class DemoDataset(Dataset):
     obss = self.all_demos[idx]
     ## this now handles batching: (demo_len, ... )
 
+    # print(f"[demo_dataset (getitem)] index selected is {idx}")
+    # print()
+    
+
     # demo_len = len(obss)
     sequence = []
+    seq_jangles = []
     seq_labels = []
     for obs in obss:
-
+      obs: Observation
       ## === extract the image from obs
       images = [
         torch.permute(
@@ -57,8 +64,17 @@ class DemoDataset(Dataset):
 
       if self.rgb_transform:
         images = map(self.rgb_transform, images)
-      
+
       sequence.append(images)
+
+      ## === extract the joint angles from the observation
+      if self.has_joint_angles:
+        seq_jangles.append(
+          torch.tensor(
+            pick_joint_angles(obs, normalise = True), 
+            dtype=torch.float32
+          )
+        )
 
       ## === extract the label from obs
       seq_labels.append(
@@ -84,3 +100,4 @@ class DemoDataset(Dataset):
     labels = torch.stack(seq_labels, dim = 0)
 
     return inputs, labels
+  

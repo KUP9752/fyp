@@ -142,7 +142,7 @@ pol_type = PolicyType.DEPTH_GRASP
 
 cam_type = CamType.WRIST | CamType.WRIST_DEPTH
 
-task = Vision_Random
+task = ReachObs_Random
 # task = ReachNoObs_Central
 print(env.get_task.__code__.co_filename)
 
@@ -156,8 +156,8 @@ smaller_task_params = {
   "wrist_cam_distance": 0.8
 }
 
-task_env = env.get_task(task_class = task, **task_params)
-# task_env = env.get_task(task_class = task)
+# task_env = env.get_task(task_class = task, **task_params)
+task_env = env.get_task(task_class = task)
 target_name = "grasp_cube"
 
 
@@ -185,7 +185,6 @@ all_cams = CamType.LEFT_SHOULDER | CamType.RIGHT_SHOULDER | CamType.WRIST_DEPTH
 #   }
 # )
 
-# ##resnet agent
 # agent = Agent(
 #   env.action_shape[0],
 #   pol_type, cam_type,
@@ -201,7 +200,9 @@ agent = Agent(
   env.action_shape[0],
   policy_type=PolicyType.RNN_GRASP,
   cam_type = wd,
-  merge_feats = False
+  rnn_opts = {
+    "config": "attn"
+  }
 )
 
 
@@ -228,12 +229,12 @@ demos
 # %%
 ## 5. Train
 training_params = {
-  "epochs": 1000,
+  "epochs": 400,
   "minibatch_size": 10,
   "lr": 1e-3,
   "shuffle_obs_in_demo": False,
   "shuffle_data": True,
-  # "lock_loader_seed": 1,
+  "lock_loader_seed": 1,
   # "dataset_to_use": "demo",
   "lambda_grasp_loss": 1
 }
@@ -316,7 +317,7 @@ for demo in range(len(demos)):
     # print(f"{action.shape = }")
     obs, reward, done = task_env.step(action)
     gripper = Object.get_object("Panda_gripper")
-    target = Object.get_object(target_name)
+    target = Object.get_object("target")
 
     
     
@@ -338,7 +339,7 @@ for demo in range(len(demos)):
   print(f"Done Successfull! done in {count} steps" if done else "Failed!")
   print(f"Final distance: {distances[-1]}")
 
-  # print(f"Success = {dones}/{len(test_demos)}")
+print(f"Success = {dones}/{len(demos)}")
   
 
 # %% Reset Task Env
@@ -448,26 +449,28 @@ def plot_attn_bar(attn_weights, sample, token_id, head, grid_size):
   plt.title(f'Where token {token_id} attends (Head {head})')
   plt.colorbar()
 # %% 
-agent.policy.attn_dtor.attn.num_heads
+agent.policy
 #%%
 # Single Step
 obs: Observation
 action, rets = agent.act(obs)
 action = action.squeeze(0)
+print(f"{obs.joint_positions}")
+print(f"{obs.gripper_pose}")
+print(f"{obs.joint_positions.shape = }")
 
+# rgb_attn = rets["rgb_attn_weights"]
+# depth_attn = rets["depth_attn_weights"]
 
-rgb_attn = rets["rgb_attn_weights"]
-depth_attn = rets["depth_attn_weights"]
-
-print(f"{rgb_attn.shape = }")
-print(f"{depth_attn.shape = }")
+# print(f"{rgb_attn.shape = }")
+# print(f"{depth_attn.shape = }")
 
   
-final_attn(rgb_attn)
-plt.imshow(obs.wrist_rgb)
+# final_attn(rgb_attn)
+# plt.imshow(obs.wrist_rgb)
 
-final_attn(depth_attn)
-plt.imshow(obs.wrist_depth)
+# final_attn(depth_attn)
+# plt.imshow(obs.wrist_depth)
 # plot_attn_bar(rgb_attn, 0, 0, 0, 64)
 
 # action = torch.Tensor([
@@ -486,7 +489,7 @@ print(f"{action.shape = }")
 # run_segmenter()
 obs, reward, done = task_env.step(action)
 gripper = Object.get_object("Panda_gripper")
-target = Object.get_object(target_name)
+target = Object.get_object("target")
 
   
 
@@ -516,7 +519,7 @@ env.shutdown()
 # %%
 ## Random Testing Cell
 import torch
-from modules.demo_dataset import DemoDataset
+from modules.dataset.demo_dataset import DemoDataset
 from modules.demo_obs_dataset import  DemoObsDataset
 from torch.utils.data import DataLoader
 from torch.nn.utils.rnn import pad_sequence

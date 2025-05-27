@@ -12,7 +12,7 @@ from rlbench.backend.observation import Observation
 from tqdm import tqdm as progress
 from lib.cam_type import CamType
 
-from modules.demo_obs_dataset import DemoObsDataset
+from modules.dataset.demo_obs_dataset import DemoObsDataset
 
 class ReasoningPlanningPolicy(nn.Module):
   def __init__(self, 

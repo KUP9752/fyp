@@ -15,8 +15,8 @@ from modules.cnns.cnn_encoder import CNNEncoder
 from modules.policy.simple_policy import SimplePolicy
 
 
-from modules.demo_obs_dataset import DemoObsDataset
-from modules.demo_dataset import DemoDataset
+from modules.dataset.demo_obs_dataset import DemoObsDataset
+from modules.dataset.demo_dataset import DemoDataset
 
 class SimpleGraspPolicy(SimplePolicy):
   ## override
