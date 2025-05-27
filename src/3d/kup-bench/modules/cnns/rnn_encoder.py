@@ -8,6 +8,7 @@ from torch.nn.utils.rnn import pack_padded_sequence
 from lib.cam_type import CamType
 from modules.cnns.cnn_encoder import CNNEncoder
 from modules.cnns.cross_attn_feats import CrossAttentionFeatures
+from modules.joint_pos_encoder import JointPosEncoder
 class RNNEncoder(nn.Module):
   def __init__(self,
     cam_type: CamType,
@@ -18,11 +19,14 @@ class RNNEncoder(nn.Module):
     batch_first = True, ## keep this true the dataloader handles it as batch first so, (B, t, ...)
     is_bidir = False, ## dont need it to be bidirectional ever i dont think
     config: Literal["depth_feats", "attn"] = "depth_feats",
-    attn_opts: dict = {}
+    attn_opts: dict = {},
+    use_proprio: bool = False,
+    proprio_opts: dict = {}
     # cnn_encoder_opts: dict = {} ## introduce if need to pass more settings
   ):
     super(RNNEncoder, self).__init__()
     self.config = config
+    self.use_proprio = use_proprio
     
     self.cam_type = cam_type
     num_ch = 0
@@ -40,8 +44,6 @@ class RNNEncoder(nn.Module):
       self.depth_conv= CNNEncoder(in_channels=1)
       self.flat_size *= 2 ## doubule double the flat size
 
-      ## explicit merging of features before the LSTM
-    ## TODO: encoding size can be expanded to be something other than the flat size for the merge_feats branch?
     match self.config:
       case "depth_feats":
         encoding_size = self.flat_size
@@ -51,11 +53,11 @@ class RNNEncoder(nn.Module):
           raise ValueError(f"[rnn_encoder (RNNEncoder)] Policy cam_type does not include '{CamType.WRIST_DEPTH}' -> current: '{self.cam_type}'")
         
         ## making this smaller than before
-        encoding_size = encoding_size // 4
+        encoding_size = encoding_size // 2  ## 256
 
         self.attn_feats = CrossAttentionFeatures(
           rgb_channels=num_ch,
-          embed_size = self.flat_size,
+          embed_size = 512,
           feat_size = encoding_size,
           **attn_opts
           # attn_num_heads = 8 ## default
@@ -65,12 +67,10 @@ class RNNEncoder(nn.Module):
         
       case _:
         raise ValueError(f"[rnn_encoder (RNNEncoder)] wrong value for 'config' ({self.config})")
-    ## maybe this is unnecessary
-    # self.flatten = nn.Sequential(
-    #   nn.Flatten(),
-    #   nn.Linear(self.flat_size, encoding_size),
-    #   nn.ReLU(inplace=False)
-    # )
+    
+    if self.use_proprio:
+      self.jpos_feats = JointPosEncoder(**proprio_opts) if proprio_opts else JointPosEncoder()
+      encoding_size += self.jpos_feats.output_size
 
     self.rnn = nn.LSTM(
       input_size = encoding_size, 
@@ -81,16 +81,15 @@ class RNNEncoder(nn.Module):
     )
     self.encoding_size = hidden_size
 
-  def _get_feats(self, image):
+
+  ## processes the convs and gives out a flattened version of the vector
+  def _get_image_feats(self, image: torch.Tensor) -> tuple[torch.Tensor, dict]: ## (B, t, out_size)
     b, t, ch, w, h = image.shape
 
     if self.cam_type & CamType.WRIST_DEPTH:
       rgb = image[:, :, :-1, :, :] ## take all rgb cams
       depth = image[:, :, -1, :, :].unsqueeze(dim=1) # for (B, w, h) -> (B, 1, w, h)
-      # print(f"{rgb.shape = }")
-      # print(f"{depth.shape = }")
 
-      ## TODO: view manipulation here?? conv wants (B, C, W, H)
       rgb = rgb.view(b * t, ch - 1, w, h)
       depth = depth.view(b * t, 1, w, h)
 
@@ -109,68 +108,72 @@ class RNNEncoder(nn.Module):
         
         case "attn":
           feats, ret_dict = self.attn_feats(rgb, depth)
-          print(f"(attn) {feats.shape = }")
+          feats = feats.view(b, t, -1) ## flatten
+          
           return feats, ret_dict
           
         case _:
           raise ValueError(f"[rnn_encoder (get_feats)] wrong value for 'config' ({self.config})")
-        
-      
     else: 
-      ## there is not 'attn' branch when there is not depth involved
+      ## there is no 'attn' branch when there is no depth involved
       image = image.view(b * t, ch, w, h)
-      # print(f"{image.shape = }")
-      
       im_feats = self.rgb_conv(image)  ##(B * T, 512) ## flatteened by -1
-      # print(f"{im_feats.shape = }")
 
       im_feats = im_feats.view(b, t, -1) ## (B, T, 512)
-      # print(f"{im_feats.shape = }")
-
       return im_feats, {}
     
   ## Not needed to separate with `forward()` but feels nicer to know which branch we are taking 3 classes removed from the task
   def inference_forward(self, 
-    image, 
-    hidden_state: Optional[tuple[torch.Tensor, torch.Tensor]] = None
+    image: torch.Tensor, 
+    hidden_state: Optional[tuple[torch.Tensor, torch.Tensor]] = None,
+    proprio: Optional[torch.Tensor]= None,
   ):
-    # print("[inference_forward()]")
-    # print(f"{image.shape = }")
-    image =  image.unsqueeze(0) ## (1, 1, ..) add seq_len = 1
-    # print(f"{image.shape = } (reshaped)")
-    feats, _ = self._get_feats(image) ## (1, ..) size because now its inference
-    # print(f"{feats.shape = }")
-    feats =  feats.view(1, 1, -1) ## (1, 1, ..) add seq_len = 1
-    # print(f"{feats.shape = } (reshaped)")
-
+    if proprio is None and self.use_proprio:
+      raise RuntimeError(f"[rnn_encoder - forward] Proprioceptive training selected but data not given!")
     
+    image =  image.unsqueeze(0) ## (1, 1, ..) add seq_len = 1
+    feats, ret_dict = self._get_image_feats(image) ## (1, ..) size because now its inference
+
+    feats =  feats.view(1, 1, -1) ## (1, 1, ..) add seq_len = 1
+
+    if self.use_proprio:
+      assert proprio is not None, f"[rnn_encoder - inference_forward] must have proprio at this point"
+      proprio = proprio.unsqueeze(0) ## as abovee add seq_len (1, 1, ..)
+      jpos_feats, jpos_dict = self.jpos_feats(proprio)
+      
+      feats = torch.cat([feats, jpos_feats], dim = -1)
+      ret_dict |= jpos_dict
 
     rnn_out, (h, c) = self.rnn(feats, hidden_state)
-    # print(f"{h.shape = }")
 
     enc = h[-1]
 
-    # print(f"{enc.shape = }")
-    # print()
-    return enc, {
+    return enc, ret_dict | {
       "rnn_ret": rnn_out,
       "h": h, 
       "c": c
     }
-  
 
-    ## output size is the hidden size, this can later be used to do whatever
-  ## GPT suggesteed hidden_state => tuple? of (h0, c0) : (num_layers, B, hidden)
-  ## NOTE: this might help with next state, or next view prediction??
+  ## output size is the hidden size, this can later be used to do whatever
   ## THIS IS FOR TRAINING WITH ENTIRE KNOWN LENGTHS
-  def forward(self, image, lengths, hidden_state=None): ## image here can contain channels from differnt camears
+  def forward(self,
+    image,
+    lengths,
+    hidden_state: Optional[tuple] = None, ## of tensors (h, c)
+    proprio: Optional[torch.Tensor]= None,
+  ): ## image here can contain channels from differnt camears including depth
+    if proprio is None and self.use_proprio:
+      raise RuntimeError(f"[rnn_encoder - forward] Proprioceptive training selected but data not given!")
     ## we want these of shape: (B, t, c, w, h)
     ## t is the time series that is going to be fed into the lstm, so we want some ordering now from dataset
-    # print("[forward()]")
-    feats, _ = self._get_feats(image)    
-    # print(f"{feats.shape = }")
     
+    feats, ret_dict = self._get_image_feats(image)    
 
+    if self.use_proprio:
+      assert proprio is not None, f"[rnn_encoder - forward] must have proprio at this point"
+      jpos_feats, _ = self.jpos_feats(proprio)
+      
+      feats = torch.cat([feats, jpos_feats], dim = -1)
 
     packed_in = pack_padded_sequence(
       feats, lengths.cpu(), batch_first=True, enforce_sorted=False
@@ -178,12 +181,11 @@ class RNNEncoder(nn.Module):
 
     packed_out, (h_n, c_n) = self.rnn(packed_in, hidden_state)
 
+    
+
     rnn_out, _ = pad_packed_sequence(packed_out, batch_first=True)
 
-    # final_enc = h_n[-1]
-    # print(f"{final_enc.shape = }")
-
-    return rnn_out, {
+    return rnn_out, ret_dict | {
       "rnn_ret": rnn_out, ## might be useful to have down the line 
       "h_n": h_n,
       "h_c": c_n

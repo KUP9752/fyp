@@ -27,24 +27,28 @@ class CrossAttentionFeatures(nn.Module):
 
     self.attn_dtor = CrossModalAttention(self.embed_size, num_heads = attn_num_heads)
     self.attn_rtod = CrossModalAttention(self.embed_size, num_heads = attn_num_heads)
-    
+
     ## TODO: maybe allow more layers here later??
     if self.is_deep_fuse:
-      middle_dim = self.embed_size + ((self.embed_size * 2) - self.embed_size) // 2 ## should be 192
+      middle_dim = (self.embed_size + self.feat_size) // 2
       self.fuser = nn.Sequential(
         ## initial fusing layer from non deep_fuse
-        nn.Conv2d(self.embed_size * 2, self.embed_size * 2, kernel_size=1, bias=False),
-        nn.BatchNorm2d(self.embed_size * 2),
-        nn.ReLU(),
-        ## (B, 256, 8, 8)
-        nn.Conv2d(self.embed_size * 2, middle_dim, kernel_size=3, stride=2, padding=1),
-        nn.BatchNorm2d(middle_dim),
-        nn.ReLU(),
-        ## (B, 192, 4, 4)
-        nn.Conv2d(middle_dim, self.embed_size, kernel_size=3, stride=2, padding=1),
+        # nn.Conv2d(self.embed_size * 2, self.embed_size * 2, kernel_size=1, bias=False),
+        # nn.BatchNorm2d(self.embed_size * 2),
+        # nn.ReLU(),
+        ## (B, 2 * embed, 8, 8)
+        nn.Conv2d(self.embed_size * 2, self.embed_size, kernel_size=3, stride=2, padding=1),
         nn.BatchNorm2d(self.embed_size),
         nn.ReLU(),
-        ## (B, 128, 2, 2)
+        ## (B, embed, 4, 4)
+        nn.Conv2d(self.embed_size, middle_dim, kernel_size=3, stride=2, padding=1),
+        nn.BatchNorm2d(middle_dim),
+        nn.ReLU(),
+        ## (B, feat, 2, 2)
+        nn.Conv2d(middle_dim, self.feat_size, kernel_size=3, stride=2, padding=1),
+        nn.BatchNorm2d(self.feat_size),
+        nn.ReLU(),
+        ## (B, feat, 1, 1)
       )
     else:
       self.fuser = nn.Sequential(
@@ -64,8 +68,8 @@ class CrossAttentionFeatures(nn.Module):
     assert len(rgb.shape) == len(depth.shape) == 4, f"[cross_attn_feats - forward] wrong format of inputs 'rgb.shape: {len(rgb.shape)}' and 'depth.shape: {len(depth.shape)} should be 4"
 
     rgb_feats: torch.Tensor = self.rgb_enc(rgb) 
-    depth_feats: torch.Tensor = self.depth_enc(depth)
-
+    depth_feats: torch.Tensor = self.depth_enc(depth) 
+    
     rgb_attn, rgb_ret = self.attn_dtor(depth_feats, rgb_feats)
     depth_attn, depth_ret = self.attn_rtod(rgb_feats, depth_feats)
 

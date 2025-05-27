@@ -19,8 +19,6 @@ from modules.cnns.rnn_encoder import RNNEncoder
 from modules.dataset.demo_dataset import DemoDataset
 
 ## Making a separate class/file here for this differnet than `SimpleGrasp` just so it is more convenient to tweak and experiment with
-
-
 class RNNGraspPolicy(nn.Module): 
 
   def __str__(self):
@@ -32,21 +30,20 @@ class RNNGraspPolicy(nn.Module):
   def __init__(self,
     action_shape: int, 
     cam_type: CamType,
-    rnn_opts: Optional[dict] = None
+    rnn_opts: Optional[dict] = None,
   ):
     super(RNNGraspPolicy, self).__init__() ##if inherining nn.Module
     self.rnn_opts = rnn_opts
     self.cam_type = cam_type
+    self.use_proprio = self.rnn_opts["use_proprio"] if self.rnn_opts is not None else False
 
-    if rnn_opts is not None:
-      self.feats_encode = RNNEncoder(self.cam_type, **rnn_opts)
+    if self.rnn_opts is not None:
+      self.feats_encode = RNNEncoder(self.cam_type, **self.rnn_opts)
+    else:
+      self.feats_encode = RNNEncoder(self.cam_type)
 
-    self.feats_encode = RNNEncoder(self.cam_type)
 
     self.feat_size = self.feats_encode.encoding_size
-
-    ## following the `SimpleGraspPolicy` convention
-    self.flatten = nn.Flatten()
 
     self.action_head = nn.Sequential(
       nn.Linear(self.feat_size, 200),
@@ -70,8 +67,6 @@ class RNNGraspPolicy(nn.Module):
 
 
   def _feats_to_action(self, feats) -> torch.Tensor:
-    feats = self.flatten(feats)
-
     pose = self.action_head(feats)
     grasp = self.grasp_head(feats)
 
@@ -81,19 +76,20 @@ class RNNGraspPolicy(nn.Module):
   def forward(self, 
     image, 
     lengths: Optional[torch.Tensor] = None,
-    hidden_state: Optional[tuple] = None
+    hidden_state: Optional[tuple] = None,
+    proprio: Optional[torch.Tensor] = None
   ) -> tuple[torch.Tensor, dict]:
     ## image: (B, T, ch, w, h)
 
     ## this means inference, training will provide lengths
     if lengths is None:
-      feats, infer_dict = self.feats_encode.inference_forward(image, hidden_state=hidden_state)
+      feats, infer_dict = self.feats_encode.inference_forward(image, hidden_state=hidden_state, proprio=proprio)
       return self._feats_to_action(feats), infer_dict
     
     B, t, _, _, _ = image.shape
 
     ## NOTE: now gives the entire sequence
-    rnn_out, rnn_dict = self.feats_encode(image, lengths)
+    rnn_out, rnn_dict = self.feats_encode(image, lengths, proprio=proprio)
     
     flat = rnn_out.reshape(B * t, -1)
     preds = self._feats_to_action(flat)
@@ -112,20 +108,20 @@ class RNNGraspPolicy(nn.Module):
     labels: torch.Tensor
 
     real_lengths = torch.LongTensor([inp.shape[0] for inp in inputs])
-    # print(f"[rnn_grasp_policy - _collate_demos] {real_lengths.shape =}")
-    
     inputs_padded = pad_sequence(inputs, batch_first=True) ## CHECK: if it gives (B, t, ch, w, h)
-    # print(f"[rnn_grasp_policy - _collate_demos] {inputs_padded.shape = }")
-
     labels_padded = pad_sequence(labels, batch_first=True) ## CHECK: if it gives (B, t, ch, w, h)
-    # print(f"[rnn_grasp_policy - _collate_demos] {labels_padded.shape = }")
+
+    ## NOTE: handle other dict entries as well
+    proprio_padded = None
+    if self.use_proprio:
+      proprio = [d["proprio"] for d in loader_dict]## should always exist, might be empty
+      proprio_padded = pad_sequence(proprio, batch_first=True)
 
 
     ## need to return shape (B, t, ch, w, h) for the input and labels
     ## also returning lenths for LSTM use later
 
-    ## NOTE the loader_dict might need extra handling here, see `simple_grasp_policy._collate_demos`
-    return inputs_padded, labels_padded, real_lengths, None ## padded labels are the action at every step
+    return inputs_padded, labels_padded, real_lengths, {"proprio": proprio_padded } ## padded labels are the action at every step
   
   def train_policy(self,
     demos: list[Demo],
@@ -161,7 +157,12 @@ class RNNGraspPolicy(nn.Module):
     shuffle_obs_in_demo = None
 
     model = self.to(device)
-    dataset = DemoDataset(demos, cam_type=self.cam_type, get_type = "cat")
+    dataset = DemoDataset(demos,
+      cam_type=self.cam_type,
+      get_type = "cat",
+      use_proprio=self.use_proprio
+
+    )
     loader = DataLoader(
       dataset,
       batch_size=minibatch_size,
@@ -180,24 +181,20 @@ class RNNGraspPolicy(nn.Module):
       total_pose_loss, total_grasp_loss = 0., 0.
       
       for inputs, labels, lengths, loader_dict in loader:
-        # print(f"Now in (train)")
-        
-        # print(f"{inputs.shape = }")
-        # print(f"{labels.shape = }")
-        # print(f"{lengths.shape = }")
-
         inputs, labels, lengths = inputs.to(device), labels.to(device), lengths.to(device)
-        # print(f"{inputs.shape =}") 
-        # print(f"{labels.shape =}")
-        
+
+        proprio_inputs = None
+        if self.use_proprio:
+          proprio_inputs = loader_dict["proprio"]
+          proprio_inputs = proprio_inputs.to(device)
+          
         optimiser.zero_grad()
         
         
-        pred_actions, _ = model(inputs, lengths)
+        pred_actions, _ = model(inputs, lengths, proprio=proprio_inputs)
         B, t, ad = pred_actions.shape
 
         ## [:, x] to preserve the batch shape (batch_size, X)
-
         mask = torch.arange(t)[None, :].to(device) < lengths[:, None]
         ## compare each time index to eaech seq's length
         # mask[b, t] = True if t < lengths[b] otherwise False
@@ -220,7 +217,6 @@ class RNNGraspPolicy(nn.Module):
         num_valid = mask.sum()
         pose_loss = pose_err.sum() / num_valid
         grasp_loss = grasp_err.sum() / num_valid
-
         
         loss = pose_loss + lambda_grasp_loss * grasp_loss
         
@@ -233,8 +229,6 @@ class RNNGraspPolicy(nn.Module):
         loss = (total_pose_loss + lambda_grasp_loss * total_grasp_loss) / len(loader)
 
         self.losses[epoch] = loss
-        # N = len(loader)
-        # print(f"Epoch {epoch}: PoseLoss={total_pose_loss/N:.4f}, GraspLoss={total_grasp_loss/N:.4f}")
       
     print(f"Done Training Policy on {len(demos)} Demos") 
     
