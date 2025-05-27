@@ -74,9 +74,8 @@ class SimpleGraspPolicy(SimplePolicy):
     if proprio is None and self.use_proprio:
       raise RuntimeError(f"[simple_grasp_policy - (feats_to_action)] Expecting proprio data but none given!")
     ret_dict = {}
-    print(f"(at input) {feats.shape = }")
     feats = self.flatten(feats)
-    print(f"(flattenede) {feats.shape = }")
+
     if proprio is not None:
       jfeats = self.jpos_feats(proprio)
       print(f"{jfeats.shape = }")
