@@ -83,28 +83,8 @@ class Agent(object):
       if self.policy_type == PolicyType.RNN_GRASP:
         self.prev_state = None
 
-    def _act_proprio(self, obs_tensor: torch.Tensor, proprio: torch.Tensor) -> tuple[torch.Tensor, dict]:
-      assert self.policy.use_proprio, f"[agent - (act_proprio)] proprio action requested but policy does not have a `JointPosEncoder`"
-
-      with torch.no_grad():
-        return self.policy(obs_tensor, proprio)
-    
-    def _act_rnn(self, obs_tensor: torch.Tensor) -> tuple[torch.Tensor, dict]:
-      assert self.policy_type == PolicyType.RNN_GRASP, f"[agent - (act_rnn)] sequential act RNN function is called with a policy that is not RNN"
-
-      with torch.no_grad():
-        action, rets = self.policy(
-          obs_tensor, 
-          hidden_state=self.prev_state,
-          lengths = None ## not passing 'lengths' on purpose to force the inference branch of policy
-        )
-      self.prev_state = (rets["h"], rets["c"])
-
-      return action, rets
-
-    ## Inference Call
-    def act(self, obs:  Observation) -> tuple[torch.Tensor, dict]: ## possibly returns other things
-      
+    ### Get Tensors from Observation Data
+    def _get_obs_tensor(self, obs: Observation) -> torch.Tensor:
       ## === Gather the `Obserevation` as tensor data
       images = []
       ## wrist -> ls -> rs -> wd
@@ -115,15 +95,50 @@ class Agent(object):
           images.append(image)
       
       if not images:
-        raise ValueError("[agent] - act] No images selected !")
+        raise ValueError("[agent] - (get_obs_tensor)] No images selected !")
       
       if self.tensor_agg is None:
-        raise ValueError(f"[agent - act] Tensor aggregation method was not set in the constructor!")
+        raise ValueError(f"[agent - (get_obs_tensor)] Tensor aggregation method was not set in the constructor!")
       
       torch_obs = self.tensor_agg(images)
 
-      torch_obs = torch_obs.unsqueeze(0) ## add a batch dimension (1, ...)
+      return torch_obs.unsqueeze(0) ## add a batch dimension (1, ...)
 
+    def _get_proprio_tensor(self, obs: Observation) -> torch.Tensor:
+      proprio = torch.tensor(pick_joint_angles(obs, normalise = True), dtype = torch.float32)
+      return proprio.unsqueeze(0) 
+
+    ### Custom Actions per speceific policy types
+    def _act_proprio(self, obs: Observation) -> tuple[torch.Tensor, dict]:
+      assert self.policy.use_proprio, f"[agent - (act_proprio)] proprio action requested but policy does not have a `JointPosEncoder`"
+
+      with torch.no_grad():
+        return self.policy(
+          self._get_obs_tensor(obs),
+          self._get_proprio_tensor(obs)
+        )
+    
+    def _act_rnn(self, obs: Observation) -> tuple[torch.Tensor, dict]:
+      assert self.policy_type == PolicyType.RNN_GRASP, f"[agent - (act_rnn)] sequential act RNN function is called with a policy that is not RNN"
+
+
+      proprio = self._get_proprio_tensor(obs) if self.policy.use_proprio else None
+      with torch.no_grad():
+        action, rets = self.policy(
+          self._get_obs_tensor(obs), 
+          hidden_state=self.prev_state,
+          lengths = None, ## not passing 'lengths' on purpose to force the inference branch of policy
+          proprio = proprio
+        )
+
+        print(f"{proprio.shape = }")
+        print(f"{proprio = }")
+      self.prev_state = (rets["h"], rets["c"])
+
+      return action, rets
+
+    ## Main Inference Call
+    def act(self, obs:  Observation) -> tuple[torch.Tensor, dict]: ## possibly returns other things
       ## === Model Prediciton
       self.policy.eval()
 
@@ -132,19 +147,16 @@ class Agent(object):
         PolicyType.SIMPLE_GRASP,
         PolicyType.DEPTH_GRASP
       ] and self.policy.use_proprio: ## NOTE add as more need proprio
-        proprio = torch.tensor(pick_joint_angles(obs, normalise = True), dtype = torch.float32)
-        proprio = proprio.unsqueeze(0) 
-        return self._act_proprio(torch_obs, proprio)
+        return self._act_proprio(obs)
       
       ### this is a sequence model, so delegate to the other act method
       ## NOTE: add other sequence based models here
       if self.policy_type == PolicyType.RNN_GRASP:
-        return self._act_rnn(torch_obs)
-
-
+        return self._act_rnn(obs)
+      
       ## all else can just run inference
       with torch.no_grad():
-        pred, rest = self.policy(torch_obs)
+        pred, rest = self.policy(self._get_obs_tensor(obs))
       
       return pred, rest
       
