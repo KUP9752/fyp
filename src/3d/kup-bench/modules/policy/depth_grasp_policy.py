@@ -111,10 +111,6 @@ class DepthGraspPolicy(SimpleGraspPolicy):
         raise ValueError(f"[depth_grasp_policy - (DepthGraspPolicy)] config '{config}' is unknown!")
     self.config = config
     
-    ## add proprioception data
-
-
-
   def __str__(self):
     return f"depth_grasp_policy-config:{self.config}-opts:{self.opts}"
   
@@ -129,7 +125,7 @@ class DepthGraspPolicy(SimpleGraspPolicy):
     ## image: shape = (batch_size, chs, w, h) where chs = 3 * (given cams) + 1 (depth)
     ## so depth is always the final dimension (easier to do it this way for now, might change later)
     if self.config in ["depth_ch"]:
-      return super().forward(image)
+      return super().forward(image, proprio)
 
     if self.config in ["depth_feats", "attn"]:
       if not (self.cam_type & CamType.WRIST_DEPTH):

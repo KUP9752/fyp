@@ -40,16 +40,16 @@ class SimpleGraspPolicy(SimplePolicy):
     self.proprio_opts = proprio_opts
 
     self.fc = None
-
+    self.final_feat_size = self.flat_size
     if use_proprio:
       self.jpos_feats = JointPosEncoder(**proprio_opts) if proprio_opts else JointPosEncoder()
-      self.flat_size += self.jpos_feats.output_size
+      self.final_feat_size += self.jpos_feats.output_size
 
     
     self.flatten = nn.Flatten()
 
     self.action_head = nn.Sequential(
-      nn.Linear(self.flat_size, 200),
+      nn.Linear(self.final_feat_size, 200),
       nn.ReLU(inplace=False),
       nn.Dropout(0.2),
       nn.Linear(200, 200),
@@ -61,7 +61,7 @@ class SimpleGraspPolicy(SimplePolicy):
     )
     
     self.grasp_head = nn.Sequential(
-      nn.Linear(self.flat_size, 128),
+      nn.Linear(self.final_feat_size, 128),
       nn.ReLU(inplace=False),
       nn.Linear(128, 64),
       nn.ReLU(inplace = False),
@@ -78,7 +78,6 @@ class SimpleGraspPolicy(SimplePolicy):
 
     if proprio is not None:
       jfeats = self.jpos_feats(proprio)
-      print(f"{jfeats.shape = }")
       feats  = torch.cat([feats, jfeats], dim = -1) ## cat on feature dimension
       ret_dict = {"proprio_feats": jfeats}
     

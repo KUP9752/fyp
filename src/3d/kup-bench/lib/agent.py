@@ -15,7 +15,7 @@ from lib.policy_type import PolicyType
 
 import torch
 import numpy as np
-from lib.utils import pick_obs_from_cam
+from lib.utils import pick_obs_from_cam, pick_joint_angles
 
 class Agent(object):
     def __init__(self,
@@ -83,8 +83,14 @@ class Agent(object):
       if self.policy_type == PolicyType.RNN_GRASP:
         self.prev_state = None
 
+    def _act_proprio(self, obs_tensor: torch.Tensor, proprio: torch.Tensor) -> tuple[torch.Tensor, dict]:
+      assert self.policy.use_proprio, f"[agent - (act_proprio)] proprio action requested but policy does not have a `JointPosEncoder`"
+
+      with torch.no_grad():
+        return self.policy(obs_tensor, proprio)
+    
     def _act_rnn(self, obs_tensor: torch.Tensor) -> tuple[torch.Tensor, dict]:
-      assert self.policy_type == PolicyType.RNN_GRASP, f"[agent - (act_rnn) sequential act RNN function is called with a policy that is not RNN]"
+      assert self.policy_type == PolicyType.RNN_GRASP, f"[agent - (act_rnn)] sequential act RNN function is called with a policy that is not RNN"
 
       with torch.no_grad():
         action, rets = self.policy(
@@ -121,11 +127,22 @@ class Agent(object):
       ## === Model Prediciton
       self.policy.eval()
 
+      ## prep proprio data for models that need it
+      if self.policy_type in [
+        PolicyType.SIMPLE_GRASP,
+        PolicyType.DEPTH_GRASP
+      ] and self.policy.use_proprio: ## NOTE add as more need proprio
+        proprio = torch.tensor(pick_joint_angles(obs, normalise = True), dtype = torch.float32)
+        proprio = proprio.unsqueeze(0) 
+        return self._act_proprio(torch_obs, proprio)
+      
       ### this is a sequence model, so delegate to the other act method
       ## NOTE: add other sequence based models here
       if self.policy_type == PolicyType.RNN_GRASP:
         return self._act_rnn(torch_obs)
-      
+
+
+      ## all else can just run inference
       with torch.no_grad():
         pred, rest = self.policy(torch_obs)
       

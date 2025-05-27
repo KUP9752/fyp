@@ -156,8 +156,8 @@ smaller_task_params = {
   "wrist_cam_distance": 0.8
 }
 
-# task_env = env.get_task(task_class = task, **task_params)
-task_env = env.get_task(task_class = task)
+task_env = env.get_task(task_class = task, **task_params)
+# task_env = env.get_task(task_class = task)
 target_name = "grasp_cube"
 
 
@@ -176,14 +176,14 @@ all_cams = CamType.LEFT_SHOULDER | CamType.RIGHT_SHOULDER | CamType.WRIST_DEPTH
 
 agent = Agent(
   env.action_shape[0],
-  policy_type=PolicyType.SIMPLE_GRASP,
-  cam_type= CamType.WRIST, 
+  policy_type=PolicyType.DEPTH_GRASP,
+  cam_type= wd, 
   grasp_thresh = 0.5,
-  use_proprio = True
-  # config = "attn",
-  #   opts = {
-  #   "attn_deep_fuse": True,
-  # }
+  config = "depth_feats",
+  opts = {
+    "attn_deep_fuse": True,
+    "use_proprio": True
+  }
 )
 
 # agent = Agent(
@@ -220,7 +220,7 @@ task_env.reset()
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
-demos: list[Demo] = task_env.get_demos(1, live_demos=live_demos)
+demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
 # test_demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
 demos
 
@@ -230,7 +230,7 @@ demos
 # %%
 ## 5. Train
 training_params = {
-  "epochs": 400,
+  "epochs": 2000,
   "minibatch_size": 1,
   "lr": 1e-3,
   "shuffle_obs_in_demo": False,
@@ -257,7 +257,8 @@ agent.save_model(model_path)
 # load_str = "/all-models/task-Vision_Static-demo-1-cam-l_shoulder--_May11_16-24.pth"
 
 # load_str = "models/grasp/very-good-simple-grasp--task-Vision_Random-demo-10-cam-wrist--demo_dataset-10_batch-2000 epochs.pth"
-# agent.policy.load_state_dict(torch.load(f"/home/kup/Desktop/code/fyp/src/3d/kup-bench/{load_str}"))
+load_str = "all-models/reach-with-demos/rwd-Vision_Random-agent-policy:depth_grasp_policy-cams:wrist+wrist_depth-policy:depth_grasp_policy-config:attn-opts:{'gated_fuse': True, 'attn_num_heads': 8, 'attn_deep_fuse': True, 'use_proprio': True, 'proprio_opts': {}}--_May27_14-44.pth"
+agent.policy.load_state_dict(torch.load(f"/home/kup/Desktop/code/fyp/src/3d/kup-bench/{load_str}"))
 #%%
 task_env = env.get_task(task,  **task_params)
 #%% 
@@ -290,7 +291,6 @@ agent.policy.to("cpu")
 # task_env = env.get_task(ReachNoObs_Central)
 dones = 0
 # _, obs = task_env.reset()
-
 for demo in range(len(demos)):
   _, obs = task_env.reset()
 # for demo in test_demos:
@@ -318,7 +318,7 @@ for demo in range(len(demos)):
     # print(f"{action.shape = }")
     obs, reward, done = task_env.step(action)
     gripper = Object.get_object("Panda_gripper")
-    target = Object.get_object("target")
+    target = Object.get_object(target_name)
 
     
     
