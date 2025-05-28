@@ -10,7 +10,7 @@ from seed import SEED
 
 from lib.utils import pick_obs_from_cam
 
-
+## this is pretty much useless currently not updating its
 class DemoObsDataset(Dataset):
   def __init__(self,
     demos: list[Demo],

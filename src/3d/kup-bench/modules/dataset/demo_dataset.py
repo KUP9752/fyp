@@ -17,6 +17,7 @@ class DemoDataset(Dataset):
       get_type: Literal["cat", "stack"],
       rgb_transform = None,
       use_proprio: bool = False,
+      label_get: Literal["joint_velocities", "joint_positions"] = "joint_velocities"
   ):
     if get_type not in ["cat", "stack"]:
       raise ValueError(f"[demo_dataset - (init)] 'get_type' is assigned an incorrect option: {get_type}")
@@ -25,6 +26,7 @@ class DemoDataset(Dataset):
     self.rgb_transform = rgb_transform
     self.use_proprio = use_proprio
     self.cam_type = cam_type
+    self.label_get = label_get
     ## store in list of lists
     self.all_demos = []
 
@@ -79,7 +81,7 @@ class DemoDataset(Dataset):
       ## === extract the label from obs
       seq_labels.append(
         torch.tensor(
-          np.append(obs.joint_velocities, obs.gripper_open), 
+          np.append(getattr(obs, self.label_get), obs.gripper_open), 
           dtype=torch.float32
         )
       )
