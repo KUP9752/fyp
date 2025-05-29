@@ -78,7 +78,7 @@ class SimpleGraspPolicy(SimplePolicy):
     feats = self.flatten(feats)
 
     if proprio is not None:
-      jfeats = self.jpos_feats(proprio)
+      jfeats, _ = self.jpos_feats(proprio)
       feats  = torch.cat([feats, jfeats], dim = -1) ## cat on feature dimension
       ret_dict = {"proprio_feats": jfeats}
     
