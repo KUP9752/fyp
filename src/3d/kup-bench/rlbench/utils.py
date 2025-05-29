@@ -10,9 +10,10 @@ from natsort import natsorted
 from pyrep.objects import VisionSensor
 
 from rlbench.backend.const import *
-from rlbench.backend.utils import image_to_float_array, rgb_handles_to_mask
-from rlbench.demo import Demo
-from rlbench.observation_config import ObservationConfig
+from .backend.utils import image_to_float_array, rgb_handles_to_mask
+
+from .demo import Demo
+from .observation_config import ObservationConfig
 
 
 class InvalidTaskName(Exception):
@@ -49,27 +50,27 @@ def get_stored_demos(amount: int, image_paths: bool, dataset_root: str,
         raise RuntimeError("Can't find the demos for %s at: %s" % (
             task_name, task_root))
 
+
+    # dont care  about this get all back
     # Sample an amount of examples for the variation of this task
-    examples_path = join(
-        task_root, VARIATIONS_FOLDER % variation_number,
-        EPISODES_FOLDER)
-    examples = listdir(examples_path)
+    demo_idxs = listdir(task_root)
+
     if amount == -1:
-        amount = len(examples)
-    if amount > len(examples):
+        amount = len(demo_idxs)
+    if amount > len(demo_idxs):
         raise RuntimeError(
-            'You asked for %d examples, but only %d were available.' % (
-                amount, len(examples)))
-    if random_selection:
-        selected_examples = np.random.choice(examples, amount, replace=False)
-    else:
-        selected_examples = natsorted(
-            examples)[from_episode_number:from_episode_number+amount]
+            'You asked for %d demo_idxs, but only %d were available.' % (
+                amount, len(demo_idxs)))
+    # if random_selection:
+    #     selected_examples = np.random.choice(examples, amount, replace=False)
+    # else:
+    #     selected_examples = natsorted(
+    #         examples)[from_episode_number:from_episode_number+amount]
 
     # Process these examples (e.g. loading observations)
     demos = []
-    for example in selected_examples:
-        example_path = join(examples_path, example)
+    for demo_i in demo_idxs:
+        example_path = join(task_root, demo_i)
         with open(join(example_path, LOW_DIM_PICKLE), 'rb') as f:
             obs = pickle.load(f)
 

@@ -227,6 +227,9 @@ def rgb_handles_to_mask(rgb_coded_handles):
   if rgb_coded_handles.dtype != np.uint8:
     rgb_coded_handles *= 255  # takes rgb range to 0 -> 255
   rgb_coded_handles.astype(int)
+
+  ## NOTE: rgb_coded_handles are already saved as (64, 64) just load the??
+  return rgb_coded_handles
   return (rgb_coded_handles[:, :, 0] +
           rgb_coded_handles[:, :, 1] * 256 +
           rgb_coded_handles[:, :, 2] * 256 * 256)

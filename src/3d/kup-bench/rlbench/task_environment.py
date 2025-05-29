@@ -4,7 +4,7 @@ from typing import List, Callable
 import numpy as np
 from pyrep import PyRep
 from pyrep.const import ObjectType
-from rlbench import utils
+from . import utils  ## the kup-bench version
 from rlbench.action_modes.action_mode import ActionMode
 from rlbench.backend.exceptions import BoundaryError, WaypointError, \
     TaskEnvironmentError
