@@ -14,6 +14,7 @@ from lib.cam_type import CamType
 from modules.joint_pos_encoder import JointPosEncoder
 from modules.policy.simple_policy import SimplePolicy
 
+from lib.utils import params_string
 
 from modules.dataset.demo_obs_dataset import DemoObsDataset
 from modules.dataset.demo_dataset import DemoDataset
@@ -116,6 +117,7 @@ class SimpleGraspPolicy(SimplePolicy):
     epochs: int = 200,
     minibatch_size: int = 1, ## size of the observations currently being used
     lr: float = 0.01,
+    data_label: Literal["joint_velocities", "joint_positions"] = "joint_velocities",
     shuffle_data = False, 
     shuffle_obs_in_demo = False,
     model_path: Optional[str] = None,
@@ -127,9 +129,21 @@ class SimpleGraspPolicy(SimplePolicy):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Camera: {self.cam_type}")
     
-    print(f"Training Params: \n\t{epochs = }, \n\t{minibatch_size = }, \n\t{lr = }, \n\t{model_path = }, \n\t{shuffle_data = },\n\t{shuffle_obs_in_demo = },\n\t {dataset_to_use = }, \n\t{'seeded loader' if lock_loader_seed is not None else 'random loader'} \n\t{device}\n")
-    
-    
+    params_str = params_string(
+      epochs = epochs,
+      minibatch_size = minibatch_size, 
+      lr = lr, 
+      data_label = data_label,
+      model_path = model_path, 
+      shffle_data = shuffle_data, 
+      shuffle_obs_in_demo = shuffle_obs_in_demo,
+      lock_loader_seed = lock_loader_seed, 
+      device = device
+
+    )
+
+    print(f"Training Params: {params_str}")
+
     model = self.to(device)
     # print(f"What is in the demos: {type(demos)} | {type(demos[0])}")
     
@@ -138,7 +152,7 @@ class SimpleGraspPolicy(SimplePolicy):
       dataset = DemoObsDataset(demos, self.cam_type, shuffle_obs=shuffle_obs_in_demo, get_type="cat")
       loader = DataLoader(dataset, batch_size = minibatch_size, shuffle=shuffle_data)
     elif dataset_to_use == "demo":
-      dataset = DemoDataset(demos, self.cam_type, get_type="cat", use_proprio=self.use_proprio)
+      dataset = DemoDataset(demos, self.cam_type, get_type="cat", label_get = data_label,  use_proprio=self.use_proprio)
 
       ## NOTE: shuffle_data here shuffles demos but preserver obs order
       if minibatch_size > len(demos):

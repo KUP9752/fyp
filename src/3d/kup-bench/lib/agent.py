@@ -131,8 +131,6 @@ class Agent(object):
           proprio = proprio
         )
 
-        print(f"{proprio.shape = }")
-        print(f"{proprio = }")
       self.prev_state = (rets["h"], rets["c"])
 
       return action, rets
@@ -158,7 +156,7 @@ class Agent(object):
       with torch.no_grad():
         pred, rest = self.policy(self._get_obs_tensor(obs))
       
-      return pred, rest
+      return pred.squeeze(0), rest
       
       
         

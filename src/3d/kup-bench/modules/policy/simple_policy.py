@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 
 import torch 
 import torch.nn as nn
@@ -11,6 +11,7 @@ from rlbench.demo import Demo
 from tqdm import tqdm as progress
 from lib.cam_type import CamType
 
+from lib.utils import params_string
 
 from modules.dataset.demo_obs_dataset import DemoObsDataset
 
@@ -71,6 +72,7 @@ class SimplePolicy(nn.Module):
             epochs: int = 200,
             minibatch_size: int = 32, ## size of the observations currently being used
             lr: float = 0.01,
+            data_label: Literal["joint_velocities", "joint_positions"] = "joint_velocities",
             shuffle_data = False, 
             shuffle_obs_in_demo = False,
             model_path: Optional[str] = None,
@@ -78,7 +80,19 @@ class SimplePolicy(nn.Module):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Camera: {self.cam_type}")
     
-    print(f"Training Params: \n\t{epochs = }, \n\t{minibatch_size = }, \n\t{lr = }, \n\t{model_path = }, \n\t{shuffle_data = },\n\t{shuffle_obs_in_demo = } \n\t{device}\n")
+    params_str = params_string(
+      epochs = epochs,
+      minibatch_size = minibatch_size, 
+      lr = lr, 
+      data_label = data_label,
+      model_path = model_path, 
+      shffle_data = shuffle_data, 
+      shuffle_obs_in_demo = shuffle_obs_in_demo,
+      device = device
+
+    )
+
+    print(f"Training Params: {params_str}")
     
     
     model = self.to(device)
@@ -89,6 +103,7 @@ class SimplePolicy(nn.Module):
     optimiser = optim.Adam(model.parameters(), lr = lr)
     
     ## 'cat' makes sure to return all the images fuxed together (batch_size, 3 * num_cam, W, H)
+    ## TODO: make into DemoDatset add the data_label
     dataset = DemoObsDataset(demos, self.cam_type, shuffle_obs=shuffle_obs_in_demo, get_type="cat")
     loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=shuffle_data) ## shuffling makes it worse
     # print(f"Dataset Size: {len(dataset)}")

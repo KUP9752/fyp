@@ -204,6 +204,7 @@ class ResNetGraspPolicy(nn.Module):
     epochs: int = 200,
     minibatch_size: int = 1,
     lr: float = 0.01,
+    data_label: Literal["joint_velocities", "joint_positions"] = "joint_velocities",
     shuffle_data=True,
     shuffle_obs_in_demo=False,
     model_path: Optional[str] = None,
@@ -218,6 +219,7 @@ class ResNetGraspPolicy(nn.Module):
       shuffle_data = shuffle_data,
       minibatch_size = minibatch_size,
       lr = lr, 
+      data_label = data_label,
       shuffle_obs_in_demo = f'{shuffle_obs_in_demo} [not being used!]',
       lambda_grasp_loss = lambda_grasp_loss,
       dataset_to_use = f'{dataset_to_use} [not being used!]',
@@ -235,7 +237,13 @@ class ResNetGraspPolicy(nn.Module):
 
     model = self.to(device)
 
-    dataset = DemoDataset(demos, cam_type=self.cam_type, get_type = "cat")
+    dataset = DemoDataset(
+      demos, 
+      cam_type=self.cam_type, 
+      get_type = "cat",
+      label_get=data_label
+    )
+
     loader = DataLoader(
       dataset,
       batch_size=minibatch_size,

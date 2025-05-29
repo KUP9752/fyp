@@ -12,6 +12,7 @@ from rlbench.demo import Demo
 
 from tqdm import tqdm as progress
 from lib.cam_type import CamType
+from lib.utils import params_string
 
 from modules.dataset.demo_obs_dataset import DemoObsDataset
 from modules.cnns.multi_cam_cnn import MultiCamCnn
@@ -193,6 +194,7 @@ class CamAttentionPolicy(nn.Module):
     epochs: int = 1000,
     minibatch_size: int = 64, ## size of the observations currently being used
     lr: float = 1e-2,
+    data_label: Literal["joint_velocities", "joint_positions"] = "joint_velocities",
     lr_eta_min = 1e-4,
     shuffle_data = True, 
     shuffle_obs_in_demo = False,
@@ -201,9 +203,20 @@ class CamAttentionPolicy(nn.Module):
     model_path: Optional[str] = None
   ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Camera: {self.cam_type}")
     
-    print(f"Training Params: \n\t{epochs = }, \n\t{minibatch_size = }, \n\t{lr = }, \n\t{lr_eta_min =}, \n\t{model_path = }, \n\t{shuffle_data = },\n\t{shuffle_obs_in_demo = }, \n\t{lambda_attn = } \n\t{device}\n")
+    params_str = params_string(
+      epochs = epochs,
+      minibatch_size = minibatch_size,
+      lr = lr,
+      data_label = data_label,
+      lr_eta_min = lr_eta_min,
+      shuffle_data = shuffle_data,
+      shuffle_obs_in_demo = shuffle_obs_in_demo,
+      lambda_attn = lambda_attn,
+      device = device
+    )
+
+    print(f"Training Params: {params_str}")
     
     
     model = self.to(device)
