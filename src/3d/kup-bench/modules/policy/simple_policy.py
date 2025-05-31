@@ -14,6 +14,7 @@ from lib.cam_type import CamType
 from lib.utils import params_string
 
 from modules.dataset.demo_obs_dataset import DemoObsDataset
+from modules.dataset.demo_dataset import DemoDataset
 
 ## This is made for image sizes of 64x64 and now multi cam setups
 class SimplePolicy(nn.Module):
@@ -61,11 +62,19 @@ class SimplePolicy(nn.Module):
       nn.ReLU(inplace=False),
       nn.Linear(50, action_shape)
     )
-  
+
   def forward(self, image):
     feats = self.conv(image)
     return self.fc(feats), {} ##making all policies return action, (...) so I can have multiple outputs
-  
+
+  def _collate_demos(self, batch):
+    ## batch: [(tensor, tensor)] for inputs, labels
+    inputs, labels, loader_dict = zip(*batch) #unzip the tuple list
+
+    ## NOTE: handle other dict entries as well
+
+    ## concat on the batch axis, preserve order of input to label
+    return torch.cat(inputs, dim=0), torch.cat(labels, dim=0), {"proprio": None}
 
   def train_policy(self, 
             demos: list[Demo],
@@ -75,6 +84,7 @@ class SimplePolicy(nn.Module):
             data_label: Literal["joint_velocities", "joint_positions"] = "joint_velocities",
             shuffle_data = False, 
             shuffle_obs_in_demo = False,
+            dataset_to_use = "obs",
             model_path: Optional[str] = None,
   ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -86,8 +96,9 @@ class SimplePolicy(nn.Module):
       lr = lr, 
       data_label = data_label,
       model_path = model_path, 
-      shffle_data = shuffle_data, 
+      shuffle_data = shuffle_data, 
       shuffle_obs_in_demo = shuffle_obs_in_demo,
+      dataset_to_use = dataset_to_use,
       device = device
 
     )
@@ -104,8 +115,19 @@ class SimplePolicy(nn.Module):
     
     ## 'cat' makes sure to return all the images fuxed together (batch_size, 3 * num_cam, W, H)
     ## TODO: make into DemoDatset add the data_label
-    dataset = DemoObsDataset(demos, self.cam_type, shuffle_obs=shuffle_obs_in_demo, get_type="cat")
-    loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=shuffle_data) ## shuffling makes it worse
+    if dataset_to_use == "obs":
+      dataset = DemoObsDataset(demos, self.cam_type, shuffle_obs=shuffle_obs_in_demo, get_type="cat")
+      loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=shuffle_data) ## shuffling makes it worse
+    else:
+      dataset = DemoDataset(
+        demos,
+        self.cam_type,
+        get_type="cat",
+        label_get = "joint_velocities"
+      )
+      loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=shuffle_data, collate_fn=self._collate_demos) 
+      
+
     # print(f"Dataset Size: {len(dataset)}")
     
     model.train()
