@@ -1,0 +1,127 @@
+#%%
+
+# Tasks
+## No Obstacle
+from rlbench.tasks.reach_target_no_obs_side_r import ReachTargetNoObsSideR as ReachNoObs_SideR
+from rlbench.tasks.reach_target_no_obs_side_l import ReachTargetNoObsSideL as ReachNoObs_SideL
+from rlbench.tasks.reach_target_no_obs_central import ReachTargetNoObsCentral as ReachNoObs_Central
+from rlbench.tasks.reach_target_no_obs_random import ReachTargetNoObsRandom as ReachNoObs_PlaceRandom
+
+
+from rlbench.tasks.reach_target_obs_static_left import ReachTargetObsStaticLeft as ReachObs_StaticLeft
+from rlbench.tasks.reach_target_obs_static import ReachTargetObsStatic as ReachObs_Static 
+from rlbench.tasks.reach_target_obs_random_static import ReachTargetObsRandomStatic as ReachObs_RandomStatic
+from rlbench.tasks.reach_target_obs_random import ReachTargetObsRandom as ReachObs_Random
+from rlbench.tasks.reach_target_obs_ind_random import ReachTargetObsIndRandom as ReachObs_IndepRandom
+## Grasp
+from rlbench.tasks.simple_grasp import SimpleGrasp as Grasp_Simple
+from rlbench.tasks.grasp_and_move import GraspAndMove as Grasp_ThenMove
+## Vision Experiments - Grasp
+from rlbench.tasks.vision_static import VisionStatic as Vision_Static
+from rlbench.tasks.vision_random import VisionRandom as Vision_Random
+
+
+
+from lib.utils import get_task_name
+from lib.cam_type import CamType
+from lib.agent import Agent
+from lib.policy_type import PolicyType
+from modules.dataset.demo_dataset import DemoDataset
+from torch.utils.data import DataLoader
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+from task_utils import launch_test_env, save_demos_for, load_demos_for, run_determined_reach_with_agent, run_reach_task_with_agent
+from itertools import product
+
+def static_tasks_epoch_search():
+  tasks = [
+    ReachNoObs_Central,
+    ReachNoObs_SideL,
+    ReachNoObs_SideR,
+  ]
+
+
+  epochs = [1, 2, 10, 50, 100, 200, 400, 500, 600, 800, 1000, 1500, 2000, 3000, 4000, 5000, 10000, 20000, 50000]
+  dataset_types = [
+    "obs",
+    "demo", 
+  ]
+  env = launch_test_env(
+    dataset_root='',
+    enableds = CamType.WRIST
+  )
+  make_agent = lambda: Agent(
+    action_shape= env.action_shape[0],
+    policy_type=PolicyType.SIMPLE,
+    cam_type=CamType.WRIST
+  )
+
+  df = pd.DataFrame(columns=[
+      "task_name",
+      "cam_type",
+      "epochs",
+      "demo_count",
+      "max_eplen",
+      "is_success",
+      "min_distance",
+      "final_distance",
+      "dataset_type"
+    ], index = range(len(epochs) * len(tasks) * len(dataset_types))
+  )
+
+  training_params = {
+    "epochs": None,
+    "minibatch_size": 32,
+    "lr": 1e-3,
+    "shuffle_obs_in_demo": False,
+    "shuffle_data": False,
+    "dataset_to_use": "obs"
+  }
+
+  count = 0 
+
+  for dt in dataset_types:
+    for task in tasks:
+      task_env = env.get_task(task)
+      task_env.reset()
+
+      demos = load_demos_for(1, env, task, f"data/1demo")
+
+      for ep in epochs:
+        training_params["dataset_to_use"] = dt  
+        if dt == "demo":
+          training_params["minibatch_size"] = 1 
+
+        training_params["epochs"] = ep  
+        agent = make_agent()
+
+        rets, is_done = run_reach_task_with_agent(
+          env, 
+          task, 
+          agent,
+          demos, 
+          "demo_max", 
+          within_err_dist= 0.12,
+          training_params= training_params,
+        )  
+
+        df.loc[count] = {
+          "task_name": get_task_name(task), 
+          "cam_type": agent.cam_type, 
+          "epochs": ep,
+          "demo_count": 1, 
+          "max_eplen": rets["max_eplen"],
+          "is_success": is_done, 
+          "min_distance": min(rets["distances"]),
+          "final_distance": rets["distances"][-1],
+          "dataset_type": training_params["dataset_to_use"]
+        }
+        count += 1
+        df.to_csv("rno_static.csv", index=True)
+    
+
+static_tasks_epoch_search()
+#%%

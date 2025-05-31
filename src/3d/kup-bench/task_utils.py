@@ -139,6 +139,53 @@ def run_reach_task(
     
   return distances, done
 
+def run_determined_reach_with_agent(
+    env: Environment, 
+    task: type[Task], 
+    agent: Agent, 
+    rec_demos: list[Demo], 
+    max_eplen: int | Literal["demo_max"] = "demo_max",
+    task_params: dict = {}
+) -> list[dict]:
+  
+  results: list[dict] = []
+  if max_eplen == "demo_max":
+    max_eplen = max(list(map(len, rec_demos)))
+
+  obs: Observation
+  results: list[dict] = []
+
+  agent.policy.to("cpu")
+  for rec_demo in rec_demos:
+    task_env = env.get_task(task, **task_params)
+
+    _, obs = task_env.reset_to_demo(rec_demo) 
+    done = False
+    
+    distances = []
+
+    for _ in range(max_eplen):
+      action, _ = agent.act(obs)
+      action = action.squeeze()
+      obs, reward, done = task_env.step(action)
+      gripper = Object.get_object("Panda_gripper")
+      target = Object.get_object("target")
+      distance = np.linalg.norm(gripper.get_position() - target.get_position())
+
+      distances.append(distance)
+      if done: break
+
+    results.append({
+      "done": done,
+      "distances": distances,
+      "max_eplen": max_eplen
+    })
+
+
+  return results
+
+
+## give UNTRAINED AGENT here
 def run_reach_task_with_agent(
   env: Environment,
   task: Task, ## any of Reach_* or ReachObs_* tasks
@@ -151,7 +198,7 @@ def run_reach_task_with_agent(
 ) -> tuple[dict, bool]:
   ## new agent trained each time
   
-  ## request demos and train
+  ## request demos and train!
   task_env, demos = demos_and_train_for_task(
     env,
     task, #type: ignore[arg-type]
@@ -170,7 +217,7 @@ def run_reach_task_with_agent(
   obs: Observation
   _, obs = task_env.reset()
   
-  obstacle = Shape("obstacle")
+  # obstacle = Shape("obstacle")
   
   agent.policy.to("cpu") # move to cpu if not alr there
   distances = []
@@ -184,22 +231,22 @@ def run_reach_task_with_agent(
     action = action.squeeze()
     
     ## get the attention weights
-    atts = pol_dict["attention_weights"]
+    # atts = pol_dict["attention_weights"]
     # print(f"{atts = }")
     ## if the z value (height) of arm is negative with respect to obstacle, then we are below
     
-    if task_env._robot.arm.get_tip().get_position(relative_to=obstacle)[2] <= 0:
-      ## below
-      # print("BELOW THE OBS")
-      # print(f"{atts = }")
-      # print()
-      atts_below_obs.append(atts)
-    else:
-      ## above
-      # print("above THE OBS")
-      # print(f"{atts = }")
-      # print()
-      atts_above_obs.append(atts)
+    # if task_env._robot.arm.get_tip().get_position(relative_to=obstacle)[2] <= 0:
+    #   ## below
+    #   # print("BELOW THE OBS")
+    #   # print(f"{atts = }")
+    #   # print()
+    #   atts_below_obs.append(atts)
+    # else:
+    #   ## above
+    #   # print("above THE OBS")
+    #   # print(f"{atts = }")
+    #   # print()
+    #   atts_above_obs.append(atts)
     
     obs, reward, done = task_env.step(action)
 
@@ -217,8 +264,9 @@ def run_reach_task_with_agent(
     
   return {
     "distances": distances, 
-    "avg_attentions_below_obstacle": torch.stack(atts_below_obs, dim=0).mean(dim=0, dtype=torch.float32) if len(atts_below_obs) > 0 else None,
-    "avg_attentions_above_obstacle": torch.stack(atts_above_obs, dim=0).mean(dim=0, dtype=torch.float32) if len(atts_above_obs) > 0 else None,
+    "max_eplen": max_eplen
+    # "avg_attentions_below_obstacle": torch.stack(atts_below_obs, dim=0).mean(dim=0, dtype=torch.float32) if len(atts_below_obs) > 0 else None,
+    # "avg_attentions_above_obstacle": torch.stack(atts_above_obs, dim=0).mean(dim=0, dtype=torch.float32) if len(atts_above_obs) > 0 else None,
     },  done  
 
 
@@ -438,6 +486,7 @@ def launch_test_env(
   
 ## loads all the demos for a requested task can then be sliced later
 def load_demos_for(
+  amount: int, 
   env: Environment,  
   task: type[Task], 
   new_root: str,
@@ -448,23 +497,26 @@ def load_demos_for(
   env._dataset_root = new_root
 
   task_env = env.get_task(task, **task_params)
-  demos = task_env.get_demos(20, live_demos = False) ## will load all demos
+  demos = task_env.get_demos(amount, live_demos = False) ## will load all demos
 
   env._dataset_root = old_root
   return demos
 
 ## creates and saves demos for the given task
 def save_demos_for(
+  amount: int,
   task: type[Task], 
   dir: str,
-  amount: int = 20,
-  task_params: dict = {}
-):
+  task_params: dict = {}, 
+  env: Optional[Environment] = None,
+  return_env: bool = False
+) -> Optional[Environment]:
   
-  env = launch_test_env(
-    dataset_root=dir, 
-    enableds = "all"
-  )
+  if env is None:
+    env = launch_test_env(
+      dataset_root=dir, 
+      enableds = "all"
+    )
 
   task_env = env.get_task(task, **task_params)
   demos = task_env.get_demos(amount, live_demos = True)
@@ -473,5 +525,9 @@ def save_demos_for(
     save_demo(demo, f"{dir}/{task_env._task.get_name()}/{i}")
 
   print(f"[task_utils - save_demos_for] Done creating and saving demos in {dir}")
+
+  if return_env:
+    return env
+  
   env.shutdown()
   
