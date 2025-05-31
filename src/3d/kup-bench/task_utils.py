@@ -3,6 +3,10 @@ from typing import Literal, Optional, Type
 from time import strftime
 import os
 
+from rlbench import CameraConfig, ObservationConfig
+from rlbench.action_modes.action_mode import MoveArmThenGripper
+from rlbench.action_modes.arm_action_modes import JointVelocity
+from rlbench.action_modes.gripper_action_modes import Discrete
 import torch
 import numpy as np
 
@@ -17,8 +21,10 @@ from rlbench.backend.task import Task
 
 from rlbench.backend.observation import Observation
 from rlbench.demo import Demo
+from rlbench.dataset_generator import save_demo
 
 from pyrep.objects import Object, Shape
+from pyrep.const import RenderMode
 import matplotlib.pyplot as plt
 
 # Tasks
@@ -368,3 +374,104 @@ def run_determined_grasp_with_agent(
   return results
 
 
+
+ALL_CAMS = [
+  "wrist_camera",
+  "right_shoulder_camera",
+  "left_shoulder_camera",
+  "overhead_camera",
+  "front_camera",
+]
+
+CT_DICT = {
+  CamType.WRIST: "wrist_camera",
+  CamType.RIGHT_SHOULDER: "right_shoulder_camera",
+  CamType.LEFT_SHOULDER: "left_shoulder_camera",
+  CamType.OVERHEAD: "overhead_camera",
+  CamType.FRONT: "front_camera",
+}
+
+
+def launch_test_env(
+  dataset_root: Optional[str],
+  enabled_config =  CameraConfig(
+    rgb=True, depth=True, mask=True, point_cloud=True,
+    render_mode=RenderMode.OPENGL, image_size=(64, 64)
+  ),
+  disabled_config = CameraConfig(
+    rgb=False, depth=False, mask=False,
+    render_mode=RenderMode.OPENGL,
+  ),
+  enableds: CamType | list[str] | Literal["all"] = [
+    "wrist_camera",
+    "right_shoulder_camera",
+    "left_shoulder_camera"
+  ],
+  action_mode = MoveArmThenGripper(
+      arm_action_mode=JointVelocity(), gripper_action_mode=Discrete())
+) -> Environment:
+  
+  DATASET = dataset_root if dataset_root is not None else ''
+
+  obs_config = ObservationConfig()
+  obs_config.set_all(True) ## important to get the data from the joints etc
+
+  if isinstance(enableds, str) and enableds == "all":
+    enableds = ALL_CAMS
+
+  if isinstance(enableds, CamType):
+    if enableds & CamType.WRIST_DEPTH:
+      raise RuntimeError(f"[task_utils - launch_test_env] '{CamType.WRIST_DEPTH}' is not a valid enablable cam, use RGB")
+    enableds = [CT_DICT[ct] for ct in CamType.uniques() if enableds & ct]
+
+  for enabled in enableds:
+    setattr(obs_config, enabled, enabled_config)
+
+  for disabled in filter(lambda s: s not in enableds, ALL_CAMS):
+    setattr(obs_config, disabled, disabled_config)
+
+  env = Environment(
+      action_mode, DATASET, obs_config, False)
+
+  env.launch()
+  return env
+  
+## loads all the demos for a requested task can then be sliced later
+def load_demos_for(
+  env: Environment,  
+  task: type[Task], 
+  new_root: str,
+  task_params: dict = {}
+) -> list[Demo]:
+
+  old_root = env._dataset_root
+  env._dataset_root = new_root
+
+  task_env = env.get_task(task, **task_params)
+  demos = task_env.get_demos(20, live_demos = False) ## will load all demos
+
+  env._dataset_root = old_root
+  return demos
+
+## creates and saves demos for the given task
+def save_demos_for(
+  task: type[Task], 
+  dir: str,
+  amount: int = 20,
+  task_params: dict = {}
+):
+  
+  env = launch_test_env(
+    dataset_root=dir, 
+    enableds = "all"
+  )
+
+  task_env = env.get_task(task, **task_params)
+  demos = task_env.get_demos(amount, live_demos = True)
+
+  for i, demo in enumerate(demos):
+    save_demo(demo, f"{dir}/{task_env._task.get_name()}/{i}")
+
+  print(f"[task_utils - save_demos_for] Done creating and saving demos in {dir}")
+  env.shutdown()
+  
