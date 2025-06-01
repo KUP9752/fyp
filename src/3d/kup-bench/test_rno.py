@@ -104,7 +104,7 @@ def static_tasks_epoch_search():
           agent,
           demos, 
           "demo_max", 
-          within_err_dist= 0.12,
+          within_err_dist= 0.08,
           training_params= training_params,
         )  
 
@@ -208,7 +208,7 @@ def place_random():
           agent,
           test_demos, 
           "demo_max", 
-          within_err_dist= 0.12,
+          within_err_dist= 0.08,
         )  
         final_dists = [d["distances"][-1] for d in ret_dicts]
         min_dists = [min(d["distances"]) for d in ret_dicts]
