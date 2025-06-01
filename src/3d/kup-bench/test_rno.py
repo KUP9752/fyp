@@ -167,7 +167,7 @@ def run_main_test():
       "min_distance",
       "final_distance",
       "dataset_type"
-    ], index = range(len(epochs) * len(demo_counts) * len(dataset_types) * len(cam_types))
+    ], index = range(len(tasks) * len(epochs) * len(demo_counts) * len(dataset_types) * len(cam_types))
   )
 
   training_params = {
@@ -186,7 +186,8 @@ def run_main_test():
     test_demos = task_env.get_demos(10, live_demos = True)
     save_demos(test_demos, f"ro-{get_task_name(task)}--demos")
     for dt in dataset_types:
-      
+      ## this already done can skip it
+      if task == ReachObs_Random and dt == "obs": continue
       task_env = env.get_task(task)
       task_env.reset()
       for dc in demo_counts:

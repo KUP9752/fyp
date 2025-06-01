@@ -64,7 +64,7 @@ num_demos = 10
 # To use 'saved' demos, set the path below, and set live_demos=False
 
 live_demos = False
-DATASET = '' if live_demos else 'data/demos20-ReachObs_Random'
+DATASET = '' if live_demos else 'data/20demos'
 
 obs_config = ObservationConfig()
 obs_config.set_all(True) ## important to get the data from the joints etc
@@ -103,12 +103,12 @@ print(env.get_task.__code__.co_filename)
 
 task_params = {
   "scale": 1.,
-  "wrist_cam_distance": 0.6
+  "wrist_cam_distance": 0.2
 }
 
 smaller_task_params = {
   "scale": 0.5,
-  "wrist_cam_distance": 0.8
+  "wrist_cam_distance": 0.3
 }
 
 task_env = env.get_task(task_class = task, **smaller_task_params)
@@ -162,6 +162,11 @@ agent = Agent(
   }
 )
 
+agent = Agent(
+  action_shape= env.action_shape[0],
+  policy_type=PolicyType.SIMPLE,
+  cam_type=CamType.WRIST
+)
 
 model_name = f"rwd-{get_task_name(task)}-{agent}--{now()}"
 model_path = f"./all-models/reach-with-demos/{model_name}.pth"
@@ -175,13 +180,27 @@ agent.policy
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
-env._dataset_root = "data/demos20-normal-Vision_Random"
+env._dataset_root = "data/20demos"
 task_env = env.get_task(task_class = task, **task_params)
-demos: list[Demo] = task_env.get_demos(20, live_demos=False)
+demos: list[Demo] = task_env.get_demos(20, live_demos=True)
 # test_demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
 demos
 
 #%%
+normal = {
+  "scale": 1.,
+  "wrist_cam_distance": 0.6
+}
+
+smaller = {
+  "scale": 0.5,
+  "wrist_cam_distance": 0.3
+}
+
+task = Vision_Random
+task_env = env.get_task(task, **smaller)
+task_env.reset()
+obs, _ , _ =task_env.step([0] * 8)
 #%%
 from rlbench.dataset_generator import save_demo
 

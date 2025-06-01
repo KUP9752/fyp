@@ -67,10 +67,6 @@ class VisionRandom(Task):
         self.picked_scale
       )
       
-      self.grasp_target.set_position(
-        [0, 0, dist],
-        relative_to=self.wrist_cam
-      )
       
        # create a spawn boundary
       sb = SpawnBoundary([self.boundary])
@@ -81,6 +77,10 @@ class VisionRandom(Task):
         min_rotation = (0, 0, 0),
         max_rotation = (0, 0, 0)
       ) 
+      self.grasp_target.set_position(
+        [0, 0, dist],
+        relative_to=self.wrist_cam
+      )
       
       return [f"Vision_Random desc"]
     
