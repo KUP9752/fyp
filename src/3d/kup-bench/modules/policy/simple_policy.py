@@ -18,6 +18,12 @@ from modules.dataset.demo_dataset import DemoDataset
 
 ## This is made for image sizes of 64x64 and now multi cam setups
 class SimplePolicy(nn.Module):
+  def __str__(self) -> str:
+    return "simple-policy"
+  
+  def __repr__(self) -> str:
+    return "SimplePolicy()"
+
   def __init__(self, action_shape: int, cam_type: CamType = CamType.WRIST):
     super(SimplePolicy, self).__init__()
     self.cam_type = cam_type

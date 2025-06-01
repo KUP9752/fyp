@@ -122,37 +122,39 @@ def static_tasks_epoch_search():
         count += 1
         df.to_csv("rno_static.csv", index=True)
     
-def place_random():
-  task = ReachNoObs_PlaceRandom
+def run_main_test():
+  tasks = [ReachObs_Random, ReachObs_IndepRandom]
 
   epochs = [
-    1, 2, 10, 50, 100, 200, 400, 500, 1000]
+    50, 100, 200, 500, 1000, 2000, 5000
+  ]
 
-  demo_counts = [1, 5, 10, 20]
+  demo_counts = [10, 20]
+  cam_types = [
+    CamType.WRIST,
+    CamType.LEFT_SHOULDER,
+    CamType.RIGHT_SHOULDER,
+    CamType.WRIST | CamType.RIGHT_SHOULDER | CamType.LEFT_SHOULDER,
+    CamType.WRIST | CamType.RIGHT_SHOULDER,
+    CamType.WRIST | CamType.LEFT_SHOULDER,
+    CamType.LEFT_SHOULDER |  CamType.RIGHT_SHOULDER,
 
+  ]
   dataset_types = [
     "obs",
     "demo", 
   ]
   env = launch_test_env(
     dataset_root='',
-    enableds = CamType.WRIST
-  )
-  task_env = env.get_task(task)
-  task_env.reset()
-  demos = load_demos_for(2, 
-    env, 
-    task, 
-    f"data/20demos", 
+    enableds = CamType.WRIST | CamType.RIGHT_SHOULDER | CamType.LEFT_SHOULDER,
   )
 
 
-  test_demos = task_env.get_demos(10, live_demos = True)
-  save_demos(test_demos, f"rno-place_randon--demos")
-  make_agent = lambda: Agent(
+  
+  make_agent = lambda x: Agent(
     action_shape= env.action_shape[0],
     policy_type=PolicyType.SIMPLE,
-    cam_type=CamType.WRIST
+    cam_type=x
   )
 
   df = pd.DataFrame(columns=[
@@ -165,7 +167,7 @@ def place_random():
       "min_distance",
       "final_distance",
       "dataset_type"
-    ], index = range(len(epochs) * len(demo_counts) * len(dataset_types))
+    ], index = range(len(epochs) * len(demo_counts) * len(dataset_types) * len(cam_types))
   )
 
   training_params = {
@@ -179,55 +181,60 @@ def place_random():
 
   }
   count = 0 
-  for dt in dataset_types:
-    
+  for task in tasks:
     task_env = env.get_task(task)
-    task_env.reset()
-    for dc in demo_counts:
-      demos = load_demos_for(dc, env, task, f"data/20demos")
-
-      if len(demos) != dc:
-        print(f"was not the right size")
-        
-        demos = demos[:dc]
+    test_demos = task_env.get_demos(10, live_demos = True)
+    save_demos(test_demos, f"ro-{get_task_name(task)}--demos")
+    for dt in dataset_types:
       
+      task_env = env.get_task(task)
+      task_env.reset()
+      for dc in demo_counts:
+        demos = load_demos_for(dc, env, task, f"data/20demos")
+        for ct in cam_types:
 
-      for ep in epochs:
-        training_params["dataset_to_use"] = dt  
-        if dt == "demo":
-          training_params["minibatch_size"] = 1 
+          if len(demos) != dc:
+            print(f"was not the right size")
+            
+            demos = demos[:dc]
+          
 
-        training_params["epochs"] = ep  
-        agent = make_agent()
+          for ep in epochs:
+            training_params["dataset_to_use"] = dt  
+            if dt == "demo":
+              training_params["minibatch_size"] = 10
 
-        agent.ingest(demos, **training_params)
+            training_params["epochs"] = ep  
+            agent = make_agent(ct)
 
-        ret_dicts = run_determined_reach_with_agent(
-          env, 
-          task, 
-          agent,
-          test_demos, 
-          "demo_max", 
-          within_err_dist= 0.08,
-        )  
-        final_dists = [d["distances"][-1] for d in ret_dicts]
-        min_dists = [min(d["distances"]) for d in ret_dicts]
+            agent.ingest(demos, **training_params)
 
-        done_count = len([d["done"] for d in ret_dicts if d["done"]])
-        eplens = [d["max_eplen"] for d in ret_dicts]
+            ret_dicts = run_determined_reach_with_agent(
+              env, 
+              task, 
+              agent,
+              test_demos, 
+              "demo_max", 
+              within_err_dist= 0.11,
+            )  
+            final_dists = [d["distances"][-1] for d in ret_dicts]
+            min_dists = [min(d["distances"]) for d in ret_dicts]
 
-        df.loc[count] = {
-          "task_name": get_task_name(task), 
-          "cam_type": agent.cam_type, 
-          "epochs": ep,
-          "demo_count": dc, 
-          "max_eplens": eplens,
-          "done_count": done_count, 
-          "min_distance": sum(min_dists) / len(min_dists),
-          "final_distance": sum(final_dists) / len(final_dists),
-          "dataset_type": training_params["dataset_to_use"]
-        }
-        count += 1
-        df.to_csv("rno-place_random.csv", index=True)
-  
+            done_count = len([d["done"] for d in ret_dicts if d["done"]])
+            eplens = [d["max_eplen"] for d in ret_dicts]
+
+            df.loc[count] = {
+              "task_name": get_task_name(task), 
+              "cam_type": agent.cam_type, 
+              "epochs": ep,
+              "demo_count": dc, 
+              "max_eplens": eplens,
+              "done_count": done_count, 
+              "min_distance": sum(min_dists) / len(min_dists),
+              "final_distance": sum(final_dists) / len(final_dists),
+              "dataset_type": training_params["dataset_to_use"]
+            }
+            count += 1
+            df.to_csv("ro-randoms-cam.csv", index=True)
+run_main_test()
 #%%
