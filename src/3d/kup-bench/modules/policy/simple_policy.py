@@ -77,15 +77,16 @@ class SimplePolicy(nn.Module):
     return torch.cat(inputs, dim=0), torch.cat(labels, dim=0), {"proprio": None}
 
   def train_policy(self, 
-            demos: list[Demo],
-            epochs: int = 200,
-            minibatch_size: int = 32, ## size of the observations currently being used
-            lr: float = 0.01,
-            data_label: Literal["joint_velocities", "joint_positions"] = "joint_velocities",
-            shuffle_data = False, 
-            shuffle_obs_in_demo = False,
-            dataset_to_use = "obs",
-            model_path: Optional[str] = None,
+    demos: list[Demo],
+    epochs: int = 200,
+    minibatch_size: int = 32, ## size of the observations currently being used
+    lr: float = 0.01,
+    data_label: Literal["joint_velocities", "joint_positions"] = "joint_velocities",
+    shuffle_data = False, 
+    shuffle_obs_in_demo = False,
+    dataset_to_use = "obs",
+    model_path: Optional[str] = None,
+    lock_loader_seed: Optional[int] = None,
   ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Camera: {self.cam_type}")
@@ -99,6 +100,7 @@ class SimplePolicy(nn.Module):
       shuffle_data = shuffle_data, 
       shuffle_obs_in_demo = shuffle_obs_in_demo,
       dataset_to_use = dataset_to_use,
+      lock_loader_seed = lock_loader_seed,
       device = device
 
     )
@@ -117,7 +119,12 @@ class SimplePolicy(nn.Module):
     ## TODO: make into DemoDatset add the data_label
     if dataset_to_use == "obs":
       dataset = DemoObsDataset(demos, self.cam_type, shuffle_obs=shuffle_obs_in_demo, get_type="cat")
-      loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=shuffle_data) ## shuffling makes it worse
+      loader = DataLoader(
+        dataset, 
+        batch_size=minibatch_size, 
+        shuffle=shuffle_data,
+        generator=torch.manual_seed(lock_loader_seed) if lock_loader_seed else None
+      ) ## shuffling makes it worse
     else:
       dataset = DemoDataset(
         demos,
@@ -125,7 +132,14 @@ class SimplePolicy(nn.Module):
         get_type="cat",
         label_get = "joint_velocities"
       )
-      loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=shuffle_data, collate_fn=self._collate_demos) 
+      loader = DataLoader(
+        dataset, 
+        batch_size=minibatch_size, 
+        shuffle=shuffle_data, 
+        collate_fn=self._collate_demos,
+        generator=torch.manual_seed(lock_loader_seed) if lock_loader_seed else None
+      )
+       
       
 
     # print(f"Dataset Size: {len(dataset)}")
