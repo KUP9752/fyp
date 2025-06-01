@@ -145,7 +145,8 @@ def run_determined_reach_with_agent(
     agent: Agent, 
     rec_demos: list[Demo], 
     max_eplen: int | Literal["demo_max"] = "demo_max",
-    task_params: dict = {}
+    within_err_dist: Optional[float] = None,
+    task_params: dict = {},
 ) -> list[dict]:
   
   results: list[dict] = []
@@ -158,6 +159,7 @@ def run_determined_reach_with_agent(
   agent.policy.to("cpu")
   for rec_demo in rec_demos:
     task_env = env.get_task(task, **task_params)
+    task_env.reset()
 
     _, obs = task_env.reset_to_demo(rec_demo) 
     done = False
@@ -173,6 +175,10 @@ def run_determined_reach_with_agent(
       distance = np.linalg.norm(gripper.get_position() - target.get_position())
 
       distances.append(distance)
+
+      if within_err_dist is not None:
+        done = done or distance <= within_err_dist
+
       if done: break
 
     results.append({
@@ -490,6 +496,7 @@ def load_demos_for(
   env: Environment,  
   task: type[Task], 
   new_root: str,
+  random_selection: bool = False, 
   task_params: dict = {}
 ) -> list[Demo]:
 
@@ -497,7 +504,11 @@ def load_demos_for(
   env._dataset_root = new_root
 
   task_env = env.get_task(task, **task_params)
-  demos = task_env.get_demos(amount, live_demos = False) ## will load all demos
+  demos = task_env.get_demos(
+    amount, 
+    live_demos = False, 
+    random_selection = random_selection
+  ) ## NOTE can add other params as a dict, but probably wont need it
 
   env._dataset_root = old_root
   return demos

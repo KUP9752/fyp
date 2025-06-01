@@ -112,7 +112,7 @@ class TaskEnvironment(object):
                   image_paths: bool = False,
                   callable_each_step: Callable[[Observation], None] = None,
                   max_attempts: int = _MAX_DEMO_ATTEMPTS,
-                  random_selection: bool = True,
+                  random_selection: bool = False,
                   from_episode_number: int = 0
                   ) -> List[Demo]:
         """Negative means all demos"""

@@ -61,15 +61,15 @@ def get_stored_demos(amount: int, image_paths: bool, dataset_root: str,
         raise RuntimeError(
             'You asked for %d demo_idxs, but only %d were available.' % (
                 amount, len(demo_idxs)))
-    # if random_selection:
-    #     selected_examples = np.random.choice(examples, amount, replace=False)
-    # else:
-    #     selected_examples = natsorted(
-    #         examples)[from_episode_number:from_episode_number+amount]
+    if random_selection:
+        selected_examples = np.random.choice(demo_idxs, amount, replace=False)
+    else:
+        selected_examples = natsorted(
+            demo_idxs)[from_episode_number:from_episode_number+amount]
 
     # Process these examples (e.g. loading observations)
     demos = []
-    for demo_i in demo_idxs:
+    for demo_i in selected_examples:
         example_path = join(task_root, demo_i)
         with open(join(example_path, LOW_DIM_PICKLE), 'rb') as f:
             obs = pickle.load(f)
