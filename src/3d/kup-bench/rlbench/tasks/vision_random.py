@@ -77,8 +77,13 @@ class VisionRandom(Task):
         min_rotation = (0, 0, 0),
         max_rotation = (0, 0, 0)
       ) 
+      ## TODO !!!! this is broken because the sampling doesn't happen anymore, maybe it was right to keep it higher like before
+      pos = self.grasp_target.get_position(relative_to=self.wrist_cam)
+
+      pos[2] = dist ## place vertically a dist distance from the camera
+
       self.grasp_target.set_position(
-        [0, 0, dist],
+        pos,
         relative_to=self.wrist_cam
       )
       
