@@ -513,21 +513,19 @@ def load_demos_for(
   env._dataset_root = old_root
   return demos
 
-## creates and saves demos for the given task
+## creates and saves demos for the given task, launches a new env with everything enabled
 def save_demos_for(
   amount: int,
   task: type[Task], 
   dir: str,
   task_params: dict = {}, 
-  env: Optional[Environment] = None,
   return_env: bool = False
 ) -> Optional[Environment]:
   
-  if env is None:
-    env = launch_test_env(
-      dataset_root=dir, 
-      enableds = "all"
-    )
+  env = launch_test_env(
+    dataset_root='', 
+    enableds = "all"
+  )
 
   task_env = env.get_task(task, **task_params)
   demos = task_env.get_demos(amount, live_demos = True)
