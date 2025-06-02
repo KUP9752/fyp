@@ -383,12 +383,14 @@ def plot_cameras(cam_type: CamType, obs: Observation, plot_title: str, save_fold
 def run_determined_grasp_with_agent(
     # env: Environment, 
     # task: type[Task], 
-    task_env: TaskEnvironment,
+    env: Environment,
+    task: type[Task],
     agent: Agent, 
     rec_demos: list[Demo],
     max_eplen: int | Literal["demo_max"] = "demo_max",
-    # task_params: dict = {}, ## doesnt need task params because the `reset_to_demo` needs the task_env to have already been created with the correct params
-):
+    do_extra_outs: bool = True,
+    task_params: dict = {}, ## doesnt need task params because the `reset_to_demo` needs the task_env to have already been created with the correct params
+) -> list[dict]:
   if max_eplen == "demo_max":
     max_eplen = max(list(map(len, rec_demos)))
 
@@ -397,6 +399,8 @@ def run_determined_grasp_with_agent(
 
   agent.policy.to("cpu")
   for rec_demo in rec_demos:
+    task_env = env.get_task(task, **task_params)
+    task_env.reset()
     _, obs = task_env.reset_to_demo(rec_demo) 
     done = False
     gripper_image_paths = []
@@ -410,7 +414,7 @@ def run_determined_grasp_with_agent(
       target = Object.get_object("grasp_cube")
       distance = np.linalg.norm(gripper.get_position() - target.get_position())
 
-      if action[-1] <= 0.5:
+      if do_extra_outs and action[-1] <= 0.5:
         gripper_image_path = f"outputs/run-grasp-with-agent/{now()}"
         gripper_image_paths.append(gripper_image_path)
         os.makedirs(gripper_image_path, exist_ok=True)
