@@ -21,22 +21,20 @@ from modules.dataset.demo_dataset import DemoDataset
 
 class SimpleGraspPolicy(SimplePolicy):
   def __str__(self):
-    return f"simple_grasp_policy-grasp_thresh:{self.grasp_thresh}-use_proprio:{self.use_proprio}-proprio_opts:{self.proprio_opts}"
+    return f"simple_grasp_policy-use_proprio:{self.use_proprio}-proprio_opts:{self.proprio_opts}"
   
   def __repr__(self):
-    return f"SimpleGraspPolicy(grasp_thresh={self.grasp_thresh}, use_proprio={self.use_proprio}, proprio_opts={self.proprio_opts})"
+    return f"SimpleGraspPolicy(use_proprio={self.use_proprio}, proprio_opts={self.proprio_opts})"
   
   ## override
   def __init__(self, 
     action_shape: int, 
     cam_type: CamType = CamType.WRIST,
-    grasp_thresh: float = 0.5,
     use_proprio: bool = False,
     proprio_opts: dict = {}
   ):
     super().__init__(action_shape, cam_type)
     
-    self.grasp_thresh = grasp_thresh
     self.use_proprio = use_proprio
     self.proprio_opts = proprio_opts
 

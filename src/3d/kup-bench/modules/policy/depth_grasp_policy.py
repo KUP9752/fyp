@@ -36,7 +36,6 @@ class DepthGraspPolicy(SimpleGraspPolicy):
     action_shape: int, 
     config: Literal["depth_ch", "depth_feats", "attn"],
     cam_type = CamType.WRIST,
-    grasp_thresh = 0.5,
     opts: dict = {} ## set all defaults to none so I don't have to try/catch everytime
     ## "gated_fuse" set to 'True' because it works well,
     
@@ -45,12 +44,10 @@ class DepthGraspPolicy(SimpleGraspPolicy):
     super().__init__(
       action_shape,
       cam_type,
-      grasp_thresh,
       use_proprio=self.opts["use_proprio"],
       proprio_opts=self.opts["proprio_opts"]
     )
     # super(DepthGraspPolicy, self).__init__() ##if inherining nn.Module
-    # self.grasp_thresh = grasp_thresh
     
     ## keeps all defaults that are not overriden in opts
 
