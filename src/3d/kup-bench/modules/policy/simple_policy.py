@@ -73,7 +73,7 @@ class SimplePolicy(nn.Module):
     feats = self.conv(image)
     return self.fc(feats), {} ##making all policies return action, (...) so I can have multiple outputs
 
-  def _collate_demos(self, batch):
+  def _collate_demos(self, batch) -> tuple[torch.Tensor, torch.Tensor, dict]:
     ## batch: [(tensor, tensor)] for inputs, labels
     inputs, labels, loader_dict = zip(*batch) #unzip the tuple list
 

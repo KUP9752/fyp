@@ -97,7 +97,7 @@ class SimpleGraspPolicy(SimplePolicy):
 
 
   ## this is used whent he "demo" options is selected for dataset, so we can catch the demos randomly but process in batch size
-  def _collate_demos(self, batch):
+  def _collate_demos(self, batch)-> tuple[torch.Tensor, torch.Tensor, dict]:
     ## batch: [(tensor, tensor)] for inputs, labels
     inputs, labels, loader_dict = zip(*batch) #unzip the tuple list
 
