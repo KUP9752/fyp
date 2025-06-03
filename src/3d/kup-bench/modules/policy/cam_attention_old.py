@@ -15,7 +15,6 @@ from lib.cam_type import CamType
 from lib.utils import params_string
 
 from modules.dataset.demo_obs_dataset import DemoObsDataset
-from modules.dataset.demo_dataset import DemoDataset
 from modules.cnns.multi_cam_cnn import MultiCamCnn
 from modules.cnns.cnn_encoder import CNNEncoder
 
@@ -42,53 +41,26 @@ class CameraAttention(nn.Module):
   def __init__(self, feature_dim, hidden_dim):
     super(CameraAttention, self).__init__()
     self.attention_mlp = nn.Sequential(
-      nn.Linear(feature_dim + 1, hidden_dim), ## NOTE: +1 for the colour score
+      nn.Linear(feature_dim, hidden_dim),
       nn.ReLU(inplace=False),
       nn.LayerNorm(hidden_dim), ## NOTE: did not help attention collapse, still extremes but flipped the other way [0, 1] -> [0.99, 0.01] 
       nn.Linear(hidden_dim, 1)  # Output 1 score per camera
     )
 
-  def forward(self, 
-    feats: torch.Tensor, 
-    t_scores: torch.Tensor, 
-    temperature: float | None = None
-  ):  
-    # feats: (batch_size, num_cameras, feature_dim)
-    # t_scores: (batch_size, num_cameras)
-
-    B, n, d = feats.shape
-    # flat_t_scores = t_scores.unsqueeze(-1) ## same as below
-    print(f"{feats.shape = }")
-    print(f"{t_scores.shape = }")
-    
-    flat_t_scores = t_scores.view(B, n, 1)
-    print(f"{flat_t_scores.shape = }")
-
-    comb = torch.cat([feats, flat_t_scores], dim = -1) # along feature dim: d
-    print(f"{comb.shape = }")
-
-    comb = comb.view(B * n, d + 1) ## not that colour score is added
-    print(f"{comb.shape = }")
-
-    scores = self.attention_mlp(comb) ## gives (B * num_cameras, 1)
-    print(f"{scores.shape = }")
-    scores = scores.view(B, n)  # (batch_size, num_cameras)
-    print(f"{scores.shape = }")
-
+  def forward(self, features, temperature: float | None = None):  
+    # features: (batch_size, num_cameras, feature_dim)
+    scores: torch.Tensor = self.attention_mlp(features)  # (batch_size, num_cameras, 1)
     scores = scores.squeeze(-1)            # (batch_size, num_cameras)
-    print(f"{scores.shape = }")
 
     ## //NOTE: normalisation, att_weights were always [0, 1] or leaning towards one cam, need normalisation
-    scores = scores - scores.max(dim=1, keepdim=True)[0] ## logit stabilisation
-    print(f"{scores.shape = }")
-    print()
+    scores = scores - scores.max(dim=1, keepdim=True)[0]
     
     if temperature:
       return F.softmax(scores / temperature, dim=1)      
     else:
       return F.softmax(scores, dim=1)  # (batch_size, num_cameras), do softmax over the different camera inputs
   
-class CamAttentionPolicy(nn.Module):
+class CamAttentionOld(nn.Module):
   def __init__(
     self, 
     action_shape: int, 
@@ -97,14 +69,10 @@ class CamAttentionPolicy(nn.Module):
     cam_att_hidden_dim = 64,
     is_multi_cnn: bool = True,
     target_rgb: torch.Tensor | None = None,
-    colour_score_pooling: Literal["mean", "max"] = "mean",
-    use_proprio: bool = False
+    colour_score_pooling: Literal["mean", "max"] = "mean"
   ):
-    
-
-    super(CamAttentionPolicy, self).__init__()
     self.cam_type = cam_type
-    self.use_proprio = use_proprio
+    super(CamAttentionOld, self).__init__()
     print(f"[cam_attention_policy] - Policy] Using {self.cam_type} as camera type")
     
     self.num_cams = 0
@@ -171,7 +139,7 @@ class CamAttentionPolicy(nn.Module):
     batch_size, num_cams, c, w, h = images.shape
     ## ensure same number of cams given
     assert num_cams == self.num_cams, f"[cam_attention_policy] Model Creation time num cams {self.num_cams} does not match the inference time tensor shape num cams: {num_cams}"
-    print("---FORWARD:")
+    
     # MultiCamCNN forward pass per camera selected
     
     ## in order wrist -> ls -> rs
@@ -193,55 +161,34 @@ class CamAttentionPolicy(nn.Module):
     
     # print()
     feats = torch.stack(to_stack, dim = 1)  ## dim = 1 so (batch_size, num_cams, feat_size, 2, 2)
-    print(f"1-{feats.shape = }")
+    
     t_scores = torch.stack(target_scores, dim = 1) ## (b, num_cams, 1) last float being target score
-    print(f"{t_scores.shape = }")
     t_scores = t_scores / (t_scores.sum(dim=1, keepdim=True) + 1e-6) ## normalisation with some epsilon, maybe can use softmax?
-    print(f"{t_scores.shape = }")
+    # print(f"1-{feats.shape = }")
     
     assert feats.shape[1] == self.num_cams, f"[cam_attention_policy] The image dimension ({feats.shape[1]}) is not the same as the number of cams being used for the policy ({self.num_cams})"  
-
-    # TODO: maybe dont pool but use the entire encoding??
-    feats = feats.mean(dim=[-2, -1]) ## Global Average Pooling the other dimensions after feat size, 
-
+    
+    feats = feats.mean(dim=[-2, -1]) ## Global Average Pooling the other dimensions after feat size
     feats = feats.view(batch_size, num_cams, -1) ## should be (batch_size, num_cams, feat_size) here
     
-    ## TODO: wait something is wrong here why are the t_scores not used in any way
-
-    print(f"2-{feats.shape = }")
+    # print(f"2-{feats.shape = }")
     # CameraWise attention
-    attention_weights: torch.Tensor = self.cam_attention(feats, t_scores) ## (B, num_cams)
-    print(f"{attention_weights.shape = }")
+    attention_weights: torch.Tensor = self.cam_attention(feats)
+    # print(f"{attention_weights.shape = }")
     
     fused_feats = (attention_weights.unsqueeze(-1) * feats).sum(dim=1)
-    print(f"{fused_feats.shape = }")
+    # print(f"{fused_feats.shape = }")
     
     # Policy Head
     actions = self.policy_head(fused_feats)
     # print(f"{actions.shape = }")
-    print("---END-FORWARD")
+    
     return actions, {
       "attention_weights": attention_weights,
       "kl_divergence": F.kl_div(attention_weights.log(), t_scores, reduction="batchmean")
       } #//NOTE: might need attention weights later on
     
-  def _collate_demos(self, batch) -> tuple[torch.Tensor, torch.Tensor, dict]:
-    ## batch: [(tensor, tensor)] for inputs, labels
-    inputs, labels, loader_dict = zip(*batch) #unzip the tuple list
 
-    ## NOTE: handle other dict entries as well
-    proprio = None
-    if self.use_proprio:
-      proprio = [d["proprio"] for d in loader_dict]## should always exist, might be empty
-      proprio = torch.cat(proprio, dim=0)
-
-    ## concat on the batch axis, preserve order of input to label
-    
-    
-    return torch.cat(inputs, dim=0), torch.cat(labels, dim=0), {
-      "proprio": proprio, 
-      "demo_lengths": [len(i) for i in inputs] ## needed for the lambda k thing
-    }
   def train_policy(self, 
     demos: list[Demo],
     epochs: int = 1000,
@@ -251,8 +198,6 @@ class CamAttentionPolicy(nn.Module):
     lr_eta_min = 1e-4,
     shuffle_data = True, 
     shuffle_obs_in_demo = False,
-    lock_loader_seed: Optional[int] = None, 
-    dataset_to_use: Literal["obs", "demo"] = "demo",
     lambda_attn: float = 1e-2,
     
     model_path: Optional[str] = None
@@ -282,27 +227,8 @@ class CamAttentionPolicy(nn.Module):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimiser, T_max= epochs, eta_min=lr_eta_min )
     
     ## 'stack' makes sure to return all the images fuxed together (batch_size, 3, num_cam, W, H)
-    if dataset_to_use == "obs":
-      dataset = DemoObsDataset(
-        demos,
-        self.cam_type,
-        shuffle_obs=shuffle_obs_in_demo,
-        get_type="stack"
-      )  
-    else:
-      dataset = DemoDataset(
-        demos, 
-        self.cam_type, 
-        get_type="stack"
-      )
-    loader_extras: dict = {"collate_fn": self._collate_demos} if dataset_to_use == "demo" else {}
-    loader = DataLoader(
-      dataset,
-      batch_size=minibatch_size,
-      shuffle=shuffle_data,
-      generator=torch.manual_seed(lock_loader_seed) if lock_loader_seed is not None else None,
-      **loader_extras
-    ) ## shuffling makes it worse
+    dataset = DemoObsDataset(demos, self.cam_type, shuffle_obs=shuffle_obs_in_demo, get_type="stack")
+    loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=shuffle_data) ## shuffling makes it worse
     # print(f"Dataset Size: {len(dataset)}")
     
     writer = SummaryWriter()
