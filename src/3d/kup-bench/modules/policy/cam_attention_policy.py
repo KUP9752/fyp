@@ -41,19 +41,35 @@ class CameraAttention(nn.Module):
   def __init__(self, feature_dim, hidden_dim):
     super(CameraAttention, self).__init__()
     self.attention_mlp = nn.Sequential(
-      nn.Linear(feature_dim, hidden_dim),
+      nn.Linear(feature_dim + 1, hidden_dim), ## NOTE: +1 for the colour score
       nn.ReLU(inplace=False),
       nn.LayerNorm(hidden_dim), ## NOTE: did not help attention collapse, still extremes but flipped the other way [0, 1] -> [0.99, 0.01] 
       nn.Linear(hidden_dim, 1)  # Output 1 score per camera
     )
 
-  def forward(self, features, temperature: float | None = None):  
-    # features: (batch_size, num_cameras, feature_dim)
-    scores: torch.Tensor = self.attention_mlp(features)  # (batch_size, num_cameras, 1)
+  def forward(self, 
+    feats: torch.Tensor, 
+    t_scores: torch.Tensor, 
+    temperature: float | None = None
+  ):  
+    # feats: (batch_size, num_cameras, feature_dim)
+    # t_scores: (batch_size, num_cameras)
+
+    B, n, d = feats.shape
+    # flat_t_scores = t_scores.unsqueeze(-1) ## same as below
+    flat_t_scores = t_scores.view(B, n, 1)
+
+    comb = torch.cat([feats, flat_t_scores], dim = -1) # along feature dim: d
+
+    comb = comb.view(B * n, d + 1) ## not that colour score is added
+
+    scores = self.attention_mlp(comb) ## gives (B * num_cameras, 1)
+    scores = scores.view(B, n)  # (batch_size, num_cameras)
+
     scores = scores.squeeze(-1)            # (batch_size, num_cameras)
 
     ## //NOTE: normalisation, att_weights were always [0, 1] or leaning towards one cam, need normalisation
-    scores = scores - scores.max(dim=1, keepdim=True)[0]
+    scores = scores - scores.max(dim=1, keepdim=True)[0] ## logit stabilisation
     
     if temperature:
       return F.softmax(scores / temperature, dim=1)      
@@ -167,13 +183,14 @@ class CamAttentionPolicy(nn.Module):
     # print(f"1-{feats.shape = }")
     
     assert feats.shape[1] == self.num_cams, f"[cam_attention_policy] The image dimension ({feats.shape[1]}) is not the same as the number of cams being used for the policy ({self.num_cams})"  
-    
     feats = feats.mean(dim=[-2, -1]) ## Global Average Pooling the other dimensions after feat size
     feats = feats.view(batch_size, num_cams, -1) ## should be (batch_size, num_cams, feat_size) here
     
+    ## TODO: wait something is wrong here why are the t_scores not used in any way
+
     # print(f"2-{feats.shape = }")
     # CameraWise attention
-    attention_weights: torch.Tensor = self.cam_attention(feats)
+    attention_weights: torch.Tensor = self.cam_attention(feats, t_scores) ## (B, num_cams)
     # print(f"{attention_weights.shape = }")
     
     fused_feats = (attention_weights.unsqueeze(-1) * feats).sum(dim=1)
