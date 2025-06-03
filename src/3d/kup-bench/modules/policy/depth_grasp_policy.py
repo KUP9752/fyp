@@ -165,100 +165,106 @@ class DepthGraspPolicy(SimpleGraspPolicy):
         
     raise ValueError(f"[depth_grasp_policy - forward] config '{self.config}' is unknown!")
 
-  def train_policy(self,
-    demos: list[Demo],
-    epochs: int = 200,
-    minibatch_size: int = 1,
-    lr: float = 0.01,
-    data_label: Literal["joint_velocities", "joint_positions"] = "joint_velocities",
-    shuffle_data=True,
-    shuffle_obs_in_demo=False,
-    model_path: Optional[str] = None,
-    lambda_grasp_loss: float = 1, 
-    lock_loader_seed: Optional[int] = None,
-    dataset_to_use: Literal['obs'] | Literal['demo'] = "demo",
-  ):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+## just use super
+  # def train_policy(self,
+  #   demos: list[Demo],
+  #   epochs: int = 200,
+  #   minibatch_size: int = 1,
+  #   lr: float = 0.01,
+  #   data_label: Literal["joint_velocities", "joint_positions"] = "joint_velocities",
+  #   shuffle_data=True,
+  #   shuffle_obs_in_demo=False,
+  #   model_path: Optional[str] = None,
+  #   lambda_grasp_loss: float = 1, 
+  #   lock_loader_seed: Optional[int] = None,
+  #   dataset_to_use: Literal['obs'] | Literal['demo'] = "demo",
+  #   last_k_grasp_mask: Optional[int] = None
+  # ):
+  #   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    params_str = params_string(
-      epochs = epochs, 
-      model_path = model_path,
-      shuffle_data = shuffle_data,
-      minibatch_size = minibatch_size,
-      lr = lr, 
-      data_label = data_label, 
-      shuffle_obs_in_demo = f'{shuffle_obs_in_demo} [not being used!]',
-      lambda_grasp_loss = lambda_grasp_loss,
-      dataset_to_use = f'{dataset_to_use} [not being used!]',
-      lock_loader_seed = lock_loader_seed,
-      device = device
-    )
+  #   params_str = params_string(
+  #     epochs = epochs, 
+  #     model_path = model_path,
+  #     shuffle_data = shuffle_data,
+  #     minibatch_size = minibatch_size,
+  #     lr = lr, 
+  #     data_label = data_label, 
+  #     shuffle_obs_in_demo = f'{shuffle_obs_in_demo} [not being used!]',
+  #     lambda_grasp_loss = lambda_grasp_loss,
+  #     dataset_to_use = f'{dataset_to_use} [not being used!]',
+  #     lock_loader_seed = lock_loader_seed,
+  #     last_k_grasp_mask = last_k_grasp_mask,
+  #     device = device
+  #   )
     
-    print(f"Training params: {params_str}")
+  #   print(f"Training params: {params_str}")
 
-    if dataset_to_use != "demo":
-      raise NameError(f"[depth_grasp_policy - train_policy] Not allowing the other dataset anymore only allow 'demo'")
+  #   if dataset_to_use != "demo":
+  #     raise NameError(f"[depth_grasp_policy - train_policy] Not allowing the other dataset anymore only allow 'demo'")
     
-    shuffle_obs_in_demo = None
+  #   shuffle_obs_in_demo = None
 
 
-    model = self.to(device)
+  #   model = self.to(device)
 
-    dataset = DemoDataset(demos,
-      cam_type=self.cam_type,
-      get_type = "cat",
-      use_proprio = self.use_proprio,
-      label_get=data_label
-    )
+  #   dataset = DemoDataset(demos,
+  #     cam_type=self.cam_type,
+  #     get_type = "cat",
+  #     use_proprio = self.use_proprio,
+  #     label_get=data_label
+  #   )
 
-    loader = DataLoader(
-      dataset,
-      batch_size=minibatch_size,
-      shuffle=shuffle_data,
-      collate_fn=self._collate_demos, ## uses parents collater, see `simple_grasp_policy._collate_demos`
-      generator=torch.manual_seed(lock_loader_seed) if lock_loader_seed else None
-    )
+  #   loader = DataLoader(
+  #     dataset,
+  #     batch_size=minibatch_size,
+  #     shuffle=shuffle_data,
+  #     collate_fn=self._collate_demos, ## uses parents collater, see `simple_grasp_policy._collate_demos`
+  #     generator=torch.manual_seed(lock_loader_seed) if lock_loader_seed else None
+  #   )
     
-    bce_loss = nn.BCEWithLogitsLoss(pos_weight=None)
-    mse_loss = nn.MSELoss()
-    optimiser = optim.Adam(model.parameters(), lr = lr)
+  #   bce_loss = nn.BCEWithLogitsLoss(pos_weight=None)
+  #   mse_loss = nn.MSELoss()
+  #   optimiser = optim.Adam(model.parameters(), lr = lr)
 
-    model.train()
-    self.losses = [0 for _ in range(epochs)]
-    for epoch in progress(range(epochs)):
-      total_pose_loss, total_grasp_loss = 0., 0.
+  #   running_pose_loss = 0.0
+  #   tunning_grasp_loss = 0.0
+
+  #   model.train()
+  #   self.losses = [0 for _ in range(epochs)]
+  #   for epoch in progress(range(epochs)):
+  #     running_pose_loss, tunning_grasp_loss = 0., 0.
       
-      for inputs, labels, loader_dict in loader:
-        if dataset_to_use == "demo":
-          inputs, labels = inputs.squeeze(), labels.squeeze()
+  #     for inputs, labels, loader_dict in loader:
+  #       if dataset_to_use == "demo":
+  #         inputs, labels = inputs.squeeze(), labels.squeeze()
 
-        proprio_inputs = None
-        if self.use_proprio:
-          proprio_inputs = loader_dict["proprio"].squeeze()
-          proprio_inputs = proprio_inputs.to(device)
+  #       proprio_inputs = None
+  #       if self.use_proprio:
+  #         proprio_inputs = loader_dict["proprio"].squeeze()
+  #         proprio_inputs = proprio_inputs.to(device)
 
-        inputs, labels = inputs.to(device), labels.to(device)
+  #       inputs, labels = inputs.to(device), labels.to(device)
         
-        optimiser.zero_grad()
-        pred_actions, _ = model(inputs, proprio = proprio_inputs)
+  #       optimiser.zero_grad()
+  #       pred_actions, _ = model(inputs, proprio = proprio_inputs)
 
-        ## [:, x] to preserve the batch shape (batch_size, X)
-        pose_loss = mse_loss(pred_actions[:, :-1], labels[:, :-1]) ## only the pose not he gripper action
-        grasp_loss = bce_loss(pred_actions[:, -1], labels[:, -1])
+  #       ## [:, x] to preserve the batch shape (batch_size, X)
+  #       pose_loss = mse_loss(pred_actions[:, :-1], labels[:, :-1]) ## only the pose not he gripper action
+  #       grasp_loss = bce_loss(pred_actions[:, -1], labels[:, -1])
         
-        loss = pose_loss + lambda_grasp_loss * grasp_loss
+  #       loss = pose_loss + lambda_grasp_loss * grasp_loss
         
-        loss.backward()
-        optimiser.step()
+  #       loss.backward()
+  #       optimiser.step()
 
-        total_pose_loss += pose_loss.item()
-        total_grasp_loss += grasp_loss.item()
+  #       running_pose_loss += pose_loss.item()
+  #       tunning_grasp_loss += grasp_loss.item()
 
-        loss = (total_pose_loss + lambda_grasp_loss * total_grasp_loss) / len(loader)
+  #     loss = (running_pose_loss + lambda_grasp_loss * tunning_grasp_loss) / len(loader)
 
-        self.losses[epoch] = loss
+  #     self.losses[epoch] = loss
       
-    print(f"Done Training Policy on {len(demos)} Demos") 
+  #   print(f"Done Training Policy on {len(demos)} Demos") 
     
 
     
