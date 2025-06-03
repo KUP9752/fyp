@@ -15,6 +15,7 @@ from lib.cam_type import CamType
 from lib.utils import params_string
 
 from modules.dataset.demo_obs_dataset import DemoObsDataset
+from modules.dataset.demo_dataset import DemoDataset
 from modules.cnns.multi_cam_cnn import MultiCamCnn
 from modules.cnns.cnn_encoder import CNNEncoder
 
@@ -205,7 +206,23 @@ class CamAttentionPolicy(nn.Module):
       "kl_divergence": F.kl_div(attention_weights.log(), t_scores, reduction="batchmean")
       } #//NOTE: might need attention weights later on
     
+  def _collate_demos(self, batch) -> tuple[torch.Tensor, torch.Tensor, dict]:
+    ## batch: [(tensor, tensor)] for inputs, labels
+    inputs, labels, loader_dict = zip(*batch) #unzip the tuple list
 
+    ## NOTE: handle other dict entries as well
+    proprio = None
+    if self.use_proprio:
+      proprio = [d["proprio"] for d in loader_dict]## should always exist, might be empty
+      proprio = torch.cat(proprio, dim=0)
+
+    ## concat on the batch axis, preserve order of input to label
+    
+    
+    return torch.cat(inputs, dim=0), torch.cat(labels, dim=0), {
+      "proprio": proprio, 
+      "demo_lengths": [len(i) for i in inputs] ## needed for the lambda k thing
+    }
   def train_policy(self, 
     demos: list[Demo],
     epochs: int = 1000,
@@ -215,6 +232,8 @@ class CamAttentionPolicy(nn.Module):
     lr_eta_min = 1e-4,
     shuffle_data = True, 
     shuffle_obs_in_demo = False,
+    lock_loader_seed: Optional[int] = None, 
+    dataset_to_use: Literal["obs", "demo"] = "demo",
     lambda_attn: float = 1e-2,
     
     model_path: Optional[str] = None
@@ -244,8 +263,27 @@ class CamAttentionPolicy(nn.Module):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimiser, T_max= epochs, eta_min=lr_eta_min )
     
     ## 'stack' makes sure to return all the images fuxed together (batch_size, 3, num_cam, W, H)
-    dataset = DemoObsDataset(demos, self.cam_type, shuffle_obs=shuffle_obs_in_demo, get_type="stack")
-    loader = DataLoader(dataset, batch_size=minibatch_size, shuffle=shuffle_data) ## shuffling makes it worse
+    if dataset_to_use == "obs":
+      dataset = DemoObsDataset(
+        demos,
+        self.cam_type,
+        shuffle_obs=shuffle_obs_in_demo,
+        get_type="stack"
+      )  
+    else:
+      dataset = DemoDataset(
+        demos, 
+        self.cam_type, 
+        get_type="stack"
+      )
+    loader_extras: dict = {"collate_fn": self._collate_demos} if dataset_to_use == "demo" else {}
+    loader = DataLoader(
+      dataset,
+      batch_size=minibatch_size,
+      shuffle=shuffle_data,
+      generator=torch.manual_seed(lock_loader_seed) if lock_loader_seed is not None else None,
+      **loader_extras
+    ) ## shuffling makes it worse
     # print(f"Dataset Size: {len(dataset)}")
     
     writer = SummaryWriter()
