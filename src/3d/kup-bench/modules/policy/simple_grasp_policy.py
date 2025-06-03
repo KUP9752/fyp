@@ -112,7 +112,7 @@ class SimpleGraspPolicy(SimplePolicy):
     
     return torch.cat(inputs, dim=0), torch.cat(labels, dim=0), {
       "proprio": proprio, 
-      "demo_lengths": [len(i) for i in inputs] 
+      "demo_lengths": [len(i) for i in inputs] ## needed for the lambda k thing
     }
 
   def _last_k_mask(self, lens, k: int, device) -> torch.Tensor:
@@ -142,7 +142,7 @@ class SimpleGraspPolicy(SimplePolicy):
     shuffle_obs_in_demo = False,
     model_path: Optional[str] = None,
     lambda_grasp_loss: float = 1.,
-    lock_loader_seed: Optional[int] = None, ## NOTE: disabled, not using
+    lock_loader_seed: Optional[int] = None, 
     dataset_to_use: Literal["obs", "demo"] = "obs",
     last_k_grasp_mask: Optional[int] = None
   ):
