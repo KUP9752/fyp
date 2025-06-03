@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from task_utils import launch_test_env, save_demos_for, load_demos_for, run_determined_reach_with_agent, run_reach_task_with_agent, run_determined_grasp_with_agent
+from task_utils import launch_test_env, save_demos_for, load_demos_for, run_determined_reach_with_agent, run_determined_grasp_with_agent
 from lib.utils import save_demos
 from itertools import product
 #%%
@@ -96,15 +96,15 @@ def static_tasks_epoch_search():
         training_params["epochs"] = ep  
         agent = make_agent()
 
-        rets, is_done = run_reach_task_with_agent(
-          env, 
-          task, 
-          agent,
-          demos, 
-          "demo_max", 
-          within_err_dist= 0.08,
-          training_params= training_params,
-        )  
+        # rets, is_done = run_reach_task_with_agent(
+        #   env, 
+        #   task, 
+        #   agent,
+        #   demos, 
+        #   "demo_max", 
+        #   within_err_dist= 0.08,
+        #   training_params= training_params,
+        # )  
 
         df.loc[count] = {
           "task_name": get_task_name(task), 
@@ -124,10 +124,14 @@ def run_main_test():
   tasks = [ReachObs_Random, ReachObs_IndepRandom]
 
   epochs = [
-    50, 100, 200, 500, 1000, 2000, 5000
+    50, 100, 200, 500, 1000, 2000, ##5000 seems unnecessary
   ]
 
-  demo_counts = [10, 20]
+  demo_counts = [
+    10, 
+    20,
+  ]
+
   cam_types = [
     CamType.WRIST,
     CamType.LEFT_SHOULDER,
@@ -137,9 +141,15 @@ def run_main_test():
     CamType.WRIST | CamType.LEFT_SHOULDER,
     CamType.LEFT_SHOULDER |  CamType.RIGHT_SHOULDER,
   ]
+
   dataset_types = [
-    "obs",
-    "demo", 
+    "obs", 
+    # "demo", 
+  ]
+  mbsizes = [
+    40, 
+    64, 
+    100
   ]
   env = launch_test_env(
     dataset_root='',
@@ -163,25 +173,65 @@ def run_main_test():
       "done_count",
       "min_distance",
       "final_distance",
-      "dataset_type"
-    ], index = range(len(tasks) * len(epochs) * len(demo_counts) * len(dataset_types) * len(cam_types))
+      "dataset_type",
+      "mbsize",
+    ], index = range(
+      len(tasks) 
+      * len(epochs) 
+      * len(demo_counts) 
+      * len(dataset_types) 
+      * len(cam_types)
+      * len(mbsizes)
+    )
   )
-
   training_params = {
-    "epochs": None,
-    "minibatch_size": 32,
-    "lr": 1e-3,
-    "shuffle_obs_in_demo": False,
-    "shuffle_data": False,
-    "dataset_to_use": "obs", 
-    "lock_loader_seed": 42
-
+    # "demo": {
+    #   "epochs": None,
+    #   "minibatch_size": 10,
+    #   "lr": 1e-3,
+    #   "shuffle_obs_in_demo": False,
+    #   "shuffle_data": True, ##let "demo" use shuffling and other things, that benefit its learning for more than 1 demo
+    #   "dataset_to_use": "demo", 
+    #   "lock_loader_seed": 42
+    # },
+    # "obs": {
+      "epochs": None,
+      "minibatch_size": None,
+      "lr": 1e-3,
+      "shuffle_obs_in_demo": False,
+      "shuffle_data": False, ##let "demo" use shuffling and other things, that benefit its learning for more than 1 demo
+      "dataset_to_use": None, 
+      "lock_loader_seed": 42
+    # }
   }
+
+  epochs = [
+    1, ##5000 seems unnecessary
+  ]
+
+  demo_counts = [
+    1
+  ]
+
+  cam_types = [
+    CamType.WRIST,
+  ]
+
+  dataset_types = [
+    "obs", 
+    # "demo", 
+  ]
+  mbsizes = [
+    40, 
+  ]
+
+
   count = 0 
   for task in tasks:
     task_env = env.get_task(task)
     test_demos = task_env.get_demos(10, live_demos = True)
     save_demos(test_demos, f"ro-{get_task_name(task)}--demos")
+
     for dt in dataset_types:
       ## this already done can skip it
       # if task == ReachObs_Random and dt == "obs": continue ## was already done earlier
@@ -198,43 +248,192 @@ def run_main_test():
           
 
           for ep in epochs:
-            training_params["dataset_to_use"] = dt  
-            if dt == "demo":
-              training_params["minibatch_size"] = 10
+            for mb in mbsizes:
+              training_params["dataset_to_use"] = dt  
+              # if dt == "demo":
+              #   training_params["minibatch_size"] = 10
 
-            training_params["epochs"] = ep  
-            agent = make_agent(ct)
+              training_params["epochs"] = ep  
+              training_params["minibatch_size"] = mb 
 
-            agent.ingest(demos, **training_params)
+              agent = make_agent(ct)
 
-            ret_dicts = run_determined_reach_with_agent(
-              env, 
-              task, 
-              agent,
-              test_demos, 
-              "demo_max", 
-              within_err_dist= 0.11,
-            )  
-            final_dists = [d["distances"][-1] for d in ret_dicts]
-            min_dists = [min(d["distances"]) for d in ret_dicts]
+              agent.ingest(demos, **training_params)
 
-            done_count = len([d["done"] for d in ret_dicts if d["done"]])
-            eplens = [d["max_eplen"] for d in ret_dicts]
+              ret_dicts = run_determined_reach_with_agent(
+                env, 
+                task, 
+                agent,
+                test_demos, 
+                "demo_max", 
+                within_err_dist= 0.11,
+              )  
+              final_dists = [d["distances"][-1] for d in ret_dicts]
+              min_dists = [min(d["distances"]) for d in ret_dicts]
 
-            df.loc[count] = {
-              "task_name": get_task_name(task), 
-              "cam_type": agent.cam_type, 
-              "epochs": ep,
-              "demo_count": dc, 
-              "max_eplens": eplens,
-              "done_count": done_count, 
-              "min_distance": sum(min_dists) / len(min_dists),
-              "final_distance": sum(final_dists) / len(final_dists),
-              "dataset_type": training_params["dataset_to_use"]
-            }
-            count += 1
-            df.to_csv("ro-randoms-cam.csv", index=True)
+              done_count = len([d["done"] for d in ret_dicts if d["done"]])
+              eplens = [d["max_eplen"] for d in ret_dicts]
+
+              df.loc[count] = {
+                "task_name": get_task_name(task), 
+                "cam_type": agent.cam_type, 
+                "epochs": ep,
+                "demo_count": dc, 
+                "max_eplens": eplens,
+                "done_count": done_count, 
+                "min_distance": sum(min_dists) / len(min_dists),
+                "final_distance": sum(final_dists) / len(final_dists),
+                "dataset_type": training_params["dataset_to_use"],
+                "mbsize": training_params["minibatch_size"]
+              }
+              count += 1
+              df.to_csv("obs-rerun-mbsize:40-64-100--ro-randoms-cam.csv", index=True)
 #%%
+def grasp_tuning():
+  env = launch_test_env(
+    dataset_root = "data/1demo",
+    enableds = CamType.WRIST | CamType.RIGHT_SHOULDER | CamType.LEFT_SHOULDER,
+  )
+
+  task = Vision_Static
+  normal = {
+    "scale": 1.,
+    "wrist_cam_distance": 0.6
+  }
+  # smaller = {
+  #   "scale": 0.5,
+  #   "wrist_cam_distance": 0.3
+  # }
+
+  env._dataset_root = f"data/1demo/normal-{get_task_name(task)}"
+  task_env = env.get_task(task, **normal)
+  demos = task_env.get_demos(1, live_demos=False)
+
+  
+  # env._dataset_root = f"data/1demo/smaller-{get_task_name(task)}"
+  # task_env = env.get_task(task, **smaller)
+  # small_demos = task_env.get_demos(1, live_demos=False)
+
+  epochs = [100, 120, 150, 200, 400, 500]
+  lambdas = [0.8, 0.9, 1.0, 1.1, 1.2]
+  repeats = 10
+
+  cam_types =  [
+    CamType.WRIST,
+    CamType.WRIST | CamType.WRIST_DEPTH,
+    CamType.LEFT_SHOULDER |  CamType.RIGHT_SHOULDER,
+    CamType.WRIST | CamType.RIGHT_SHOULDER | CamType.LEFT_SHOULDER,
+    CamType.WRIST | CamType.RIGHT_SHOULDER | CamType.LEFT_SHOULDER | CamType.WRIST_DEPTH,
+    CamType.WRIST | CamType.RIGHT_SHOULDER,
+    CamType.WRIST | CamType.LEFT_SHOULDER,
+  ]
+
+  make_agent = lambda x: Agent(
+    action_shape= env.action_shape[0],
+    policy_type=PolicyType.DEPTH_GRASP,
+    cam_type=x,
+    config = "depth_ch"
+    ## others are defaulted
+  )
+  print(f"{make_agent(CamType.WRIST).policy.grasp_head = }")
+  
+
+  training_params = {
+    "epochs": None,
+    "minibatch_size": 1,
+    "lr": 1e-3,
+    "shuffle_obs_in_demo": False,
+    "shuffle_data": True,
+    "dataset_to_use": "demo",  ## can use this finally
+    "lock_loader_seed": 42,
+    "lambda_grasp_loss": None,
+  }
+
+  combs = list(product(epochs, cam_types, lambdas))
+  df_all = pd.DataFrame(columns=[
+      "task_name",
+      "epochs",
+      "cam_type",
+      "repeat_idx",
+      "demo_count",
+      "control_done",
+      "min_distance",
+      "final_distance",
+      "dataset_type",
+      "grasp_loss_lambda",
+      "control_gripper_image_paths",
+    ], index = range(len(combs) * repeats)
+  )
+
+  df_avg = pd.DataFrame(columns=[
+    "task_name",
+    "epochs",
+    "cam_type",
+    "demo_count",
+    "done_count",
+    "avg_min_distance",
+    "avg_final_distance",
+    "dataset_type",
+    "grasp_loss_lambda",
+    ], index = range(len(combs))
+  )
+
+  count = 0
+  for i, (ep, ct, l) in enumerate(combs):
+    training_params["epochs"] = ep
+    training_params["lambda_grasp_loss"] = l
+
+    assert len(demos) == 1, "more than 1 demo!!"
+    
+    dones  = []
+    mins  = []
+    finals = []
+    for rep in range(repeats):
+      agent = make_agent(ct)
+      agent.ingest(demos, **training_params)
+
+      run_dict = run_determined_grasp_with_agent(
+        env, 
+        task, 
+        agent, 
+        demos, 
+        max_eplen="demo_max", 
+        do_extra_outs=True, 
+        task_params = normal
+      )[0] ## there is only one demo hence only one output
+
+      dones.append(run_dict["done"])
+      mins.append(min(run_dict["distances"]))
+      finals.append(run_dict["distances"][-1])
+
+      df_all.loc[count] = {
+        "task_name": get_task_name(task),
+        "epochs": training_params["epochs"],
+        "cam_type": ct,
+        "repeat_idx": rep,
+        "demo_count": 1,
+        "control_done": run_dict["done"],
+        "min_distance": min(run_dict["distances"]),
+        "final_distance": run_dict["distances"][-1],
+        "dataset_type": training_params["dataset_to_use"],
+        "grasp_loss_lambda": training_params["lambda_grasp_loss"],
+        "control_gripper_image_paths":run_dict["gripper_image_paths"],
+      }
+      df_all.to_csv("ALLvs-tuning-normal--old-policy.csv", index=True)
+      count += 1
+    
+    df_avg.loc[i] = {
+      "task_name": get_task_name(task),
+      "epochs": training_params["epochs"],
+      "cam_type": ct,
+      "demo_count": 1,
+      "done_count": len([b for b in dones if b]),
+      "avg_min_distance": sum(mins) / len(mins),
+      "avg_final_distance":sum(finals) / len(finals),
+      "dataset_type": training_params["dataset_to_use"],
+      "grasp_loss_lambda": training_params["lambda_grasp_loss"],
+    }
+    df_avg.to_csv("vs-tuning-normal--old-policy.csv", index=True)
 def test_di():
   env = launch_test_env(
     dataset_root = "data/1demo",
@@ -342,18 +541,9 @@ def test_di():
 
     for rep in range(repeats):
       agent = make_agent(ct)
-      agent.ingest(demos, **training_params)
+      agent.ingest(small_demos, **training_params)
 
       control_dict = run_determined_grasp_with_agent(
-        env, 
-        task, 
-        agent, 
-        demos, 
-        max_eplen="demo_max", 
-        do_extra_outs=True, 
-        task_params = normal
-      )[0] ## there is only one demo hence only one output
-      test_dict = run_determined_grasp_with_agent(
         env, 
         task, 
         agent, 
@@ -361,6 +551,15 @@ def test_di():
         max_eplen="demo_max", 
         do_extra_outs=True, 
         task_params = smaller
+      )[0] ## there is only one demo hence only one output
+      test_dict = run_determined_grasp_with_agent(
+        env, 
+        task, 
+        agent, 
+        demos, 
+        max_eplen=100, 
+        do_extra_outs=True, 
+        task_params = normal
       )[0]
 
       control_dones.append(control_dict["done"])
@@ -386,7 +585,7 @@ def test_di():
         "control_gripper_image_paths":control_dict["gripper_image_paths"],
         "test_gripper_image_paths":test_dict["gripper_image_paths"],
       }
-      df_all.to_csv("ALLvs-train_normal-test_small.csv", index=True)
+      df_all.to_csv("ALLvs-train_small-test_normal--normal_more_eplen-.csv", index=True)
       count += 1
     
     df_avg.loc[i] = {
@@ -402,13 +601,10 @@ def test_di():
       "test_final_distance":sum(test_finals) / len(test_finals),
       "dataset_type": training_params["dataset_to_use"],
     }
-    df_avg.to_csv("vs-train_normal-test_small.csv", index=True)
-
-
-
-
-
+    df_avg.to_csv("vs-train_small-test_normal--normal_more_eplen-.csv", index=True)
 
 
 #%%
-test_di()
+# test_di()
+# run_main_test()
+run_main_test()
