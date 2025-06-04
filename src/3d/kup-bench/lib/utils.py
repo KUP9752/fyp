@@ -78,9 +78,9 @@ def pick_obs_from_cam(cam_type: CamType, obs: Observation, normalise_rgb: bool =
     case CamType.RIGHT_SHOULDER:
       return (obs.right_shoulder_rgb / 255) if normalise_rgb else obs.right_shoulder_rgb
     case CamType.OVERHEAD:
-      return (obs.overhead_rgb / 255) if normalise_rgb else obs.right_shoulder_rgb
+      return (obs.overhead_rgb / 255) if normalise_rgb else obs.overhead_rgb
     case CamType.FRONT:
-      return (obs.front_rgb / 255) if normalise_rgb else obs.right_shoulder_rgb
+      return (obs.front_rgb / 255) if normalise_rgb else obs.front_rgb
     ## NOTE: depth normalisation is min-max here, if we want to keep the meanings of metres in the model, maybe use log etc??
     case CamType.WRIST_DEPTH:
       depth_arr = ndarray_min_max_norm(obs.wrist_depth) if normalise_depth else obs.wrist_depth 

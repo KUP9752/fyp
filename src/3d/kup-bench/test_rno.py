@@ -156,8 +156,6 @@ def run_main_test():
     enableds = CamType.WRIST | CamType.RIGHT_SHOULDER | CamType.LEFT_SHOULDER,
   )
 
-
-  
   make_agent = lambda x: Agent(
     action_shape= env.action_shape[0],
     policy_type=PolicyType.SIMPLE,
@@ -204,27 +202,6 @@ def run_main_test():
       "lock_loader_seed": 42
     # }
   }
-
-  epochs = [
-    1, ##5000 seems unnecessary
-  ]
-
-  demo_counts = [
-    1
-  ]
-
-  cam_types = [
-    CamType.WRIST,
-  ]
-
-  dataset_types = [
-    "obs", 
-    # "demo", 
-  ]
-  mbsizes = [
-    40, 
-  ]
-
 
   count = 0 
   for task in tasks:
@@ -315,7 +292,8 @@ def grasp_tuning():
   # small_demos = task_env.get_demos(1, live_demos=False)
 
   epochs = [100, 120, 150, 200, 400, 500]
-  lambdas = [0.8, 0.9, 1.0, 1.1, 1.2]
+  lambdas = [0.9, 1.0, 1.2]
+  last_ks = [None, 5, 7, 9]
   repeats = 10
 
   cam_types =  [
@@ -347,9 +325,10 @@ def grasp_tuning():
     "dataset_to_use": "demo",  ## can use this finally
     "lock_loader_seed": 42,
     "lambda_grasp_loss": None,
+    "last_k_grasp_mask": None
   }
 
-  combs = list(product(epochs, cam_types, lambdas))
+  combs = list(product(epochs, cam_types, lambdas, last_ks))
   df_all = pd.DataFrame(columns=[
       "task_name",
       "epochs",
@@ -361,7 +340,9 @@ def grasp_tuning():
       "final_distance",
       "dataset_type",
       "grasp_loss_lambda",
+      "last_k_mask",
       "control_gripper_image_paths",
+      "max_eplen", 
     ], index = range(len(combs) * repeats)
   )
 
@@ -375,13 +356,15 @@ def grasp_tuning():
     "avg_final_distance",
     "dataset_type",
     "grasp_loss_lambda",
+    "last_k_mask",
     ], index = range(len(combs))
   )
 
   count = 0
-  for i, (ep, ct, l) in enumerate(combs):
+  for i, (ep, ct, l, last_k) in enumerate(combs):
     training_params["epochs"] = ep
     training_params["lambda_grasp_loss"] = l
+    training_params["last_k_grasp_mask"] = last_k
 
     assert len(demos) == 1, "more than 1 demo!!"
     
@@ -418,8 +401,10 @@ def grasp_tuning():
         "dataset_type": training_params["dataset_to_use"],
         "grasp_loss_lambda": training_params["lambda_grasp_loss"],
         "control_gripper_image_paths":run_dict["gripper_image_paths"],
+        "last_k_mask": training_params["last_k_grasp_mask"],
+        "max_eplen":run_dict["max_eplen"],
       }
-      df_all.to_csv("ALLvs-tuning-normal--old-policy.csv", index=True)
+      df_all.to_csv("ALLvs-tuning-normal--last-k-test.csv", index=True)
       count += 1
     
     df_avg.loc[i] = {
@@ -432,8 +417,9 @@ def grasp_tuning():
       "avg_final_distance":sum(finals) / len(finals),
       "dataset_type": training_params["dataset_to_use"],
       "grasp_loss_lambda": training_params["lambda_grasp_loss"],
+      "last_k_mask": training_params["last_k_grasp_mask"],
     }
-    df_avg.to_csv("vs-tuning-normal--old-policy.csv", index=True)
+    df_avg.to_csv("vs-tuning-normal--last-k-test.csv", index=True)
 def test_di():
   env = launch_test_env(
     dataset_root = "data/1demo",
@@ -607,4 +593,4 @@ def test_di():
 #%%
 # test_di()
 # run_main_test()
-run_main_test()
+grasp_tuning()

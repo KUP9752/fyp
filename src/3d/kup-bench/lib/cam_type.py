@@ -45,5 +45,14 @@ class CamType(Flag):
   ## in order returns the existing CamTypes
   def uniques(cls):
     return [CamType(1 << i) for i in range(len(CamType))]
+  
+  @classmethod
+  ## returns wrist left and right shoulders
+  def main3(cls) -> list :
+    return [
+      CamType.WRIST, 
+      CamType.LEFT_SHOULDER, 
+      CamType.RIGHT_SHOULDER, 
+    ]
     
     
