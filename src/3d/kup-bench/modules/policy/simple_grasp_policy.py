@@ -199,7 +199,8 @@ class SimpleGraspPolicy(SimplePolicy):
     optimiser = optim.Adam(model.parameters(), lr = lr)
     
     model.train()
-    self.losses = [0 for _ in range(epochs)]
+    self.action_losses = []
+    self.grasp_losses = []
     for epoch in progress(range(epochs)):
       running_pose_loss, running_grasp_loss = 0., 0.
       
@@ -226,25 +227,49 @@ class SimpleGraspPolicy(SimplePolicy):
         grasp_loss = bce_loss(pred_actions[:, -1], labels[:, -1])
 
         if isinstance(last_k_grasp_mask, int):
+          # print(f"[simple_grasp_policy - forward] using last k mask")
+          
           last_k_mask = self._last_k_mask(
             loader_dict["demo_lengths"],
             k = last_k_grasp_mask, 
             device = device
           )
           grasp_loss = (grasp_loss * last_k_mask).sum() / last_k_mask.sum()
-
-          
         
-        loss = pose_loss +  lambda_grasp_loss * grasp_loss
+        # 1) Extract the raw grasp‐logits (shape: [batch_size])
+        # raw_logits = pred_actions[:, -1]           
+
+        # # 2) Convert to probabilities via sigmoid (shape: [batch_size])
+        # probs = torch.sigmoid(raw_logits)          
+
+        # # 3) Grab the ground‐truth grasp labels (0 or 1)
+        # gt_labels = labels[:, -1].detach().cpu()   # move to CPU for printing
+
+        # # 4) Move raw_logits and probs to CPU and convert to NumPy for easy printing
+        # logits_np = raw_logits.detach().cpu().numpy()
+        # probs_np  = probs.detach().cpu().numpy()
+
+        # print("---- grasp_head Debug ----")
+        # print("Raw logits (first 5):", logits_np)
+        # print("Sigmoid(probs)  (first 5):", probs_np)
+        # print("Ground‐truth labels(first 5):", gt_labels.numpy())
+        # print("--------------------------")
+        
+        loss = pose_loss + lambda_grasp_loss * grasp_loss
         
         loss.backward()
+        # grads = []
+        # for name, param in model.named_parameters():
+        #     if "grasp_head" in name and param.grad is not None:
+        #         grads.append(param.grad.norm().item())
+
+        # print("Grasp‐head grad norms:", grads)
         optimiser.step()
         running_pose_loss += pose_loss.item()
-        running_grasp_loss += grasp_loss.item()
+        running_grasp_loss += lambda_grasp_loss * grasp_loss.item()
 
-      loss = (running_pose_loss + lambda_grasp_loss * running_grasp_loss) / len(loader)
-      self.losses[epoch] = loss
-      N = len(loader)
+      self.grasp_losses.append(running_grasp_loss / len(loader))
+      self.action_losses.append(running_pose_loss / len(loader))
       
     print(f"Done Training Policy on {len(demos)} Demos") 
     
