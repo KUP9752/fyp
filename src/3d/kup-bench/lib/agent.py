@@ -6,6 +6,7 @@ from modules.policy.depth_grasp_policy import DepthGraspPolicy
 from modules.policy.cam_attention_policy import CamAttentionPolicy
 from modules.policy.resnet_grasp_policy import ResNetGraspPolicy
 from modules.policy.rnn_grasp_policy import RNNGraspPolicy
+from modules.policy.fusing_policy import FusingPolicy
 
 from rlbench.demo import Demo
 from rlbench.backend.observation import Observation
@@ -48,6 +49,10 @@ class Agent(object):
           self.policy = RNNGraspPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
           self.tensor_agg = self._catter
           self.prev_state = None
+        case PolicyType.FUSING:
+          self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+          self.tensor_agg = self._catter
+          # self.prev_state = None
         case PolicyType.CAM_ATTENTION:
           self.policy = CamAttentionPolicy(action_shape, cam_type, **policy_args) ## NOTE: other varaible settings here
           self.tensor_agg = self._stacker

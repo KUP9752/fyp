@@ -54,5 +54,31 @@ class CamType(Flag):
       CamType.LEFT_SHOULDER, 
       CamType.RIGHT_SHOULDER, 
     ]
+  
+  @classmethod
+  ## returns wrist left and right shoulders + wrist depth
+  def main4(cls) -> list :
+    return [
+      CamType.WRIST, 
+      CamType.LEFT_SHOULDER, 
+      CamType.RIGHT_SHOULDER, 
+      CamType.WRIST_DEPTH, 
+    ]
+  
+  @classmethod
+  ## returns wrist rgb + wrist depth
+  def wrists(cls) -> list :
+    return [
+      CamType.WRIST, 
+      CamType.WRIST_DEPTH, 
+    ]
+  
+  @classmethod
+  ## returns left and right shoulders
+  def shoulders(cls) -> list :
+    return [
+      CamType.LEFT_SHOULDER, 
+      CamType.RIGHT_SHOULDER, 
+    ]
     
     

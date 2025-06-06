@@ -9,6 +9,7 @@ class CrossAttentionFeatures(nn.Module):
   # default_opts = {}
   def __init__(self,
     rgb_channels: int, ## this is cams * 3 already
+    depth_channels: int, ## this is cams * 3 already
     embed_size: int,
     feat_size: int,
     attn_num_heads: int = 8,
@@ -23,7 +24,7 @@ class CrossAttentionFeatures(nn.Module):
     self.is_deep_fuse = is_deep_fuse
 
     self.rgb_enc = ConvEncoder(in_channels=rgb_channels, out_channels = embed_size)
-    self.depth_enc = ConvEncoder(in_channels = 1, out_channels = embed_size)
+    self.depth_enc = ConvEncoder(in_channels = depth_channels, out_channels = embed_size)
 
     self.attn_dtor = CrossModalAttention(self.embed_size, num_heads = attn_num_heads)
     self.attn_rtod = CrossModalAttention(self.embed_size, num_heads = attn_num_heads)

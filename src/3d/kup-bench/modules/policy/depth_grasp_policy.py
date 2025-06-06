@@ -2,7 +2,6 @@ from typing import Literal, Optional
 
 import torch 
 import torch.nn as nn
-data_label: Literal["joint_velocities", "joint_positions"] = "joint_velocities",
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -100,6 +99,7 @@ class DepthGraspPolicy(SimpleGraspPolicy):
 
         self.attn_feats = CrossAttentionFeatures(
           rgb_channels=self.num_rgb_cams * 3,
+          depth_channels= 1,
           embed_size = self.flat_size // 4,
           feat_size=self.flat_size,
           attn_num_heads=self.opts["attn_num_heads"],
