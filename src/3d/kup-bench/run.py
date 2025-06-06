@@ -32,10 +32,12 @@ from pyrep.const import RenderMode
 from pyrep.objects import Object, VisionSensor, Shape
 from pyrep.backend import sim
 
+from modules.policy.cam_attention_old import CamAttentionOld
+
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn.functional as F
+import matplotlib.pyplot as plt
 
 from torchvision import models, transforms
 from PIL import Image, ImageDraw
@@ -46,13 +48,24 @@ from lib.agent import Agent
 from lib.cam_type import CamType
 from lib.policy_type import PolicyType
 
-from lib.utils import get_task_name, now, params_string
-from task_utils import load_demos_for, launch_test_env, run_determined_reach_with_agent, run_determined_grasp_with_agent
+from lib.utils import get_task_name, now, params_string, load_demos
+from task_utils import save_demos_for, load_demos_for, launch_test_env, run_determined_reach_with_agent, run_determined_grasp_with_agent, run_reachobs_random_task_with_agent
 from seed import set_seed
 from pprint import pprint
 
+from modules.policy.fusing_policy import FuseConfig
+
 from itertools import product
 DATASET  = 'data/20demos'
+#%%
+task = Vision_Random
+
+normal = {
+  "scale": 0.5,
+  "wrist_cam_distance": 0.3
+}
+
+
 #%%
 
 env = launch_test_env(
@@ -60,67 +73,38 @@ env = launch_test_env(
   enableds = CamType.WRIST | CamType.RIGHT_SHOULDER | CamType.LEFT_SHOULDER
 )
 #%%
-task = ReachObs_Random
-
-agent = Agent(
-  env.action_shape[0],
-  policy_type = PolicyType.SIMPLE_GRASP,
-  cam_type = CamType.WRIST,
-  # grasp_thresh = 0.5,
-  # config = "depth_ch",
-  # opts = {}
-)
-
-try:
-  target = Shape("target")
-  target_rgb = torch.tensor(target.get_color())
-except RuntimeError:
-  print(f"'target' doesn't exist meaning this is a different task")
-  target_rgb = None
-
-new_agent = lambda: Agent(
-  env.action_shape[0],
-  policy_type = PolicyType.CAM_ATTENTION,
-  cam_type = CamType.WRIST,
-  # config="depth_ch",
-  target_rgb = target_rgb
-)
-
-model_name = f"rwd-{get_task_name(task)}-{agent}--{now()}"
-model_path = f"./all-models/reach-with-demos/{model_name}.pth"
-print(model_name)
-agent
-
-#%%
-# demos = load_demos_for(10, env, task, DATASET)
-task_env = env.get_task(task)
-test_demos = task_env.get_demos(20, live_demos=False)
-#%%
-demos = test_demos
-#%%
 task = Vision_Static
+
+# agent = Agent(
+#   env.action_shape[0],
+#   policy_type = PolicyType.FUSING,
+#   cam_type = CamType.WRIST,
+#   config = FuseConfig.WDLR
+#   is_grasp = True
+#   use_proprio = False
+#   # opts = {}
+# )
+
+# model_name = f"rwd-{get_task_name(task)}-{agent}--{now()}"
+# model_path = f"./all-models/reach-with-demos/{model_name}.pth"
+# print(model_name)
+# agent
+
+#%%
+task = Vision_Random
 normal = {
   "scale": 1.,
   "wrist_cam_distance": 0.6
 }
-smaller = {
-  "scale": 0.5,
-  "wrist_cam_distance": 0.3
-}
 
 env._dataset_root = f"data/1demo/normal-{get_task_name(task)}"
 task_env = env.get_task(task, **normal)
+
 demos = task_env.get_demos(1, live_demos=False)
-
-
-env._dataset_root = f"data/1demo/smaller-{get_task_name(task)}"
-task_env = env.get_task(task, **smaller)
-small_demos = task_env.get_demos(1, live_demos=False)
-
 #%%
 training_params = {
-  "epochs": 100,
-  "minibatch_size": 10,
+  "epochs": 200, 
+  "minibatch_size": 1,
   "lr": 1e-3,
   "shuffle_obs_in_demo": False,
   "shuffle_data": True,
@@ -129,47 +113,50 @@ training_params = {
   "lambda_grasp_loss": 1,
 }
 
-ingest_num = 10
-
-print(f"-> Using {ingest_num} demos")
-
-agent.ingest(test_demos, **training_params) ## trains here
-agent.save_model(model_path)
-#%%
-#%%
-env._dataset_root = f"data/20demos"
-task_env = env.get_task(ReachNoObs_PlaceRandom)
-demos = task_env.get_demos(5, live_demos=False)
-#%%
-
-#%%
-import torch.nn as nn
-agent = new_agent()
-
-training_params = {
-  "epochs": 200,
-  "minibatch_size": 1,
-  "lr": 1e-3,
-  "shuffle_obs_in_demo": False,
-  "shuffle_data": True,
-  "lock_loader_seed": 42,
-  "dataset_to_use": "demo",
-  # "lambda_grasp_loss": 1.2,
-  # "last_k_grasp_mask": 5
-}
+# bs = [False, True]
+# for p in bs:
+#   for g in bs:
+agent = Agent(
+  env.action_shape[0],
+  policy_type = PolicyType.FUSING,
+  cam_type = CamType.WRIST | CamType.WRIST_DEPTH | CamType.LEFT_SHOULDER,
+  config = FuseConfig.Wfilm_D,
+  is_grasp = True,
+  use_proprio = False,
+  # opts = {}
+)
 agent.ingest(demos, **training_params) ## trains here
+
 #%%
-run_determined_reach_with_agent(
+# agent.policy.load_state_dict(torch.load("models/PROMISING-rwd-reach-1-demo-wrist+r_shoulder-ReachObs_Random-PolicyType.CAM_ATTENTION.pth"))
+#%%
+rets = run_determined_grasp_with_agent(
   env, 
   task, 
   agent, 
   demos, 
   max_eplen="demo_max", 
-  # do_extra_outs=True, 
-  # task_params = normal
+  do_extra_outs=False, 
+  task_params = normal
 )[0]
+# rets
+# # print(f"Above: {rets['avg_attentions_above_obstacle']}")
+# # print(f"Below: {rets['avg_attentions_below_obstacle']}")
+# #%%
+# plt.plot(range(training_params["epochs"]), agent.policy.action_losses,  color='tab:blue',  marker='', linestyle='-', label='Pose Loss')
+# plt.plot(range(training_params["epochs"]), agent.policy.grasp_losses, color='tab:orange', marker='', linestyle='--', label='Grasp Loss')
+# plt.title('Loss per Epoch, $k_{mask}$ = %d' % training_params["last_k_grasp_mask"])
+# plt.xlabel('Epoch')
+# plt.ylabel('Avg Loss')
+# plt.grid(True)
+# plt.legend()
+# plt.tight_layout()
+# # plt.savefig(f"/home/kup/Desktop/code/fyp-report/assets/cam-comb/grasp-simple/k-losses-k7.png", format="png", dpi=1000)
+# plt.show()
+
+# #%%
+# env.get_task(ReachObs_Random)
+# target_rgb = Shape("target").get_color()
 #%%
-task = ReachNoObs_Central
-env._dataset_root = "data/20demos"
-task_env = env.get_task(task)
-_, obs = task_env.reset()
+
+f"{FuseConfig.Wfilm_D}"
