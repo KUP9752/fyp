@@ -108,7 +108,7 @@ class FusingPolicy(nn.Module):
           num_ch += 1
 
         layers = self.opts["cnn"]["cnn_rgb_layers"]
-        self.conv = CNNEncoder(in_channels=all_rgb_chs, layers = layers)
+        self.conv = CNNEncoder(in_channels=num_ch, layers = layers)
         self.feat_size = self.conv.flat_out_size
         
 
