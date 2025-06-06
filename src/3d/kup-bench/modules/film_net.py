@@ -65,8 +65,6 @@ class FilmModulator(nn.Module):
       return self.one_on_two(x1feats, x2pool), self.two_on_one(x2feats, x1pool)
     
     ## modulate x1 features on x2
-
-
     return self.one_on_two(x1feats, x2pool)
 
 

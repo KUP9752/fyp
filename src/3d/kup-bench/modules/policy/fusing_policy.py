@@ -379,18 +379,17 @@ class FusingPolicy(nn.Module):
       ):
         self._check_cam(needed=CamType.wrists())
         wX = image[:, :3, :, :]
-        dX = image[:, -1, :, :]
+        dX = image[:, -1, :, :].unsqueeze(dim=1) 
 
         if self.config == FuseConfig.W_Dfilm:
           mod = self.film(dX, wX)
-          feats = self.mod_downer(mod)
-        elif FuseConfig.Wfilm_D:
+        elif self.config == FuseConfig.Wfilm_D:
           mod = self.film(wX, dX)
-          feats = self.mod_downer(mod)
-        else: ## == FuseConfig.Wfilm_Dfilm
+        else:# self.config == FuseConfig.Wfilm_Dfilm:
           mod1, mod2 = self.film(wX, dX)
-          feats = torch.cat([mod1, mod2], dim = 1)
+          mod = torch.cat([mod1, mod2], dim = 1)
 
+        feats = self.mod_downer(mod)
         return self._feats_to_action(feats, proprio), ret_dict
 
       case FuseConfig.W_D_L_R:
@@ -398,13 +397,13 @@ class FusingPolicy(nn.Module):
         curr_index = 0
 
         for ct in CamType.main3():
-          if ct * self.cam_type:
-            feat = self.multi_enc(image[:, curr_index:curr_index+3, :, :], ct), 
+          if ct & self.cam_type:
+            feat = self.multi_enc(image[:, curr_index:curr_index+3, :, :], ct)
             feats.append(feat)
             curr_index +=3
 
         if self.cam_type & CamType.WRIST_DEPTH:
-          feat = self.multi_enc(image[:, -1, :, :], CamType.WRIST_DEPTH)
+          feat = self.multi_enc(image[:, -1, :, :].unsqueeze(dim=1), CamType.WRIST_DEPTH)
           feats.append(feat)
 
         cated = torch.cat(feats, dim = 1)
