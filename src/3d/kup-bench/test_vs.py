@@ -121,6 +121,7 @@ def main():
     "error",
     "task_name",
     "cam_type",
+    "epochs",
 
     "control_done_count",
     "test_done_count",
@@ -138,6 +139,7 @@ def main():
     "task_name",
     "demo_idx",
     "cam_type",
+    "epochs",
 
     "is_control_done",
     "is_test_done",
@@ -217,7 +219,6 @@ def main():
           logger.info(f"{len(control_dicts) = }")
 
           for i in range(len(control_dicts)):
-            logger.info("doing")
             cd = control_dicts[i]
             td = test_dicts[i]
 
@@ -237,6 +238,7 @@ def main():
               "task_name": get_task_name(task),
               "cam_type": ct,
               "demo_idx": i,
+              "epochs": training_params["epochs"],
 
               "control_final_distance": cd["distances"][-1],
               "control_min_distance": min(cd["distances"]),
@@ -258,6 +260,7 @@ def main():
             "error": False,
             "task_name": get_task_name(task),
             "cam_type": ct,
+            "epochs": training_params["epochs"],
 
             "control_done_count": len([b for b in control_dones if b]),
             "test_done_count":len([b for b in test_dones if b]),
@@ -273,14 +276,17 @@ def main():
           df_avg.to_csv(f"zz-new-out/vs_random-ns-cfg:{config}-rep{rep}.csv", index=True)
 
         except Exception as e:
-          print(f"Something Went Wrong! => {e}")
-          logger.exception(f"Something Went Wrong! Marking row in DF => {e}")
+          
+          logger.exception(f"Something Went Wrong! Marking row in DF")
+          logger.error(e)
           for i in range(10):
             df_all.loc[all_count] = {
               "rep": rep,
               "config": config,
               "error": True,
               "task_name": get_task_name(task),
+              "cam_type": ct,
+              "epochs": training_params["epochs"],
             }
             all_count+= 1
             df_all.to_csv(f"zz-new-out/ALLvs_random-ns-cfg:{config}-rep{rep}.csv", index=True)
@@ -290,6 +296,8 @@ def main():
             "config": config,
             "error": True,
             "task_name": get_task_name(task),
+            "cam_type": ct,
+            "epochs": training_params["epochs"],
           }
           avg_count += 1
           df_avg.to_csv(f"zz-new-out/vs_random-ns-cfg:{config}-rep{rep}.csv", index=True)
