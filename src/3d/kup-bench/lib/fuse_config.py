@@ -22,6 +22,5 @@ class FuseConfig(Enum):
 
   #w + d + l + r
   W_D_L_R = auto() ## all separated but cated before linear layer
-  ##TODO: the next 2
   W_D_L_R_FILM = auto() ## all separated but cated before linear layer
   W_D_L_R_ATTN = auto() #' 4 way cross attention?
