@@ -77,19 +77,11 @@ def main():
     task_params=smaller
   )
   configs = [
-    FuseConfig.WDLR,
-    FuseConfig.WLR_D,
-    FuseConfig.DEPTH_FEATS_GATED,
-    FuseConfig.DEPTH_FEATS_ATTN,
-    FuseConfig.WD_LR,
-    FuseConfig.WD_LR_ATTN,
-    FuseConfig.Wfilm_D,
-    FuseConfig.W_Dfilm,
-    FuseConfig.Wfilm_Dfilm,
+    FuseConfig.W_D_L_R_FILM,
+    FuseConfig.W_D_L_R_ATTN,
   ]
 
-  epochs = [50, 100, 150, 200, 400, 500, 1000, 2000]
-  # proprio = [False, True]
+  epochs = [100, 200, 600, 1000, 2000]
 
   repeats = 5
   cam_types =  [ 
@@ -158,9 +150,15 @@ def main():
     action_shape= env.action_shape[0],
     policy_type=PolicyType.FUSING,
     cam_type=ct,
-    config = cfg,
+
     is_grasp = True, 
-    opts = {} ## make sure to use defaults 
+
+    fuse_config = cfg,
+    fusing_opts = {}, ## make sure to use defaults 
+
+    use_proprio = False,
+    proprio_opts = {}, ## make sure to use defaults 
+
     ## others are defaulted
   )
   logger.info("=== Starting Long Test:")

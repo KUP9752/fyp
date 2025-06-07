@@ -143,7 +143,7 @@ def run_determined_reach_with_agent(
     env: Environment, 
     task: type[Task], 
     agent: Agent, 
-    rec_demos: list[Demo], 
+    rec_demos: list[Demo],# | list[tuple[Demo, int]], 
     max_eplen: int | Literal["demo_max"] = "demo_max",
     within_err_dist: Optional[float] = None,
     task_params: dict = {},
@@ -160,15 +160,38 @@ def run_determined_reach_with_agent(
   for rec_demo in rec_demos:
     task_env = env.get_task(task, **task_params)
     task_env.reset()
-
-    _, obs = task_env.reset_to_demo(rec_demo) 
+    if isinstance(rec_demo, Demo):
+      _, obs = task_env.reset_to_demo(rec_demo) 
+    # else:
+    #   rec_demo: tuple[Demo, int]
+    #   _, obs = task_env.reset_to_demo(rec_demo[0], obs_variation_index= rec_demo[1] ) 
     done = False
-    
+
+    obstacle = Shape("obstacle")
     distances = []
+    atts_above_obs = []
+    atts_below_obs = []
+  
 
     for _ in range(max_eplen):
-      action, _ = agent.act(obs)
+      action, pol_dict = agent.act(obs)
       action = action.squeeze()
+      atts = pol_dict["attention_weights"]
+
+      if task_env._robot.arm.get_tip().get_position(relative_to=obstacle)[2] <= 0:
+      ## below
+      # print("BELOW THE OBS")
+      # print(f"{atts = }")
+      # print()
+        atts_below_obs.append(atts)
+      else:
+        ## above
+        # print("above THE OBS")
+        # print(f"{atts = }")
+        # print()
+        atts_above_obs.append(atts)
+
+
       obs, reward, done = task_env.step(action)
       gripper = Object.get_object("Panda_gripper")
       target = Object.get_object("target")
@@ -184,36 +207,24 @@ def run_determined_reach_with_agent(
     results.append({
       "done": done,
       "distances": distances,
-      "max_eplen": max_eplen
+      "max_eplen": max_eplen,
+      "avg_attentions_below_obstacle": torch.stack(atts_below_obs, dim=0).mean(dim=0, dtype=torch.float32) if len(atts_below_obs) > 0 else None,
+      "avg_attentions_above_obstacle": torch.stack(atts_above_obs, dim=0).mean(dim=0, dtype=torch.float32) if len(atts_above_obs) > 0 else None,
     })
 
 
   return results
 
 
-## give UNTRAINED AGENT here
-def run_reach_task_with_agent(
+def run_reachobs_random_task_with_agent(
   env: Environment,
-  task: Task, ## any of Reach_* or ReachObs_* tasks
+  task: Type[Task], ## any of Reach_* or ReachObs_* tasks
   agent: Agent, 
   demos: list[Demo],
   max_eplen: int | Literal["demo_max"] = "demo_max",
   within_err_dist: Optional[float] = None, ## allows the execution to finish early depending on if an error around the target is reached
-  training_params: dict = {},
-  task_params: dict = {}
 ) -> tuple[dict, bool]:
   ## new agent trained each time
-  
-  ## request demos and train!
-  task_env, demos = demos_and_train_for_task(
-    env,
-    task, #type: ignore[arg-type]
-    agent,
-    demos,
-    save_model=True,
-    training_params = training_params,
-    task_params = task_params
-  )
     
   ## if max len is not specified make it the max of the givem demo
   if max_eplen == "demo_max":
@@ -221,13 +232,14 @@ def run_reach_task_with_agent(
   
   ## evaluate
   obs: Observation
+  task_env = env.get_task(task)
   _, obs = task_env.reset()
   
-  # obstacle = Shape("obstacle")
+  obstacle = Shape("obstacle")
   
   agent.policy.to("cpu") # move to cpu if not alr there
   distances = []
-  done  = False
+  done: bool = False
   
   atts_above_obs = []
   atts_below_obs = []
@@ -237,22 +249,22 @@ def run_reach_task_with_agent(
     action = action.squeeze()
     
     ## get the attention weights
-    # atts = pol_dict["attention_weights"]
+    atts = pol_dict["attention_weights"]
     # print(f"{atts = }")
-    ## if the z value (height) of arm is negative with respect to obstacle, then we are below
+    # if the z value (height) of arm is negative with respect to obstacle, then we are below
     
-    # if task_env._robot.arm.get_tip().get_position(relative_to=obstacle)[2] <= 0:
-    #   ## below
-    #   # print("BELOW THE OBS")
-    #   # print(f"{atts = }")
-    #   # print()
-    #   atts_below_obs.append(atts)
-    # else:
-    #   ## above
-    #   # print("above THE OBS")
-    #   # print(f"{atts = }")
-    #   # print()
-    #   atts_above_obs.append(atts)
+    if task_env._robot.arm.get_tip().get_position(relative_to=obstacle)[2] <= 0:
+      ## below
+      # print("BELOW THE OBS")
+      # print(f"{atts = }")
+      # print()
+      atts_below_obs.append(atts)
+    else:
+      ## above
+      # print("above THE OBS")
+      # print(f"{atts = }")
+      # print()
+      atts_above_obs.append(atts)
     
     obs, reward, done = task_env.step(action)
 
@@ -270,9 +282,9 @@ def run_reach_task_with_agent(
     
   return {
     "distances": distances, 
-    "max_eplen": max_eplen
-    # "avg_attentions_below_obstacle": torch.stack(atts_below_obs, dim=0).mean(dim=0, dtype=torch.float32) if len(atts_below_obs) > 0 else None,
-    # "avg_attentions_above_obstacle": torch.stack(atts_above_obs, dim=0).mean(dim=0, dtype=torch.float32) if len(atts_above_obs) > 0 else None,
+    "max_eplen": max_eplen,
+    "avg_attentions_below_obstacle": torch.stack(atts_below_obs, dim=0).mean(dim=0, dtype=torch.float32) if len(atts_below_obs) > 0 else None,
+    "avg_attentions_above_obstacle": torch.stack(atts_above_obs, dim=0).mean(dim=0, dtype=torch.float32) if len(atts_above_obs) > 0 else None,
     },  done  
 
 
@@ -354,7 +366,7 @@ def run_grasp_with_agent(
 
 def plot_cameras(cam_type: CamType, obs: Observation, plot_title: str, save_folder: str):
 
-  to_plot: list[CamType] = [ct for ct in CamType.uniques() ]# if ct & cam_type] ## plot all for now?
+  to_plot: list[CamType] = [ct for ct in  CamType.main3()] # if ct & cam_type] ## plot all for now?
   if len(to_plot) <= 0:
     raise ValueError("[task_utils - plot_cameras] No Cameras were given to plot")
   

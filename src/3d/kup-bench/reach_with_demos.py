@@ -173,16 +173,17 @@ model_path = f"./all-models/reach-with-demos/{model_name}.pth"
 print(model_name)
 agent.policy
 
-# %%
+# %%d
 #%%
 ## 4. Request Demos
 # demos = []#
 # for var in [0,1,2]:
 #   task_env.set_variation(var)
 #   demos += task_env.get_demos(1, live_demos=live_demos, random_selection = True)
-env._dataset_root = "data/20demos"
+task = Vision_Random
+env._dataset_root = "data/20demos/Vision_Random-size:1-dist:0_6"
 task_env = env.get_task(task_class = task, **task_params)
-demos: list[Demo] = task_env.get_demos(20, live_demos=True)
+demos: list[Demo] = task_env.get_demos(1, live_demos=False)
 # test_demos: list[Demo] = task_env.get_demos(10, live_demos=live_demos)
 demos
 
@@ -198,7 +199,7 @@ smaller = {
 }
 
 task = Vision_Random
-task_env = env.get_task(task, **smaller)
+task_env = env.get_task(task, **normal)
 task_env.reset()
 obs, _ , _ =task_env.step([0] * 8)
 #%%
@@ -244,7 +245,7 @@ agent.save_model(model_path)
 # load_str = "all-models/reach-with-demos/rwd-Vision_Random-agent-policy:depth_grasp_policy-cams:wrist+wrist_depth-policy:depth_grasp_policy-config:attn-opts:{'gated_fuse': True, 'attn_num_heads': 8, 'attn_deep_fuse': True, 'use_proprio': True, 'proprio_opts': {}}--_May27_14-44.pth"
 # agent.policy.load_state_dict(torch.load(f"/home/kup/Desktop/code/fyp/src/3d/kup-bench/{load_str}"))
 #%%
-task_env = env.get_task(task)
+task_env = env.get_task(task, )
 _, obs = task_env.reset()
 
 obs.left_shoulder_mask.shape

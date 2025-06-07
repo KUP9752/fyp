@@ -97,14 +97,14 @@ normal = {
   "wrist_cam_distance": 0.6
 }
 
-env._dataset_root = f"data/1demo/normal-{get_task_name(task)}"
+env._dataset_root = f"data/20demos/normal-{get_task_name(task)}"
 task_env = env.get_task(task, **normal)
 
 demos = task_env.get_demos(1, live_demos=False)
-#%%
+#%10
 training_params = {
-  "epochs": 200, 
-  "minibatch_size": 1,
+  "epochs": 1, 
+  "minibatch_size": 5,
   "lr": 1e-3,
   "shuffle_obs_in_demo": False,
   "shuffle_data": True,
@@ -119,8 +119,8 @@ training_params = {
 agent = Agent(
   env.action_shape[0],
   policy_type = PolicyType.FUSING,
-  cam_type = CamType.WRIST | CamType.WRIST_DEPTH | CamType.LEFT_SHOULDER,
-  config = FuseConfig.Wfilm_D,
+  cam_type = CamType.WRIST | CamType.WRIST_DEPTH,
+  fuse_config = FuseConfig.W_Dfilm,
   is_grasp = True,
   use_proprio = False,
   # opts = {}
@@ -158,5 +158,45 @@ rets = run_determined_grasp_with_agent(
 # env.get_task(ReachObs_Random)
 # target_rgb = Shape("target").get_color()
 #%%
+# from modules.dataset.demo_dataset import DemoDataset
+# from torch.utils.data import DataLoader
+# from torch.nn.utils.rnn import pad_sequence
 
-f"{FuseConfig.Wfilm_D}"
+# def collate(batch):
+#     ## batch contains [(input, labels)] where each input is a complete demo (in terms of the data in sequence rgb for example)
+#     ## input: (t, ch, w, h) 
+#     inputs, labels, loader = zip(*batch)
+#     [print(f"{input.shape}") for input in inputs]
+
+#     ## enforcing types for later
+#     print(f"{len(labels) =}")
+    
+#     real_lengths = torch.LongTensor([inp.shape[0] for inp in inputs])
+#     print(f"{real_lengths.shape =}")
+    
+#     inputs_padded = pad_sequence(inputs, batch_first=True) ## CHECK: if it gives (B, t, ch, w, h)
+#     print(f"{inputs_padded.shape = }")
+
+#     labels_padded = pad_sequence(labels, batch_first=True) ## CHECK: if it gives (B, t, ch, w, h)
+#     print(f"{labels_padded.shape = }")
+
+
+#     ## need to return shape (B, t, ch, w, h) for the input and labels
+#     ## also returning lenths for LSTM use later
+#     return inputs_padded, labels_padded, real_lengths
+
+# dataset = DemoDataset(demos, cam_type= CamType.WRIST | CamType.WRIST_DEPTH | CamType.LEFT_SHOULDER | CamType.RIGHT_SHOULDER, get_type="cat")
+# loader = DataLoader(
+#   dataset,
+#   shuffle = True,
+#   batch_size=10,
+#   collate_fn=collate,
+#   generator=torch.manual_seed(42)
+# )
+
+# for ins, out, ls in loader:
+#   print(f"{ins.shape = }")
+  
+#   plt.imshow(ins[4, 20, -1, :, :])
+#   break
+  
