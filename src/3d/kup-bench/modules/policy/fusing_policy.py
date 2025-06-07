@@ -15,6 +15,7 @@ from lib.utils import params_string
 
 from modules.cnns.cnn_encoder import CNNEncoder
 from modules.cnns.multi_cam_cnn import MultiCamCnn
+from modules.cnns.vit_encoder import MultiViewEncoder
 
 from modules.film_net import FilmModulator
 from modules.cnns.cross_attn_feats import CrossAttentionFeatures
@@ -39,7 +40,8 @@ class FuseConfig(Enum):
   WD_LR_ATTN = auto() 
 
   #w + d
-  ## dont want other cams here, can beb added if needed
+  ## dont want other cams here, the lr cams will just be ignored in this case
+
   Wfilm_D = auto() ## depth modulated colour
   W_Dfilm = auto() ##  colour modulated depth
   Wfilm_Dfilm = auto() ## depth modulated colour
@@ -64,6 +66,18 @@ class FusingPolicy(nn.Module):
       "embed_size": 128,
       "attn_num_heads": 8,
       "attn_deep_fuse": True, ## works better
+    },
+    "film":{
+      "downer_cnn_layers": [64, 64, 128, 128],
+      "double_downer_cnn_layers": [128, 128, 128, 128],
+    },
+    "mvt":{
+      "embed_dim":  128, 
+      "num_heads":  8, 
+      "num_layers": 4, 
+      "patch_size": 8,
+      "img_size":  64,
+      "max_eplen":  100,
     },
     "proprio_opts": {} ## dict of kwargs
   }
@@ -193,6 +207,8 @@ class FusingPolicy(nn.Module):
       case FuseConfig.Wfilm_D:
         ## depth modulated colour
         self._check_cam(needed=CamType.wrists())
+        self._fail_if_cam(CamType.shoulders())
+
         ## NOTE: will ignore the other cameras given to it!!
 
         self.film = FilmModulator(
@@ -200,32 +216,36 @@ class FusingPolicy(nn.Module):
           in2 = 1, ## wrist d, 
           do_both = False,
         )
-        self.mod_downer = CNNEncoder(64) ## use default layers
+        self.mod_downer = CNNEncoder(64, layers = self.opts["film"]["downer_cnn_layers"]) ## use default layers
         ##NOTE: modulation happens at the resolution level need to downsample
 
-        self.feat_size = 128 * 2 * 2
+        self.feat_size = self.mod_downer.flat_out_size
 
       case FuseConfig.W_Dfilm :
         ## colour modulated depth
         self._check_cam(needed=CamType.wrists())
+        self._fail_if_cam(CamType.shoulders())
+
         self.film = FilmModulator(
           in1 = 1, ## wrist d, 
           in2 = 3, ## wrist rgb, 
           do_both = False,
         )
-        self.mod_downer = CNNEncoder(64) ## use default layers
-        self.feat_size = 128 * 2 * 2
+        self.mod_downer = CNNEncoder(64, layers = self.opts["film"]["downer_cnn_layers"]) ## use default layers
+        self.feat_size = self.mod_downer.flat_out_size
 
       case FuseConfig.Wfilm_Dfilm:
         ## both ways then concatenate
         self._check_cam(needed=CamType.wrists())
+        self._fail_if_cam(CamType.shoulders())
+
         self.film = FilmModulator(
           in1 = 3, ## wrist rgb, 
           in2 = 1, ## wrist d, 
           do_both = True,
         )
-        self.mod_downer = CNNEncoder(128) ## double the size of last time, 2 of them
-        self.feat_size = 128 * 2 * 2
+        self.mod_downer = CNNEncoder(128, layers = self.opts["film"]["double_downer_cnn_layers"]) ## double the size of last time, 2 of them
+        self.feat_size = self.mod_downer.flat_out_size
 
       case FuseConfig.W_D_L_R:
         self.multi_enc = MultiCamCnn(self.cam_type)
@@ -234,7 +254,38 @@ class FusingPolicy(nn.Module):
         if no_cams < 3: 
           raise RuntimeError(f"[fusing_policy - (FusingPolicy)] We want at least 3 cams here")
         self.feat_size = no_cams * 128 * 2 * 2
-      
+
+      case FuseConfig.W_D_L_R_FILM:
+        # force all 4, cant be asked to figure it out for 3 no real point for 3
+        self._check_cam(needed=CamType.main4())
+        ## the order of fusing is w+d then l+r then wd+lr
+        ##TODO modulate wrist rgb with depth, left and right with each other
+
+        self.wd_film = FilmModulator(
+          in1 = 3, 
+          in2 = 1, 
+          do_both=False
+        )
+        self.wd_downer = CNNEncoder(64, layers = self.opts["film"]["downer_cnn_layers"])
+
+        self.lr_film = FilmModulator(
+          in1 = 3, 
+          in2 = 3, 
+          do_both=True
+        )
+
+        self.lr_downer = CNNEncoder(128, layers = self.opts["film"]["double_downer_cnn_layers"])
+
+        self.feat_size = self.lr_downer.flat_out_size + self.wd_downer.flat_out_size
+
+      case FuseConfig.W_D_L_R_ATTN:
+        self.mvt = MultiViewEncoder(
+          cam_type=self.cam_type,
+          **self.opts["mvt"]
+        )
+        self.feat_size = self.mvt.embed_dim
+        ## NOTE: no cam checks here the attention thing already takes care of that
+
       case _:
         raise ValueError(f"[fusing_policy - (FusingPolicy)] unknown value for FuseConfig: '{self.config}")
 
@@ -267,14 +318,18 @@ class FusingPolicy(nn.Module):
       nn.ReLU(inplace = False),
       nn.Linear(64, 1),
     ) if self.is_grasp else None
+  
+  def _fail_if_cam(self, fail_cases: list[CamType]):
+    if any([self.cam_type & ct for ct in fail_cases]):
+      raise ValueError(f"[fusing_policy - (fail_if_cam)] Given a can that is not compatible with this configuration! no '{fail_cases}")
 
   def _check_cam(self, needed: list[CamType] | None = None, any_one: list[CamType] | None = None):
 
     if needed is not None and not all([self.cam_type & ct for ct in needed]):
-      raise ValueError(f"[fusing_policy - (Fusing Policy)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+      raise ValueError(f"[fusing_policy - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
 
     if any_one is not None and not any([self.cam_type & ct for ct in any_one]):
-      raise ValueError(f"[fusing_policy - (Fusing Policy)] Policy cam_type does not include any of '{any_one}' -> current: '{self.cam_type}'")
+      raise ValueError(f"[fusing_policy - (check_cam)] Policy cam_type does not include any of '{any_one}' -> current: '{self.cam_type}'")
     
   def _feats_to_action(self, feats, proprio = None) -> torch.Tensor:
     feats = self.flatten(feats)
@@ -306,7 +361,7 @@ class FusingPolicy(nn.Module):
     
     return torch.cat(inputs, dim=0), torch.cat(labels, dim=0), {
       "proprio": proprio, 
-      "demo_lengths": [len(i) for i in inputs] ## needed for the lambda k thing
+      "demo_lengths": torch.LongTensor([len(i) for i in inputs]) ## needed for the lambda k thing
     }
   
   def forward(self, image, proprio=None) -> tuple[torch.Tensor, dict]:
@@ -409,12 +464,28 @@ class FusingPolicy(nn.Module):
         cated = torch.cat(feats, dim = 1)
         return self._feats_to_action(cated, proprio), ret_dict
       
-      case (
-        FuseConfig.W_D_L_R_FILM | 
-        FuseConfig.W_D_L_R_ATTN
-      ):
-        raise NotImplementedError(f"4 way cross attention will do this later i cant be fucked anymore")
-        return torch.empty(), ret_dict ##TODO
+      case FuseConfig.W_D_L_R_FILM:
+        self._check_cam(needed=CamType.main4())
+        ## all must be here
+        wX = image[:, :3, :, :]
+        lsX = image[:, 3:6, :, :]
+        rsX = image[:, 6:9, :, :]
+        dX = image[:, -1, :, :].unsqueeze(dim=1) 
+
+        wd_mod = self.wd_film(wX, dX)
+        wd_feats = self.wd_downer(wd_mod)
+
+        lr_mod, rl_mod = self.lr_film(lsX, rsX)
+        s_mod_cat = torch.cat([lr_mod, rl_mod], dim = 1)
+        lr_feats = self.lr_downer(s_mod_cat)
+
+        cated = torch.cat([wd_feats, lr_feats], dim = 1)
+        return self._feats_to_action(cated, proprio), ret_dict
+      case FuseConfig.W_D_L_R_ATTN:
+        
+        feats, mvt_dict = self.mvt(image)
+        return self._feats_to_action(feats, proprio), ret_dict | mvt_dict
+
       case _:
         raise ValueError(f"[fusing_policy - (FusingPolicy)] unknown value for FuseConfig: '{self.config}")
 

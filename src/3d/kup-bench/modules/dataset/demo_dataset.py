@@ -61,7 +61,9 @@ class DemoDataset(Dataset):
           ),
           (2, 0, 1)
         )
-        for ct in CamType.uniques() if self.cam_type & ct
+        for ct in CamType.main4() if self.cam_type & ct
+        # for ct in CamType.uniques() if self.cam_type & ct
+        ## NOTE doing main4 just to be safe as I never use the other 2
       ]
 
       if self.rgb_transform:
@@ -100,6 +102,9 @@ class DemoDataset(Dataset):
 
     inputs = torch.stack(batch, dim = 0)
     labels = torch.stack(seq_labels, dim = 0)
+
+    # print(f"[demo_dataset (getitem)] {inputs.shape = }")
+    # print(f"[demo_dataset (getitem)] {labels.shape = }")
 
     proprio = None
     if self.use_proprio:
