@@ -142,6 +142,7 @@ class FusingPolicy(nn.Module):
     data_label: Literal["joint_velocities", "joint_positions"] = "joint_velocities",
     shuffle_data = True, 
     shuffle_obs_in_demo = False,
+    lr_eta_min = 1e-4,
     model_path: Optional[str] = None,
     lambda_grasp_loss: float = 1.,
     lock_loader_seed: Optional[int] = None, 
@@ -161,6 +162,7 @@ class FusingPolicy(nn.Module):
       lambda_grasp_loss = lambda_grasp_loss,
       dataset_to_use = f'{dataset_to_use} [not being used!]',
       lock_loader_seed = lock_loader_seed,
+      lr_eta_min = lr_eta_min,
       # last_k_grasp_mask = last_k_grasp_mask,
       device = device
     )
@@ -192,7 +194,7 @@ class FusingPolicy(nn.Module):
     bce_loss = nn.BCEWithLogitsLoss(pos_weight=None)
     mse_loss = nn.MSELoss()
     optimiser = optim.Adam(model.parameters(), lr = lr)
-
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimiser, T_max= epochs, eta_min=lr_eta_min )
     self.action_losses = []
     self.grasp_losses = []
 
@@ -226,6 +228,7 @@ class FusingPolicy(nn.Module):
         
         loss.backward()
         optimiser.step()
+        scheduler.step()
 
         running_pose_loss += pose_loss.item()
         running_grasp_loss += grasp_loss.item() if self.is_grasp else 0
