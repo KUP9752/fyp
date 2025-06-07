@@ -1,0 +1,1912 @@
+2025-06-07 16:44:29,928 - Starting long test.
+2025-06-07 16:44:39,271 - === Starting Long Test:
+2025-06-07 16:44:39,281 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 16:44:39,282 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 16:44:39,290 - Added error rows to dfs
+2025-06-07 16:44:39,290 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 16:44:39,290 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 16:44:39,297 - Added error rows to dfs
+2025-06-07 16:44:39,297 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 16:44:39,297 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 16:44:39,303 - Added error rows to dfs
+2025-06-07 16:44:39,303 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 16:44:39,303 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 16:44:39,310 - Added error rows to dfs
+2025-06-07 16:46:19,748 - len(test_dicts) = 10
+2025-06-07 16:46:19,757 - len(control_dicts) = 10
+2025-06-07 16:46:19,765 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 16:46:19,765 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 16:46:19,774 - Added error rows to dfs
+2025-06-07 16:46:19,774 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 16:46:19,774 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 16:46:19,784 - Added error rows to dfs
+2025-06-07 16:46:19,784 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 16:46:19,784 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 16:46:19,794 - Added error rows to dfs
+2025-06-07 16:46:19,794 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 16:46:19,794 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 16:46:19,804 - Added error rows to dfs
+2025-06-07 16:48:56,559 - len(test_dicts) = 10
+2025-06-07 16:48:56,559 - len(control_dicts) = 10
+2025-06-07 16:48:56,578 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 16:48:56,578 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 16:48:56,588 - Added error rows to dfs
+2025-06-07 16:48:56,589 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 16:48:56,589 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 16:48:56,599 - Added error rows to dfs
+2025-06-07 16:48:56,599 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 16:48:56,600 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 16:48:56,610 - Added error rows to dfs
+2025-06-07 16:48:56,610 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 16:48:56,611 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 16:48:56,623 - Added error rows to dfs
+2025-06-07 16:54:45,148 - len(test_dicts) = 10
+2025-06-07 16:54:45,156 - len(control_dicts) = 10
+2025-06-07 16:54:45,169 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 16:54:45,169 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 16:54:45,181 - Added error rows to dfs
+2025-06-07 16:54:45,181 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 16:54:45,181 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 16:54:45,193 - Added error rows to dfs
+2025-06-07 16:54:45,194 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 16:54:45,194 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 16:54:45,206 - Added error rows to dfs
+2025-06-07 16:54:45,206 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 16:54:45,207 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 16:54:45,219 - Added error rows to dfs
+2025-06-07 17:03:53,383 - len(test_dicts) = 10
+2025-06-07 17:03:53,383 - len(control_dicts) = 10
+2025-06-07 17:03:53,405 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 17:03:53,405 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 17:03:53,419 - Added error rows to dfs
+2025-06-07 17:03:53,419 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 17:03:53,419 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 17:03:53,433 - Added error rows to dfs
+2025-06-07 17:03:53,433 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 17:03:53,434 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 17:03:53,448 - Added error rows to dfs
+2025-06-07 17:03:53,448 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 17:03:53,448 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 17:03:53,463 - Added error rows to dfs
+2025-06-07 17:21:38,681 - len(test_dicts) = 10
+2025-06-07 17:21:38,681 - len(control_dicts) = 10
+2025-06-07 17:21:38,707 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 239, in __init__
+    self.mvt = MultiViewEncoder(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/vit_encoder.py", line 39, in __init__
+    raise RuntimeError(f"[vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: {self.cam_type}")
+RuntimeError: [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 17:21:38,707 - [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 17:21:38,713 - Added error rows to dfs
+2025-06-07 17:22:32,484 - len(test_dicts) = 10
+2025-06-07 17:22:32,492 - len(control_dicts) = 10
+2025-06-07 17:23:26,921 - len(test_dicts) = 10
+2025-06-07 17:23:26,921 - len(control_dicts) = 10
+2025-06-07 17:24:35,900 - len(test_dicts) = 10
+2025-06-07 17:24:35,900 - len(control_dicts) = 10
+2025-06-07 17:26:00,801 - len(test_dicts) = 10
+2025-06-07 17:26:00,801 - len(control_dicts) = 10
+2025-06-07 17:26:00,818 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 239, in __init__
+    self.mvt = MultiViewEncoder(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/vit_encoder.py", line 39, in __init__
+    raise RuntimeError(f"[vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: {self.cam_type}")
+RuntimeError: [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 17:26:00,819 - [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 17:26:00,828 - Added error rows to dfs
+2025-06-07 17:27:14,460 - len(test_dicts) = 10
+2025-06-07 17:27:14,460 - len(control_dicts) = 10
+2025-06-07 17:28:30,413 - len(test_dicts) = 10
+2025-06-07 17:28:30,413 - len(control_dicts) = 10
+2025-06-07 17:30:15,027 - len(test_dicts) = 10
+2025-06-07 17:30:15,027 - len(control_dicts) = 10
+2025-06-07 17:32:30,057 - len(test_dicts) = 10
+2025-06-07 17:32:30,058 - len(control_dicts) = 10
+2025-06-07 17:32:30,069 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 239, in __init__
+    self.mvt = MultiViewEncoder(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/vit_encoder.py", line 39, in __init__
+    raise RuntimeError(f"[vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: {self.cam_type}")
+RuntimeError: [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 17:32:30,070 - [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 17:32:30,081 - Added error rows to dfs
+2025-06-07 17:35:06,624 - len(test_dicts) = 10
+2025-06-07 17:35:06,625 - len(control_dicts) = 10
+2025-06-07 17:37:49,377 - len(test_dicts) = 10
+2025-06-07 17:37:49,377 - len(control_dicts) = 10
+2025-06-07 17:41:56,637 - len(test_dicts) = 10
+2025-06-07 17:41:56,637 - len(control_dicts) = 10
+2025-06-07 17:47:31,670 - len(test_dicts) = 10
+2025-06-07 17:47:31,670 - len(control_dicts) = 10
+2025-06-07 17:47:31,685 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 239, in __init__
+    self.mvt = MultiViewEncoder(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/vit_encoder.py", line 39, in __init__
+    raise RuntimeError(f"[vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: {self.cam_type}")
+RuntimeError: [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 17:47:31,685 - [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 17:47:31,700 - Added error rows to dfs
+2025-06-07 17:51:31,181 - len(test_dicts) = 10
+2025-06-07 17:51:31,181 - len(control_dicts) = 10
+2025-06-07 17:55:41,921 - len(test_dicts) = 10
+2025-06-07 17:55:41,922 - len(control_dicts) = 10
+2025-06-07 18:02:11,176 - len(test_dicts) = 10
+2025-06-07 18:02:11,176 - len(control_dicts) = 10
+2025-06-07 18:11:06,788 - len(test_dicts) = 10
+2025-06-07 18:11:06,788 - len(control_dicts) = 10
+2025-06-07 18:11:06,813 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 239, in __init__
+    self.mvt = MultiViewEncoder(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/vit_encoder.py", line 39, in __init__
+    raise RuntimeError(f"[vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: {self.cam_type}")
+RuntimeError: [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 18:11:06,814 - [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 18:11:06,831 - Added error rows to dfs
+2025-06-07 18:18:33,591 - len(test_dicts) = 10
+2025-06-07 18:18:33,592 - len(control_dicts) = 10
+2025-06-07 18:26:21,648 - len(test_dicts) = 10
+2025-06-07 18:26:21,648 - len(control_dicts) = 10
+2025-06-07 18:38:47,553 - len(test_dicts) = 10
+2025-06-07 18:38:47,553 - len(control_dicts) = 10
+2025-06-07 18:56:03,900 - len(test_dicts) = 10
+2025-06-07 18:56:03,900 - len(control_dicts) = 10
+2025-06-07 18:56:03,930 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 18:56:03,930 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 18:56:03,936 - Added error rows to dfs
+2025-06-07 18:56:03,936 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 18:56:03,936 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 18:56:03,942 - Added error rows to dfs
+2025-06-07 18:56:03,942 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 18:56:03,942 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 18:56:03,948 - Added error rows to dfs
+2025-06-07 18:56:03,948 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 18:56:03,948 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 18:56:03,955 - Added error rows to dfs
+2025-06-07 18:57:39,538 - len(test_dicts) = 10
+2025-06-07 18:57:39,538 - len(control_dicts) = 10
+2025-06-07 18:57:39,555 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 18:57:39,556 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 18:57:39,564 - Added error rows to dfs
+2025-06-07 18:57:39,564 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 18:57:39,565 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 18:57:39,573 - Added error rows to dfs
+2025-06-07 18:57:39,573 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 18:57:39,573 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 18:57:39,583 - Added error rows to dfs
+2025-06-07 18:57:39,583 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 18:57:39,583 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 18:57:39,592 - Added error rows to dfs
+2025-06-07 19:00:09,431 - len(test_dicts) = 10
+2025-06-07 19:00:09,431 - len(control_dicts) = 10
+2025-06-07 19:00:09,449 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 19:00:09,449 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 19:00:09,459 - Added error rows to dfs
+2025-06-07 19:00:09,459 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 19:00:09,460 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 19:00:09,470 - Added error rows to dfs
+2025-06-07 19:00:09,471 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 19:00:09,471 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 19:00:09,482 - Added error rows to dfs
+2025-06-07 19:00:09,482 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 19:00:09,482 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 19:00:09,495 - Added error rows to dfs
+2025-06-07 19:05:59,888 - len(test_dicts) = 10
+2025-06-07 19:05:59,896 - len(control_dicts) = 10
+2025-06-07 19:05:59,909 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 19:05:59,909 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 19:05:59,921 - Added error rows to dfs
+2025-06-07 19:05:59,921 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 19:05:59,922 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 19:05:59,934 - Added error rows to dfs
+2025-06-07 19:05:59,934 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 19:05:59,935 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 19:05:59,947 - Added error rows to dfs
+2025-06-07 19:05:59,947 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 19:05:59,948 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 19:05:59,961 - Added error rows to dfs
+2025-06-07 19:15:18,798 - len(test_dicts) = 10
+2025-06-07 19:15:18,798 - len(control_dicts) = 10
+2025-06-07 19:15:18,822 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 19:15:18,822 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 19:15:18,837 - Added error rows to dfs
+2025-06-07 19:15:18,837 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 19:15:18,837 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 19:15:18,851 - Added error rows to dfs
+2025-06-07 19:15:18,852 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 19:15:18,852 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 19:15:18,866 - Added error rows to dfs
+2025-06-07 19:15:18,866 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 19:15:18,867 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 19:15:18,882 - Added error rows to dfs
+2025-06-07 19:33:49,577 - len(test_dicts) = 10
+2025-06-07 19:33:49,578 - len(control_dicts) = 10
+2025-06-07 19:33:49,605 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 239, in __init__
+    self.mvt = MultiViewEncoder(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/vit_encoder.py", line 39, in __init__
+    raise RuntimeError(f"[vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: {self.cam_type}")
+RuntimeError: [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 19:33:49,606 - [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 19:33:49,611 - Added error rows to dfs
+2025-06-07 19:34:47,476 - len(test_dicts) = 10
+2025-06-07 19:34:47,484 - len(control_dicts) = 10
+2025-06-07 19:35:43,724 - len(test_dicts) = 10
+2025-06-07 19:35:43,732 - len(control_dicts) = 10
+2025-06-07 19:36:53,430 - len(test_dicts) = 10
+2025-06-07 19:36:53,438 - len(control_dicts) = 10
+2025-06-07 19:38:20,978 - len(test_dicts) = 10
+2025-06-07 19:38:20,986 - len(control_dicts) = 10
+2025-06-07 19:38:20,999 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 239, in __init__
+    self.mvt = MultiViewEncoder(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/vit_encoder.py", line 39, in __init__
+    raise RuntimeError(f"[vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: {self.cam_type}")
+RuntimeError: [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 19:38:20,999 - [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 19:38:21,009 - Added error rows to dfs
+2025-06-07 19:39:36,440 - len(test_dicts) = 10
+2025-06-07 19:39:36,448 - len(control_dicts) = 10
+2025-06-07 19:40:57,396 - len(test_dicts) = 10
+2025-06-07 19:40:57,404 - len(control_dicts) = 10
+2025-06-07 19:42:47,748 - len(test_dicts) = 10
+2025-06-07 19:42:47,756 - len(control_dicts) = 10
+2025-06-07 19:45:10,502 - len(test_dicts) = 10
+2025-06-07 19:45:10,509 - len(control_dicts) = 10
+2025-06-07 19:45:10,522 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 239, in __init__
+    self.mvt = MultiViewEncoder(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/vit_encoder.py", line 39, in __init__
+    raise RuntimeError(f"[vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: {self.cam_type}")
+RuntimeError: [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 19:45:10,522 - [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 19:45:10,533 - Added error rows to dfs
+2025-06-07 19:47:56,633 - len(test_dicts) = 10
+2025-06-07 19:47:56,641 - len(control_dicts) = 10
+2025-06-07 19:50:48,682 - len(test_dicts) = 10
+2025-06-07 19:50:48,690 - len(control_dicts) = 10
+2025-06-07 19:55:10,817 - len(test_dicts) = 10
+2025-06-07 19:55:10,826 - len(control_dicts) = 10
+2025-06-07 20:01:08,288 - len(test_dicts) = 10
+2025-06-07 20:01:08,296 - len(control_dicts) = 10
+2025-06-07 20:01:08,311 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 239, in __init__
+    self.mvt = MultiViewEncoder(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/vit_encoder.py", line 39, in __init__
+    raise RuntimeError(f"[vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: {self.cam_type}")
+RuntimeError: [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 20:01:08,312 - [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 20:01:08,326 - Added error rows to dfs
+2025-06-07 20:05:21,567 - len(test_dicts) = 10
+2025-06-07 20:05:21,575 - len(control_dicts) = 10
+2025-06-07 20:09:47,468 - len(test_dicts) = 10
+2025-06-07 20:09:47,476 - len(control_dicts) = 10
+2025-06-07 20:16:43,888 - len(test_dicts) = 10
+2025-06-07 20:16:43,896 - len(control_dicts) = 10
+2025-06-07 20:26:13,560 - len(test_dicts) = 10
+2025-06-07 20:26:13,568 - len(control_dicts) = 10
+2025-06-07 20:26:13,586 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 239, in __init__
+    self.mvt = MultiViewEncoder(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/vit_encoder.py", line 39, in __init__
+    raise RuntimeError(f"[vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: {self.cam_type}")
+RuntimeError: [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 20:26:13,587 - [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 20:26:13,604 - Added error rows to dfs
+2025-06-07 20:34:10,333 - len(test_dicts) = 10
+2025-06-07 20:34:10,341 - len(control_dicts) = 10
+2025-06-07 20:42:29,945 - len(test_dicts) = 10
+2025-06-07 20:42:29,953 - len(control_dicts) = 10
+2025-06-07 20:55:46,162 - len(test_dicts) = 10
+2025-06-07 20:55:46,170 - len(control_dicts) = 10
+2025-06-07 21:13:46,503 - len(test_dicts) = 10
+2025-06-07 21:13:46,504 - len(control_dicts) = 10
+2025-06-07 21:13:46,527 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 21:13:46,527 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 21:13:46,532 - Added error rows to dfs
+2025-06-07 21:13:46,532 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 21:13:46,533 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 21:13:46,538 - Added error rows to dfs
+2025-06-07 21:13:46,538 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 21:13:46,539 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 21:13:46,545 - Added error rows to dfs
+2025-06-07 21:13:46,545 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 21:13:46,545 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 21:13:46,551 - Added error rows to dfs
+2025-06-07 21:15:22,493 - len(test_dicts) = 10
+2025-06-07 21:15:22,494 - len(control_dicts) = 10
+2025-06-07 21:15:22,504 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 21:15:22,505 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 21:15:22,515 - Added error rows to dfs
+2025-06-07 21:15:22,515 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 21:15:22,515 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 21:15:22,524 - Added error rows to dfs
+2025-06-07 21:15:22,524 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 21:15:22,524 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 21:15:22,535 - Added error rows to dfs
+2025-06-07 21:15:22,536 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 21:15:22,536 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 21:15:22,549 - Added error rows to dfs
+2025-06-07 21:17:58,389 - len(test_dicts) = 10
+2025-06-07 21:17:58,397 - len(control_dicts) = 10
+2025-06-07 21:17:58,408 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 21:17:58,408 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 21:17:58,418 - Added error rows to dfs
+2025-06-07 21:17:58,418 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 21:17:58,419 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 21:17:58,429 - Added error rows to dfs
+2025-06-07 21:17:58,429 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 21:17:58,430 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 21:17:58,441 - Added error rows to dfs
+2025-06-07 21:17:58,441 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 21:17:58,441 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 21:17:58,453 - Added error rows to dfs
+2025-06-07 21:24:01,935 - len(test_dicts) = 10
+2025-06-07 21:24:01,935 - len(control_dicts) = 10
+2025-06-07 21:24:01,958 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 21:24:01,958 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 21:24:01,971 - Added error rows to dfs
+2025-06-07 21:24:01,971 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 21:24:01,971 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 21:24:01,988 - Added error rows to dfs
+2025-06-07 21:24:01,988 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 21:24:01,988 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 21:24:02,001 - Added error rows to dfs
+2025-06-07 21:24:02,001 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 21:24:02,001 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 21:24:02,014 - Added error rows to dfs
+2025-06-07 21:33:50,975 - len(test_dicts) = 10
+2025-06-07 21:33:50,983 - len(control_dicts) = 10
+2025-06-07 21:33:51,005 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 21:33:51,005 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 21:33:51,019 - Added error rows to dfs
+2025-06-07 21:33:51,019 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 21:33:51,020 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 21:33:51,034 - Added error rows to dfs
+2025-06-07 21:33:51,034 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 21:33:51,035 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 21:33:51,049 - Added error rows to dfs
+2025-06-07 21:33:51,049 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 21:33:51,049 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 21:33:51,064 - Added error rows to dfs
+2025-06-07 21:52:17,510 - len(test_dicts) = 10
+2025-06-07 21:52:17,510 - len(control_dicts) = 10
+2025-06-07 21:52:17,536 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 239, in __init__
+    self.mvt = MultiViewEncoder(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/vit_encoder.py", line 39, in __init__
+    raise RuntimeError(f"[vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: {self.cam_type}")
+RuntimeError: [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 21:52:17,536 - [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 21:52:17,542 - Added error rows to dfs
+2025-06-07 21:53:11,762 - len(test_dicts) = 10
+2025-06-07 21:53:11,770 - len(control_dicts) = 10
+2025-06-07 21:54:06,549 - len(test_dicts) = 10
+2025-06-07 21:54:06,557 - len(control_dicts) = 10
+2025-06-07 21:55:15,832 - len(test_dicts) = 10
+2025-06-07 21:55:15,840 - len(control_dicts) = 10
+2025-06-07 21:56:40,628 - len(test_dicts) = 10
+2025-06-07 21:56:40,636 - len(control_dicts) = 10
+2025-06-07 21:56:40,645 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 239, in __init__
+    self.mvt = MultiViewEncoder(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/vit_encoder.py", line 39, in __init__
+    raise RuntimeError(f"[vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: {self.cam_type}")
+RuntimeError: [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 21:56:40,645 - [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 21:56:40,654 - Added error rows to dfs
+2025-06-07 21:57:54,971 - len(test_dicts) = 10
+2025-06-07 21:57:54,979 - len(control_dicts) = 10
+2025-06-07 21:59:11,283 - len(test_dicts) = 10
+2025-06-07 21:59:11,291 - len(control_dicts) = 10
+2025-06-07 22:00:56,791 - len(test_dicts) = 10
+2025-06-07 22:00:56,799 - len(control_dicts) = 10
+2025-06-07 22:03:11,998 - len(test_dicts) = 10
+2025-06-07 22:03:12,006 - len(control_dicts) = 10
+2025-06-07 22:03:12,018 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 239, in __init__
+    self.mvt = MultiViewEncoder(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/vit_encoder.py", line 39, in __init__
+    raise RuntimeError(f"[vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: {self.cam_type}")
+RuntimeError: [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 22:03:12,018 - [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 22:03:12,030 - Added error rows to dfs
+2025-06-07 22:05:48,653 - len(test_dicts) = 10
+2025-06-07 22:05:48,661 - len(control_dicts) = 10
+2025-06-07 22:08:31,699 - len(test_dicts) = 10
+2025-06-07 22:08:31,707 - len(control_dicts) = 10
+2025-06-07 22:12:39,273 - len(test_dicts) = 10
+2025-06-07 22:12:39,281 - len(control_dicts) = 10
+2025-06-07 22:18:15,648 - len(test_dicts) = 10
+2025-06-07 22:18:15,656 - len(control_dicts) = 10
+2025-06-07 22:18:15,671 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 239, in __init__
+    self.mvt = MultiViewEncoder(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/vit_encoder.py", line 39, in __init__
+    raise RuntimeError(f"[vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: {self.cam_type}")
+RuntimeError: [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 22:18:15,671 - [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 22:18:15,685 - Added error rows to dfs
+2025-06-07 22:22:25,002 - len(test_dicts) = 10
+2025-06-07 22:22:25,010 - len(control_dicts) = 10
+2025-06-07 22:26:42,959 - len(test_dicts) = 10
+2025-06-07 22:26:42,967 - len(control_dicts) = 10
+2025-06-07 22:33:40,112 - len(test_dicts) = 10
+2025-06-07 22:33:40,112 - len(control_dicts) = 10
+2025-06-07 22:43:06,232 - len(test_dicts) = 10
+2025-06-07 22:43:06,240 - len(control_dicts) = 10
+2025-06-07 22:43:06,259 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 239, in __init__
+    self.mvt = MultiViewEncoder(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/vit_encoder.py", line 39, in __init__
+    raise RuntimeError(f"[vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: {self.cam_type}")
+RuntimeError: [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 22:43:06,260 - [vit_encoder (MultiViewEncoder)] Need at least 2 cams here given: wrist
+2025-06-07 22:43:06,278 - Added error rows to dfs
+2025-06-07 22:50:56,839 - len(test_dicts) = 10
+2025-06-07 22:50:56,847 - len(control_dicts) = 10
+2025-06-07 22:59:10,335 - len(test_dicts) = 10
+2025-06-07 22:59:10,343 - len(control_dicts) = 10
+2025-06-07 23:12:26,898 - len(test_dicts) = 10
+2025-06-07 23:12:26,907 - len(control_dicts) = 10
+2025-06-07 23:30:37,005 - len(test_dicts) = 10
+2025-06-07 23:30:37,013 - len(control_dicts) = 10
+2025-06-07 23:30:37,036 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 23:30:37,037 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 23:30:37,042 - Added error rows to dfs
+2025-06-07 23:30:37,042 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 23:30:37,043 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 23:30:37,048 - Added error rows to dfs
+2025-06-07 23:30:37,049 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 23:30:37,049 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 23:30:37,055 - Added error rows to dfs
+2025-06-07 23:30:37,055 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 23:30:37,055 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 23:30:37,062 - Added error rows to dfs
+2025-06-07 23:32:16,954 - len(test_dicts) = 10
+2025-06-07 23:32:16,962 - len(control_dicts) = 10
+2025-06-07 23:32:16,971 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 23:32:16,971 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist'
+2025-06-07 23:32:16,980 - Added error rows to dfs
+2025-06-07 23:32:16,980 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 23:32:16,981 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+wrist_depth'
+2025-06-07 23:32:16,989 - Added error rows to dfs
+2025-06-07 23:32:16,989 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 23:32:16,989 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'l_shoulder+r_shoulder'
+2025-06-07 23:32:16,998 - Added error rows to dfs
+2025-06-07 23:32:16,998 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 193, in main
+    agent = make_grasp_agent(ct, config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 149, in <lambda>
+    make_grasp_agent = lambda ct, cfg,: Agent(
+                                        ^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/lib/agent.py", line 53, in __init__
+    self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/policy/fusing_policy.py", line 60, in __init__
+    self.feats = FusingEncoder(
+                 ^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 217, in __init__
+    self._check_cam(needed=CamType.main4())
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/modules/cnns/fusing_encoder.py", line 258, in _check_cam
+    raise ValueError(f"[fusing_encoder - (check_cam)] Policy cam_type does not include all of '{needed}' -> current: '{self.cam_type}'")
+ValueError: [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 23:32:16,999 - [fusing_encoder - (check_cam)] Policy cam_type does not include all of '[<CamType.WRIST: 1>, <CamType.LEFT_SHOULDER: 2>, <CamType.RIGHT_SHOULDER: 4>, <CamType.WRIST_DEPTH: 8>]' -> current: 'wrist+l_shoulder+r_shoulder'
+2025-06-07 23:32:17,008 - Added error rows to dfs
