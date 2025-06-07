@@ -74,16 +74,28 @@ def main():
     env, 
     task, 
     "data/test/10demos/smaller-Vision_Random-setdist:0.3",
-    task_params=smaller
+    task_params = smaller
   )
   configs = [
+    FuseConfig.WDLR,
+    FuseConfig.WLR_D,
+    FuseConfig.DEPTH_FEATS_GATED,
+    FuseConfig.DEPTH_FEATS_ATTN,
+    FuseConfig.WD_LR,
+    FuseConfig.WD_LR_ATTN,
+    FuseConfig.Wfilm_D,
+    FuseConfig.W_Dfilm,
+    FuseConfig.Wfilm_Dfilm,
+    FuseConfig.W_D_L_R,
+    FuseConfig.W_D_L_R_FILM,
+    FuseConfig.W_D_L_R_ATTN,
     FuseConfig.W_D_L_R_FILM,
     FuseConfig.W_D_L_R_ATTN,
   ]
 
   epochs = [100, 200, 600, 1000, 2000]
 
-  repeats = 5
+  seeds = [3790, 1901, 4248]#, 6689, 7653]
   cam_types =  [ 
     CamType.WRIST,
     CamType.WRIST | CamType.WRIST_DEPTH,
@@ -108,7 +120,7 @@ def main():
   }
 
   config_columns = [
-    "rep",
+    "seed",
     "config",
     "error",
     "task_name",
@@ -124,8 +136,11 @@ def main():
     "avg_test_final_distance",
 
   ]
+  df_all_str = lambda config, seed: f"zz-new-out/ALLvs_random-ns-cfg:{config}-seed{seed}.csv"
+  df_avg_str = lambda config, seed: f"zz-new-out/vs_random-ns-cfg:{config}-seed{seed}.csv"
+
   demo_columns = [
-    "rep",
+    "seed",
     "config",
     "error",
     "task_name",
@@ -162,7 +177,7 @@ def main():
     ## others are defaulted
   )
   logger.info("=== Starting Long Test:")
-  for rep in range(repeats):
+  for seed in seeds:
     for config in configs:
 
       df_all = pd.DataFrame(
@@ -177,11 +192,13 @@ def main():
       all_count = 0
       avg_count = 0
 
-      df_all.to_csv(f"zz-new-out/ALLvs_random-ns-cfg:{config}-rep{rep}.csv", index=True)
-      df_avg.to_csv(f"zz-new-out/vs_random-ns-cfg:{config}-rep{rep}.csv", index=True)
+      df_all.to_csv(df_all_str(config, seed), index=True)
+      df_avg.to_csv(df_avg_str(config, seed), index=True)
 
       for (ep, ct) in combs:
         training_params["epochs"] = ep
+        training_params["lock_loader_seed"] = seed
+
         control_dones = []
         test_dones = []
         control_mins = []
@@ -230,7 +247,7 @@ def main():
             test_finals.append(td["distances"][-1])
 
             df_all.loc[all_count] = {
-              "rep": rep,
+              "rep": seed,
               "config": config,
               "error": False,
               "task_name": get_task_name(task),
@@ -250,10 +267,10 @@ def main():
 
             }
             all_count+= 1
-            df_all.to_csv(f"zz-new-out/ALLvs_random-ns-cfg:{config}-rep{rep}.csv", index=True)
+            df_all.to_csv(df_all_str(config, seed), index=True)
 
           df_avg.loc[avg_count] = {
-            "rep": rep,
+            "rep": seed,
             "config": config,
             "error": False,
             "task_name": get_task_name(task),
@@ -271,7 +288,7 @@ def main():
 
           }
           avg_count += 1
-          df_avg.to_csv(f"zz-new-out/vs_random-ns-cfg:{config}-rep{rep}.csv", index=True)
+          df_avg.to_csv(df_avg_str(config, seed), index=True)
 
         except Exception as e:
           
@@ -287,7 +304,7 @@ def main():
               "epochs": training_params["epochs"],
             }
             all_count+= 1
-            df_all.to_csv(f"zz-new-out/ALLvs_random-ns-cfg:{config}-rep{rep}.csv", index=True)
+            df_all.to_csv(df_all_str(config, seed), index=True)
 
           df_avg.loc[avg_count] = {
             "rep": rep,
@@ -298,7 +315,7 @@ def main():
             "epochs": training_params["epochs"],
           }
           avg_count += 1
-          df_avg.to_csv(f"zz-new-out/vs_random-ns-cfg:{config}-rep{rep}.csv", index=True)
+          df_avg.to_csv(df_avg_str(config, seed), index=True)
 
           logger.info("Added error rows to dfs")
 
