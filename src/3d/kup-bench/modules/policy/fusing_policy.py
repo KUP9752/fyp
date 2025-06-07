@@ -47,10 +47,11 @@ class FusingPolicy(nn.Module):
     ## keeps all defaults that are not overriden in opts
     # self.opts = self.default_opts 
     super(FusingPolicy, self).__init__()
+    self.action_shape = action_shape
     self.cam_type = cam_type
+    self.fuse_config = fuse_config
     self.is_grasp = is_grasp
     self.use_proprio = use_proprio
-    self.fuse_config = fuse_config
     self.fusing_opts = fusing_opts
     self.proprio_opts = proprio_opts
 
