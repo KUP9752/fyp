@@ -30,10 +30,10 @@ from lib.fuse_config import FuseConfig
 ## Making a separate class/file here for this differnet than `SimpleGrasp` just so it is more convenient to tweak and experiment with
 class FusingPolicy(nn.Module): 
   def __str__(self):
-    return f"fusing_policy-is_grasp:{self.is_grasp}-use_proprio@{self.use_proprio}config:{self.config}-opts:{self.opts}"
+    return f"fusing_policy-fuse_config:{self.fuse_config}-is_grasp:{self.is_grasp}-use_proprio:{self.use_proprio}-fusing_opts:{self.fusing_opts}-proprio_opts:{self.proprio_opts}"
   
   def __repr__(self):
-    return f"FusingPolicy(is_grasp={self.is_grasp}, use_proprio={self.use_proprio}, config={self.config}, opts={self.opts})"
+    return f"FusingPolicy(fuse_config={self.fuse_config}, is_grasp={self.is_grasp}, use_proprio={self.use_proprio}, config={self.config}, fusing_opts={self.fusing_opts}, proprio_opts={self.proprio_opts})"
   
   def __init__(self,
     action_shape: int, 
@@ -50,7 +50,12 @@ class FusingPolicy(nn.Module):
     self.cam_type = cam_type
     self.is_grasp = is_grasp
     self.use_proprio = use_proprio
+    self.fuse_config = fuse_config
+    self.fusing_opts = fusing_opts
+    self.proprio_opts = proprio_opts
 
+    print(f"Policy Fuse Config: {fuse_config}")
+    
     self.feats = FusingEncoder(
       cam_type=self.cam_type, 
       config = fuse_config, 
