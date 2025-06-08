@@ -39,16 +39,16 @@
 37,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,100,,,,,,,,
 38,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,100,,,,,,,,
 39,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,100,,,,,,,,
-40,4,FuseConfig.Wfilm_D,False,Vision_Random,0,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.5197526994271254,0.5009212816056281,0.25457740723773065,0.25457740723773065,[],[]
-41,4,FuseConfig.Wfilm_D,False,Vision_Random,1,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.5590301493361977,0.5574815186655397,0.3218291525311178,0.29322125799197896,[],[]
-42,4,FuseConfig.Wfilm_D,False,Vision_Random,2,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.6013199056037182,0.5894857458252607,0.12350949105166373,0.12350949105166373,[],[]
-43,4,FuseConfig.Wfilm_D,False,Vision_Random,3,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.5178006521263265,0.5174608672590276,0.2999110705141793,0.29983732792180307,[],[]
-44,4,FuseConfig.Wfilm_D,False,Vision_Random,4,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.44276954862328083,0.44276954862328083,0.2865788022161379,0.2865788022161379,[],[]
-45,4,FuseConfig.Wfilm_D,False,Vision_Random,5,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.3375902996513515,0.3375902996513515,0.2616746980388559,0.2616746980388559,[],[]
-46,4,FuseConfig.Wfilm_D,False,Vision_Random,6,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.5220837882470928,0.5220837882470928,0.2782985285315297,0.2782985285315297,[],[]
-47,4,FuseConfig.Wfilm_D,False,Vision_Random,7,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.4825209422437022,0.4825209422437022,0.2903926841788362,0.2895555166479622,[],[]
-48,4,FuseConfig.Wfilm_D,False,Vision_Random,8,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.43354856601234815,0.43354856601234815,0.28565539726958583,0.28565539726958583,[],[]
-49,4,FuseConfig.Wfilm_D,False,Vision_Random,9,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.16215380905081622,0.1452986596640343,0.2530358749279192,0.25203143385248256,[],[]
+40,4,FuseConfig.Wfilm_D,True,Vision_Random,0,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.5197526994271254,0.5009212816056281,0.25457740723773065,0.25457740723773065,[],[]
+41,4,FuseConfig.Wfilm_D,True,Vision_Random,1,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.5590301493361977,0.5574815186655397,0.3218291525311178,0.29322125799197896,[],[]
+42,4,FuseConfig.Wfilm_D,True,Vision_Random,2,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.6013199056037182,0.5894857458252607,0.12350949105166373,0.12350949105166373,[],[]
+43,4,FuseConfig.Wfilm_D,True,Vision_Random,3,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.5178006521263265,0.5174608672590276,0.2999110705141793,0.29983732792180307,[],[]
+44,4,FuseConfig.Wfilm_D,True,Vision_Random,4,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.44276954862328083,0.44276954862328083,0.2865788022161379,0.2865788022161379,[],[]
+45,4,FuseConfig.Wfilm_D,True,Vision_Random,5,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.3375902996513515,0.3375902996513515,0.2616746980388559,0.2616746980388559,[],[]
+46,4,FuseConfig.Wfilm_D,True,Vision_Random,6,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.5220837882470928,0.5220837882470928,0.2782985285315297,0.2782985285315297,[],[]
+47,4,FuseConfig.Wfilm_D,True,Vision_Random,7,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.4825209422437022,0.4825209422437022,0.2903926841788362,0.2895555166479622,[],[]
+48,4,FuseConfig.Wfilm_D,True,Vision_Random,8,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.43354856601234815,0.43354856601234815,0.28565539726958583,0.28565539726958583,[],[]
+49,4,FuseConfig.Wfilm_D,True,Vision_Random,9,wrist+l_shoulder+r_shoulder+wrist_depth,100,False,False,0.16215380905081622,0.1452986596640343,0.2530358749279192,0.25203143385248256,[],[]
 50,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,150,,,,,,,,
 51,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,150,,,,,,,,
 52,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,150,,,,,,,,
@@ -89,16 +89,16 @@
 87,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,150,,,,,,,,
 88,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,150,,,,,,,,
 89,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,150,,,,,,,,
-90,4,FuseConfig.Wfilm_D,False,Vision_Random,0,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.0897654327567373,0.0853205845637053,0.08553254243650514,0.050851826968741944,[],[]
-91,4,FuseConfig.Wfilm_D,False,Vision_Random,1,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.11478914699129467,0.09759231763810822,0.22979707517019757,0.12553813925607782,[],[]
-92,4,FuseConfig.Wfilm_D,False,Vision_Random,2,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.24466431506515893,0.24466431506515893,0.34679524748534807,0.10858961073383926,[],[]
-93,4,FuseConfig.Wfilm_D,False,Vision_Random,3,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.24832957975876233,0.08793288176538035,0.28785464889784673,0.2024108438260492,[],[]
-94,4,FuseConfig.Wfilm_D,False,Vision_Random,4,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.43449170136324916,0.0780853641616896,0.3108550506931119,0.2141427394473557,[],[]
-95,4,FuseConfig.Wfilm_D,False,Vision_Random,5,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.39770335381253236,0.10971248318280707,0.24032382247046477,0.13278166883836454,[],[]
-96,4,FuseConfig.Wfilm_D,False,Vision_Random,6,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.3434696671713273,0.0850991975507699,0.3039913856325791,0.20615211116625887,[],[]
-97,4,FuseConfig.Wfilm_D,False,Vision_Random,7,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.4431831086288632,0.30167603496712114,0.29481798153137534,0.10553899300438693,[],[]
-98,4,FuseConfig.Wfilm_D,False,Vision_Random,8,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.23803997765389132,0.07807922602610769,0.18901478861267237,0.1104808466182767,[],[]
-99,4,FuseConfig.Wfilm_D,False,Vision_Random,9,wrist+l_shoulder+r_shoulder+wrist_depth,150,True,False,0.09645921482275363,0.09645921482275363,0.32956304858837987,0.06378730449451847,['outputs/run-grasp-with-agent/_June07_14-06'],[]
+90,4,FuseConfig.Wfilm_D,True,Vision_Random,0,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.0897654327567373,0.0853205845637053,0.08553254243650514,0.050851826968741944,[],[]
+91,4,FuseConfig.Wfilm_D,True,Vision_Random,1,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.11478914699129467,0.09759231763810822,0.22979707517019757,0.12553813925607782,[],[]
+92,4,FuseConfig.Wfilm_D,True,Vision_Random,2,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.24466431506515893,0.24466431506515893,0.34679524748534807,0.10858961073383926,[],[]
+93,4,FuseConfig.Wfilm_D,True,Vision_Random,3,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.24832957975876233,0.08793288176538035,0.28785464889784673,0.2024108438260492,[],[]
+94,4,FuseConfig.Wfilm_D,True,Vision_Random,4,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.43449170136324916,0.0780853641616896,0.3108550506931119,0.2141427394473557,[],[]
+95,4,FuseConfig.Wfilm_D,True,Vision_Random,5,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.39770335381253236,0.10971248318280707,0.24032382247046477,0.13278166883836454,[],[]
+96,4,FuseConfig.Wfilm_D,True,Vision_Random,6,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.3434696671713273,0.0850991975507699,0.3039913856325791,0.20615211116625887,[],[]
+97,4,FuseConfig.Wfilm_D,True,Vision_Random,7,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.4431831086288632,0.30167603496712114,0.29481798153137534,0.10553899300438693,[],[]
+98,4,FuseConfig.Wfilm_D,True,Vision_Random,8,wrist+l_shoulder+r_shoulder+wrist_depth,150,False,False,0.23803997765389132,0.07807922602610769,0.18901478861267237,0.1104808466182767,[],[]
+99,4,FuseConfig.Wfilm_D,True,Vision_Random,9,wrist+l_shoulder+r_shoulder+wrist_depth,150,True,False,0.09645921482275363,0.09645921482275363,0.32956304858837987,0.06378730449451847,['outputs/run-grasp-with-agent/_June07_14-06'],[]
 100,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,200,,,,,,,,
 101,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,200,,,,,,,,
 102,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,200,,,,,,,,
@@ -139,16 +139,16 @@
 137,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,200,,,,,,,,
 138,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,200,,,,,,,,
 139,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,200,,,,,,,,
-140,4,FuseConfig.Wfilm_D,False,Vision_Random,0,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.4595560084642547,0.4588842083765011,0.218496665570459,0.19295667452342793,[],[]
-141,4,FuseConfig.Wfilm_D,False,Vision_Random,1,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.4559821179211003,0.4457836490752249,0.2151258749318868,0.19400403691715742,[],[]
-142,4,FuseConfig.Wfilm_D,False,Vision_Random,2,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.49157704943325875,0.49157704943325875,0.19638368577570461,0.17797959443673245,[],[]
-143,4,FuseConfig.Wfilm_D,False,Vision_Random,3,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.3412041246746061,0.3412041246746061,0.2766167552415721,0.22454222579414293,[],"['outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09']"
-144,4,FuseConfig.Wfilm_D,False,Vision_Random,4,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.49842689593722594,0.4477701137856924,0.27502825913332557,0.25963856941145336,"['outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09']",[]
-145,4,FuseConfig.Wfilm_D,False,Vision_Random,5,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.44787278976434663,0.3995703451543688,0.20357789220685682,0.18732070189058075,"['outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09']",[]
-146,4,FuseConfig.Wfilm_D,False,Vision_Random,6,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.12246789963189575,0.12167966223034096,0.2598899277952785,0.2477948950959869,[],[]
-147,4,FuseConfig.Wfilm_D,False,Vision_Random,7,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.36924084598834983,0.3690581036193687,0.1572539898167199,0.1566418886528893,[],"['outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09']"
-148,4,FuseConfig.Wfilm_D,False,Vision_Random,8,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.4337947537384734,0.4040879878328055,0.23761338938946006,0.22556761431279979,"['outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09']",[]
-149,4,FuseConfig.Wfilm_D,False,Vision_Random,9,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.36681258887906326,0.35975431064715613,0.2163666581461567,0.055113160365419016,"['outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09']",[]
+140,4,FuseConfig.Wfilm_D,True,Vision_Random,0,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.4595560084642547,0.4588842083765011,0.218496665570459,0.19295667452342793,[],[]
+141,4,FuseConfig.Wfilm_D,True,Vision_Random,1,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.4559821179211003,0.4457836490752249,0.2151258749318868,0.19400403691715742,[],[]
+142,4,FuseConfig.Wfilm_D,True,Vision_Random,2,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.49157704943325875,0.49157704943325875,0.19638368577570461,0.17797959443673245,[],[]
+143,4,FuseConfig.Wfilm_D,True,Vision_Random,3,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.3412041246746061,0.3412041246746061,0.2766167552415721,0.22454222579414293,[],"['outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09']"
+144,4,FuseConfig.Wfilm_D,True,Vision_Random,4,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.49842689593722594,0.4477701137856924,0.27502825913332557,0.25963856941145336,"['outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09']",[]
+145,4,FuseConfig.Wfilm_D,True,Vision_Random,5,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.44787278976434663,0.3995703451543688,0.20357789220685682,0.18732070189058075,"['outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09']",[]
+146,4,FuseConfig.Wfilm_D,True,Vision_Random,6,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.12246789963189575,0.12167966223034096,0.2598899277952785,0.2477948950959869,[],[]
+147,4,FuseConfig.Wfilm_D,True,Vision_Random,7,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.36924084598834983,0.3690581036193687,0.1572539898167199,0.1566418886528893,[],"['outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09']"
+148,4,FuseConfig.Wfilm_D,True,Vision_Random,8,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.4337947537384734,0.4040879878328055,0.23761338938946006,0.22556761431279979,"['outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09']",[]
+149,4,FuseConfig.Wfilm_D,True,Vision_Random,9,wrist+l_shoulder+r_shoulder+wrist_depth,200,False,False,0.36681258887906326,0.35975431064715613,0.2163666581461567,0.055113160365419016,"['outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09', 'outputs/run-grasp-with-agent/_June07_14-09']",[]
 150,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,400,,,,,,,,
 151,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,400,,,,,,,,
 152,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,400,,,,,,,,
@@ -189,16 +189,16 @@
 187,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,400,,,,,,,,
 188,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,400,,,,,,,,
 189,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,400,,,,,,,,
-190,4,FuseConfig.Wfilm_D,False,Vision_Random,0,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.41952319754804474,0.3950193931272353,0.2777385499654469,0.2427222770552906,[],[]
-191,4,FuseConfig.Wfilm_D,False,Vision_Random,1,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.5052711044811322,0.5052711044811322,0.2787862710992373,0.2589604314812669,[],[]
-192,4,FuseConfig.Wfilm_D,False,Vision_Random,2,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.5459302890804729,0.5459302890804729,0.2164798630774006,0.21612824295688443,[],[]
-193,4,FuseConfig.Wfilm_D,False,Vision_Random,3,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.44289331532926207,0.44289331532926207,0.2809911661960946,0.25232125655620147,[],[]
-194,4,FuseConfig.Wfilm_D,False,Vision_Random,4,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.20885401841405804,0.20885401841405804,0.2746686372812813,0.2746686372812813,[],[]
-195,4,FuseConfig.Wfilm_D,False,Vision_Random,5,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.2541078592641801,0.2541078592641801,0.24594631661095295,0.21592579410755774,[],[]
-196,4,FuseConfig.Wfilm_D,False,Vision_Random,6,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.35721757021326866,0.35721757021326866,0.26123722078668726,0.26123722078668726,[],[]
-197,4,FuseConfig.Wfilm_D,False,Vision_Random,7,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.21826767988734944,0.21826767988734944,0.2233491969189575,0.14887006901173006,[],[]
-198,4,FuseConfig.Wfilm_D,False,Vision_Random,8,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.4795121111820536,0.4679531448300126,0.3157879658705439,0.26941566327012373,[],[]
-199,4,FuseConfig.Wfilm_D,False,Vision_Random,9,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.1045125140659914,0.1045125140659914,0.1990958146616017,0.18894077315789337,[],[]
+190,4,FuseConfig.Wfilm_D,True,Vision_Random,0,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.41952319754804474,0.3950193931272353,0.2777385499654469,0.2427222770552906,[],[]
+191,4,FuseConfig.Wfilm_D,True,Vision_Random,1,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.5052711044811322,0.5052711044811322,0.2787862710992373,0.2589604314812669,[],[]
+192,4,FuseConfig.Wfilm_D,True,Vision_Random,2,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.5459302890804729,0.5459302890804729,0.2164798630774006,0.21612824295688443,[],[]
+193,4,FuseConfig.Wfilm_D,True,Vision_Random,3,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.44289331532926207,0.44289331532926207,0.2809911661960946,0.25232125655620147,[],[]
+194,4,FuseConfig.Wfilm_D,True,Vision_Random,4,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.20885401841405804,0.20885401841405804,0.2746686372812813,0.2746686372812813,[],[]
+195,4,FuseConfig.Wfilm_D,True,Vision_Random,5,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.2541078592641801,0.2541078592641801,0.24594631661095295,0.21592579410755774,[],[]
+196,4,FuseConfig.Wfilm_D,True,Vision_Random,6,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.35721757021326866,0.35721757021326866,0.26123722078668726,0.26123722078668726,[],[]
+197,4,FuseConfig.Wfilm_D,True,Vision_Random,7,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.21826767988734944,0.21826767988734944,0.2233491969189575,0.14887006901173006,[],[]
+198,4,FuseConfig.Wfilm_D,True,Vision_Random,8,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.4795121111820536,0.4679531448300126,0.3157879658705439,0.26941566327012373,[],[]
+199,4,FuseConfig.Wfilm_D,True,Vision_Random,9,wrist+l_shoulder+r_shoulder+wrist_depth,400,False,False,0.1045125140659914,0.1045125140659914,0.1990958146616017,0.18894077315789337,[],[]
 200,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,500,,,,,,,,
 201,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,500,,,,,,,,
 202,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,500,,,,,,,,
@@ -239,16 +239,16 @@
 237,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,500,,,,,,,,
 238,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,500,,,,,,,,
 239,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,500,,,,,,,,
-240,4,FuseConfig.Wfilm_D,False,Vision_Random,0,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.0788415615583613,0.0788415615583613,0.06156203095640979,0.06156203095640979,[],[]
-241,4,FuseConfig.Wfilm_D,False,Vision_Random,1,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.2685094235726621,0.2685094235726621,0.11587534054556557,0.11302791901238941,[],[]
-242,4,FuseConfig.Wfilm_D,False,Vision_Random,2,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.09323356001728271,0.09323356001728271,0.11225660820646358,0.11225660820646358,[],[]
-243,4,FuseConfig.Wfilm_D,False,Vision_Random,3,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.0967268421574452,0.0967268421574452,0.20917530707089316,0.18908081644486435,[],[]
-244,4,FuseConfig.Wfilm_D,False,Vision_Random,4,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.0785831883310362,0.0785831883310362,0.27663715709256564,0.24500807928754936,[],[]
-245,4,FuseConfig.Wfilm_D,False,Vision_Random,5,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.07874920732905726,0.07874920732905726,0.13952259572838133,0.1225412861310013,[],[]
-246,4,FuseConfig.Wfilm_D,False,Vision_Random,6,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.08915426107565093,0.08915426107565093,0.2505380993067602,0.2374157838395462,[],[]
-247,4,FuseConfig.Wfilm_D,False,Vision_Random,7,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.4226388146231189,0.3115929291329309,0.058882467203350226,0.051050259790151584,[],[]
-248,4,FuseConfig.Wfilm_D,False,Vision_Random,8,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.3234056944173,0.2700839267441933,0.08075185704745835,0.08029932153246012,[],[]
-249,4,FuseConfig.Wfilm_D,False,Vision_Random,9,wrist+l_shoulder+r_shoulder+wrist_depth,500,True,False,0.09442074334097988,0.09442074334097988,0.07177232091390259,0.0633062146688427,['outputs/run-grasp-with-agent/_June07_14-18'],[]
+240,4,FuseConfig.Wfilm_D,True,Vision_Random,0,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.0788415615583613,0.0788415615583613,0.06156203095640979,0.06156203095640979,[],[]
+241,4,FuseConfig.Wfilm_D,True,Vision_Random,1,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.2685094235726621,0.2685094235726621,0.11587534054556557,0.11302791901238941,[],[]
+242,4,FuseConfig.Wfilm_D,True,Vision_Random,2,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.09323356001728271,0.09323356001728271,0.11225660820646358,0.11225660820646358,[],[]
+243,4,FuseConfig.Wfilm_D,True,Vision_Random,3,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.0967268421574452,0.0967268421574452,0.20917530707089316,0.18908081644486435,[],[]
+244,4,FuseConfig.Wfilm_D,True,Vision_Random,4,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.0785831883310362,0.0785831883310362,0.27663715709256564,0.24500807928754936,[],[]
+245,4,FuseConfig.Wfilm_D,True,Vision_Random,5,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.07874920732905726,0.07874920732905726,0.13952259572838133,0.1225412861310013,[],[]
+246,4,FuseConfig.Wfilm_D,True,Vision_Random,6,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.08915426107565093,0.08915426107565093,0.2505380993067602,0.2374157838395462,[],[]
+247,4,FuseConfig.Wfilm_D,True,Vision_Random,7,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.4226388146231189,0.3115929291329309,0.058882467203350226,0.051050259790151584,[],[]
+248,4,FuseConfig.Wfilm_D,True,Vision_Random,8,wrist+l_shoulder+r_shoulder+wrist_depth,500,False,False,0.3234056944173,0.2700839267441933,0.08075185704745835,0.08029932153246012,[],[]
+249,4,FuseConfig.Wfilm_D,True,Vision_Random,9,wrist+l_shoulder+r_shoulder+wrist_depth,500,True,False,0.09442074334097988,0.09442074334097988,0.07177232091390259,0.0633062146688427,['outputs/run-grasp-with-agent/_June07_14-18'],[]
 250,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,1000,,,,,,,,
 251,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,1000,,,,,,,,
 252,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,1000,,,,,,,,
@@ -289,16 +289,16 @@
 287,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,1000,,,,,,,,
 288,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,1000,,,,,,,,
 289,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,1000,,,,,,,,
-290,4,FuseConfig.Wfilm_D,False,Vision_Random,0,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.12540221704056384,0.12540221704056384,0.07029761613302256,0.05721211358307928,[],[]
-291,4,FuseConfig.Wfilm_D,False,Vision_Random,1,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.11850789079446081,0.11517499286551042,0.23816545538759917,0.11975893799247454,[],[]
-292,4,FuseConfig.Wfilm_D,False,Vision_Random,2,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.2670762194844175,0.2209312291636272,0.2725349689891817,0.1158271362958687,[],[]
-293,4,FuseConfig.Wfilm_D,False,Vision_Random,3,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.12280844058323899,0.12280844058323899,0.3335484549733889,0.1947719257901979,[],[]
-294,4,FuseConfig.Wfilm_D,False,Vision_Random,4,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.08654002520807233,0.08158296841506815,0.3600337635835326,0.22988912711490503,[],[]
-295,4,FuseConfig.Wfilm_D,False,Vision_Random,5,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.0830423466201714,0.0830423466201714,0.2770567965165888,0.1213843639480201,[],[]
-296,4,FuseConfig.Wfilm_D,False,Vision_Random,6,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.09232870879172739,0.09232870879172739,0.36347402612132096,0.21921580625743153,[],[]
-297,4,FuseConfig.Wfilm_D,False,Vision_Random,7,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.3914369518385624,0.2360981595072267,0.33256603553682923,0.07433423117471931,[],[]
-298,4,FuseConfig.Wfilm_D,False,Vision_Random,8,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.2830056624676491,0.11005953553114096,0.20535028038975378,0.08949355351657767,[],[]
-299,4,FuseConfig.Wfilm_D,False,Vision_Random,9,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.11692028054508442,0.11692028054508442,0.06472823555342783,0.06377216923541122,[],[]
+290,4,FuseConfig.Wfilm_D,True,Vision_Random,0,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.12540221704056384,0.12540221704056384,0.07029761613302256,0.05721211358307928,[],[]
+291,4,FuseConfig.Wfilm_D,True,Vision_Random,1,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.11850789079446081,0.11517499286551042,0.23816545538759917,0.11975893799247454,[],[]
+292,4,FuseConfig.Wfilm_D,True,Vision_Random,2,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.2670762194844175,0.2209312291636272,0.2725349689891817,0.1158271362958687,[],[]
+293,4,FuseConfig.Wfilm_D,True,Vision_Random,3,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.12280844058323899,0.12280844058323899,0.3335484549733889,0.1947719257901979,[],[]
+294,4,FuseConfig.Wfilm_D,True,Vision_Random,4,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.08654002520807233,0.08158296841506815,0.3600337635835326,0.22988912711490503,[],[]
+295,4,FuseConfig.Wfilm_D,True,Vision_Random,5,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.0830423466201714,0.0830423466201714,0.2770567965165888,0.1213843639480201,[],[]
+296,4,FuseConfig.Wfilm_D,True,Vision_Random,6,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.09232870879172739,0.09232870879172739,0.36347402612132096,0.21921580625743153,[],[]
+297,4,FuseConfig.Wfilm_D,True,Vision_Random,7,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.3914369518385624,0.2360981595072267,0.33256603553682923,0.07433423117471931,[],[]
+298,4,FuseConfig.Wfilm_D,True,Vision_Random,8,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.2830056624676491,0.11005953553114096,0.20535028038975378,0.08949355351657767,[],[]
+299,4,FuseConfig.Wfilm_D,True,Vision_Random,9,wrist+l_shoulder+r_shoulder+wrist_depth,1000,False,False,0.11692028054508442,0.11692028054508442,0.06472823555342783,0.06377216923541122,[],[]
 300,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,2000,,,,,,,,
 301,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,2000,,,,,,,,
 302,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist,2000,,,,,,,,
@@ -339,13 +339,13 @@
 337,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,2000,,,,,,,,
 338,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,2000,,,,,,,,
 339,4,FuseConfig.Wfilm_D,True,Vision_Random,,wrist+l_shoulder+r_shoulder,2000,,,,,,,,
-340,4,FuseConfig.Wfilm_D,False,Vision_Random,0,wrist+l_shoulder+r_shoulder+wrist_depth,2000,True,False,0.08923599235598441,0.08799710232461538,0.11416347326857451,0.07110455980493233,['outputs/run-grasp-with-agent/_June07_14-42'],[]
-341,4,FuseConfig.Wfilm_D,False,Vision_Random,1,wrist+l_shoulder+r_shoulder+wrist_depth,2000,False,False,0.07857061176144453,0.07857061176144453,0.15597974168480697,0.09485366278861501,[],[]
-342,4,FuseConfig.Wfilm_D,False,Vision_Random,2,wrist+l_shoulder+r_shoulder+wrist_depth,2000,False,False,0.0906453830276803,0.08732641749096956,0.20125790794186998,0.1267747375077382,[],[]
-343,4,FuseConfig.Wfilm_D,False,Vision_Random,3,wrist+l_shoulder+r_shoulder+wrist_depth,2000,True,False,0.10525351916562418,0.10030303430774247,0.19332787165124693,0.16410941255217368,['outputs/run-grasp-with-agent/_June07_14-42'],[]
-344,4,FuseConfig.Wfilm_D,False,Vision_Random,4,wrist+l_shoulder+r_shoulder+wrist_depth,2000,False,False,0.08533179538662483,0.07866240173101374,0.2996223355573871,0.24897116098818547,[],[]
-345,4,FuseConfig.Wfilm_D,False,Vision_Random,5,wrist+l_shoulder+r_shoulder+wrist_depth,2000,False,False,0.07965420146443766,0.07965420146443766,0.15294039283138045,0.09990177987542848,[],[]
-346,4,FuseConfig.Wfilm_D,False,Vision_Random,6,wrist+l_shoulder+r_shoulder+wrist_depth,2000,False,False,0.08376322734833437,0.07855876735721197,0.3072426649187761,0.2420023011002349,[],[]
-347,4,FuseConfig.Wfilm_D,False,Vision_Random,7,wrist+l_shoulder+r_shoulder+wrist_depth,2000,False,False,0.3300616440040829,0.3138387514819823,0.06870647605747426,0.06501620633722108,[],[]
-348,4,FuseConfig.Wfilm_D,False,Vision_Random,8,wrist+l_shoulder+r_shoulder+wrist_depth,2000,False,False,0.35018298848725155,0.34833894888851874,0.14581079904880637,0.06658206312497254,[],[]
-349,4,FuseConfig.Wfilm_D,False,Vision_Random,9,wrist+l_shoulder+r_shoulder+wrist_depth,2000,False,False,0.23734563222980523,0.08352011575005994,0.0659312187072659,0.0659312187072659,[],[]
+340,4,FuseConfig.Wfilm_D,True,Vision_Random,0,wrist+l_shoulder+r_shoulder+wrist_depth,2000,True,False,0.08923599235598441,0.08799710232461538,0.11416347326857451,0.07110455980493233,['outputs/run-grasp-with-agent/_June07_14-42'],[]
+341,4,FuseConfig.Wfilm_D,True,Vision_Random,1,wrist+l_shoulder+r_shoulder+wrist_depth,2000,False,False,0.07857061176144453,0.07857061176144453,0.15597974168480697,0.09485366278861501,[],[]
+342,4,FuseConfig.Wfilm_D,True,Vision_Random,2,wrist+l_shoulder+r_shoulder+wrist_depth,2000,False,False,0.0906453830276803,0.08732641749096956,0.20125790794186998,0.1267747375077382,[],[]
+343,4,FuseConfig.Wfilm_D,True,Vision_Random,3,wrist+l_shoulder+r_shoulder+wrist_depth,2000,True,False,0.10525351916562418,0.10030303430774247,0.19332787165124693,0.16410941255217368,['outputs/run-grasp-with-agent/_June07_14-42'],[]
+344,4,FuseConfig.Wfilm_D,True,Vision_Random,4,wrist+l_shoulder+r_shoulder+wrist_depth,2000,False,False,0.08533179538662483,0.07866240173101374,0.2996223355573871,0.24897116098818547,[],[]
+345,4,FuseConfig.Wfilm_D,True,Vision_Random,5,wrist+l_shoulder+r_shoulder+wrist_depth,2000,False,False,0.07965420146443766,0.07965420146443766,0.15294039283138045,0.09990177987542848,[],[]
+346,4,FuseConfig.Wfilm_D,True,Vision_Random,6,wrist+l_shoulder+r_shoulder+wrist_depth,2000,False,False,0.08376322734833437,0.07855876735721197,0.3072426649187761,0.2420023011002349,[],[]
+347,4,FuseConfig.Wfilm_D,True,Vision_Random,7,wrist+l_shoulder+r_shoulder+wrist_depth,2000,False,False,0.3300616440040829,0.3138387514819823,0.06870647605747426,0.06501620633722108,[],[]
+348,4,FuseConfig.Wfilm_D,True,Vision_Random,8,wrist+l_shoulder+r_shoulder+wrist_depth,2000,False,False,0.35018298848725155,0.34833894888851874,0.14581079904880637,0.06658206312497254,[],[]
+349,4,FuseConfig.Wfilm_D,True,Vision_Random,9,wrist+l_shoulder+r_shoulder+wrist_depth,2000,False,False,0.23734563222980523,0.08352011575005994,0.0659312187072659,0.0659312187072659,[],[]
