@@ -42,30 +42,30 @@ def main():
   task = Vision_Random
   
   env = launch_test_env(
-    "data/20demos/normal-Vision_Random-setdist:0.6", 
+    "data/20demos/normal-Vision_Random", 
     enableds = CamType.WRIST | CamType.RIGHT_SHOULDER | CamType.LEFT_SHOULDER,
   )
   
   normal = {
     "scale": 1.,
-    "wrist_cam_distance": 0.6
+    # "wrist_cam_distance": 0.6
   }
   smaller = {
     "scale": 0.5,
-    "wrist_cam_distance": 0.3
+    # "wrist_cam_distance": 0.3
   }
   training_demos = load_demos_for(
     10,
     env, 
     task, 
-    "data/20demos/normal-Vision_Random-setdist:0.6",
+    "data/20demos/normal-Vision_Random",
     task_params = normal
   )
   test_normal = load_demos_for(
     10,
     env, 
     task, 
-    "data/test/10demos/normal-Vision_Random-setdist:0.6",
+    "data/test/10demos/normal-Vision_Random",
     task_params = normal
   )
 
@@ -73,29 +73,27 @@ def main():
     10,
     env, 
     task, 
-    "data/test/10demos/smaller-Vision_Random-setdist:0.3",
+    "data/test/10demos/smaller-Vision_Random",
     task_params = smaller
   )
   configs = [
-    FuseConfig.WDLR,
-    FuseConfig.WLR_D,
-    FuseConfig.DEPTH_FEATS_GATED,
-    FuseConfig.DEPTH_FEATS_ATTN,
-    FuseConfig.WD_LR,
-    FuseConfig.WD_LR_ATTN,
+    # FuseConfig.WDLR,
+    # FuseConfig.WLR_D,
+    # FuseConfig.DEPTH_FEATS_GATED,
+    # FuseConfig.DEPTH_FEATS_ATTN,
+    # FuseConfig.WD_LR,
+    # FuseConfig.WD_LR_ATTN,
     FuseConfig.Wfilm_D,
     FuseConfig.W_Dfilm,
     FuseConfig.Wfilm_Dfilm,
-    FuseConfig.W_D_L_R,
+    # FuseConfig.W_D_L_R,
     FuseConfig.W_D_L_R_FILM,
-    FuseConfig.W_D_L_R_ATTN,
-    FuseConfig.W_D_L_R_FILM,
-    FuseConfig.W_D_L_R_ATTN,
+    # FuseConfig.W_D_L_R_ATTN,
   ]
 
   epochs = [100, 200, 600, 1000, 2000]
 
-  seeds = [3790, 1901, 4248]#, 6689, 7653]
+  seeds = [3790, 1901, 4248, 6689, 7653]
   cam_types =  [ 
     CamType.WRIST,
     CamType.WRIST | CamType.WRIST_DEPTH,
@@ -136,8 +134,10 @@ def main():
     "avg_test_final_distance",
 
   ]
-  df_all_str = lambda config, seed: f"zz-new-out/ALLvs_random-ns-cfg:{config}-seed{seed}.csv"
-  df_avg_str = lambda config, seed: f"zz-new-out/vs_random-ns-cfg:{config}-seed{seed}.csv"
+  main_folder = "ZZ-films"
+
+  df_all_str = lambda config, seed: f"{main_folder}/ALLvs_random-sn-cfg:{config}-seed{seed}.csv"
+  df_avg_str = lambda config, seed: f"{main_folder}/vs_random-sn-cfg:{config}-seed{seed}.csv"
 
   demo_columns = [
     "seed",
@@ -247,7 +247,7 @@ def main():
             test_finals.append(td["distances"][-1])
 
             df_all.loc[all_count] = {
-              "rep": seed,
+              "seed": seed,
               "config": config,
               "error": False,
               "task_name": get_task_name(task),
@@ -270,7 +270,7 @@ def main():
             df_all.to_csv(df_all_str(config, seed), index=True)
 
           df_avg.loc[avg_count] = {
-            "rep": seed,
+            "seed": seed,
             "config": config,
             "error": False,
             "task_name": get_task_name(task),
@@ -296,7 +296,7 @@ def main():
           logger.error(e)
           for i in range(10):
             df_all.loc[all_count] = {
-              "rep": rep,
+              "seed": seed,
               "config": config,
               "error": True,
               "task_name": get_task_name(task),
@@ -307,7 +307,7 @@ def main():
             df_all.to_csv(df_all_str(config, seed), index=True)
 
           df_avg.loc[avg_count] = {
-            "rep": rep,
+            "seed": seed,
             "config": config,
             "error": True,
             "task_name": get_task_name(task),
