@@ -164,136 +164,79 @@ class ActiveAgent_Plan1:
     return masked_pc, mask
   
 
-  # def _sample_camera_poses(self, 
-  #   robot: Robot, 
-  #   n_samples: int,
-  #   radius: float,
-  # ):
-  #   ee_pos = robot.gripper.get_position()
-
-  #   points = np.zeros((n_samples, 3), dtype=float)
-  #   phi = np.pi * (3.0 - np.sqrt(5.0))
-
-  #   for i in range(n_samples):
-  #       y = 1.0 - (2.0 * i) / (n_samples - 1) 
-  #       r_xy = np.sqrt(1.0 - y*y) 
-  #       theta = phi * i 
-  #       x = np.cos(theta) * r_xy
-  #       z = np.sin(theta) * r_xy
-  #       points[i] = np.array([x, y, z])
-
-  #   positions = ee_pos.reshape(1, 3) + points * radius
-
-  #   poses = np.zeros((n_samples, 7), dtype=float)
-  #   for idx, (pos, vec) in enumerate(zip(positions, points)):
-  #       # forward = from camera → center = -unit vector
-  #       forward = -vec / np.linalg.norm(vec)
-  #       # pick a stable “up” direction & build right/up axes
-  #       world_up = np.array([0.0, 0.0, 1.0])
-  #       right = np.cross(world_up, forward)
-  #       if np.linalg.norm(right) < 1e-6:
-  #           world_up = np.array([1.0, 0.0, 0.0])
-  #           right = np.cross(world_up, forward)
-  #       right /= np.linalg.norm(right)
-  #       true_up = np.cross(forward, right)
-
-  #       # rotation matrix: columns = [right, true_up, forward]
-  #       R_mat = np.stack([right, true_up, forward], axis=1)
-  #       quat = rot.from_matrix(R_mat).as_quat()  # [qx, qy, qz, qw]
-
-  #       poses[idx, :3] = pos
-  #       poses[idx, 3:] = quat
-
-  #   return poses
-
-  ## calculate a point a reachable cloud of join configurations then sample within that
-  # def _sample_camera_poses(
-  #     self, 
-  #     robot: Robot, 
-  #     n_samples, 
-  #     radius: float, 
-  #   ):
-#     ee_pos = robot.gripper.get_position()
-  #   # Precompute a coarse point cloud of reachable positions:
-  #   if not hasattr(self, "_reachable_cloud"):
-  #       cloud = []
-  #       low, high = zip(*robot.arm.get_joint_intervals()[1])
-  #       for _ in range(5000):
-  #         q = np.random.uniform(low, high)
-  #         robot.arm.set_joint_positions(q.tolist())
-  #         cloud.append(robot.arm._ik_target.get_position())
-  #       self._reachable_cloud = np.array(cloud)
-  #       # You could build a KD-tree or approximate hull here.
-
-  #   poses = []
-  #   for _ in range(n_samples):
-  #       # 1) Sample a direction AND distance within the actual cloud:
-  #       #    pick a random point in the cloud, then jitter it:
-  #       idx = np.random.randint(len(self._reachable_cloud))
-  #       base = self._reachable_cloud[idx]
-  #       offset = np.random.normal(scale=radius, size=3)
-  #       pos = base + offset
-
-  #       # 2) Reject quickly if too far from the actual cloud:
-  #       #    (e.g. by nearest-neighbour distance)
-  #       #    this saves an IK call on obviously impossible poses
-  #       #    …
-        
-  #       # 3) Build a “look-at” frame more robustly:
-  #       forward = (ee_pos - pos)
-  #       forward /= np.linalg.norm(forward)
-  #       # choose an up vector that isn’t collinear:
-  #       up = np.array([0,0,1]) if abs(forward.dot([0,0,1])) < 0.9 else np.array([1,0,0])
-  #       right  = np.cross(up, forward);  right  /= np.linalg.norm(right)
-  #       true_up = np.cross(forward, right)
-  #       R = np.stack([right, true_up, forward], axis=1)
-  #       quat = rot.from_matrix(R).as_quat()
-
-  #       poses.append(np.hstack([pos, quat]))
-  #   return poses
   def _sample_camera_poses(self, 
     robot: Robot,
     n_samples: int, 
     radius: float,
+    max_angle_rad = np.deg2rad(30)
   ):
-    ee_pos = robot.gripper.get_position()
+    curr_pose = robot.gripper.get_pose()
+    curr_pos = curr_pose[:3]
+    curr_quat = curr_pose[3:]
+    curr_rot = rot.from_quat(curr_quat)
+
     poses = []
+    joint_sets = []
     for _ in range(n_samples):
-      ## get position
-      # uniform sampling on sphere surface around gripper pose
-      theta = np.arccos(2 * np.random.rand() - 1)
-      phi   = 2 * np.pi * np.random.rand()
-      x_off = radius * np.sin(theta) * np.cos(phi)
-      y_off = radius * np.sin(theta) * np.sin(phi)
-      z_off = radius * np.cos(theta)
-      off = np.array([x_off, y_off, z_off])
-      pos = ee_pos + off
+      axis = np.random.rand(3) ## pick an axis
+      axis /= np.linalg.norm(axis)
 
+      angle = (np.random.rand() * 2 - 1) * max_angle_rad
+      delta_rot = rot.from_rotvec(axis * angle)
+      rot_new = delta_rot * curr_rot
 
-      ## get rotation
-      ## TODO add math for this in the report
-      # forward = ee_pos - pos ## same as - off
-      forward = -off
-      forward /= np.linalg.norm(forward)
-      world_up = np.array([0.0, 0.0, 1.])
-      right = np.cross(world_up, forward)
-
-      ## handle case when up ~= forward
-      if np.linalg.norm(right) < 1e-6:
-          world_up = np.array([1.0, 0.0, 0.0])
-          right = np.cross(world_up, forward)
-      right /= np.linalg.norm(right)
-      true_up = np.cross(forward, right)
-
-      R_mat = np.stack([right, true_up, forward], axis=1)  # 3 x 3 rot
-      quat = rot.from_matrix(R_mat).as_quat()  
-
-      pose = np.zeros(7, dtype=float) ## xyz + quat
-      pose[0:3] = pos
-      pose[3:7] = quat
-      poses.append(pose)
-
+      new_quat = rot_new.as_quat()
+      new_pose = np.zeros(7, dtype=float) ## xyz + quat
+      new_pose[0:3] = curr_pos
+      new_pose[3:7] = new_quat
+      poses.append(new_pose)
+      
     return poses
+  
+
+  # def _sample_camera_poses(self, 
+  #   robot: Robot,
+  #   n_samples: int, 
+  #   radius: float,
+  # ):
+  #   ee_pos = robot.gripper.get_position()
+  #   poses = []
+  #   for _ in range(n_samples):
+  #     ## get position
+  #     # uniform sampling on sphere surface around gripper pose
+  #     theta = np.arccos(2 * np.random.rand() - 1)
+  #     phi   = 2 * np.pi * np.random.rand()
+  #     x_off = radius * np.sin(theta) * np.cos(phi)
+  #     y_off = radius * np.sin(theta) * np.sin(phi)
+  #     z_off = radius * np.cos(theta)
+  #     off = np.array([x_off, y_off, z_off])
+  #     pos = ee_pos + off
+
+
+  #     ## get rotation
+  #     ## TODO add math for this in the report
+  #     # forward = ee_pos - pos ## same as - off
+  #     forward = -off
+  #     forward /= np.linalg.norm(forward)
+  #     world_up = np.array([0.0, 0.0, 1.])
+  #     right = np.cross(world_up, forward)
+
+  #     ## handle case when up ~= forward
+  #     if np.linalg.norm(right) < 1e-6:
+  #         world_up = np.array([1.0, 0.0, 0.0])
+  #         right = np.cross(world_up, forward)
+  #     right /= np.linalg.norm(right)
+  #     true_up = np.cross(forward, right)
+
+  #     R_mat = np.stack([right, true_up, forward], axis=1)  # 3 x 3 rot
+  #     quat = rot.from_matrix(R_mat).as_quat()  
+
+  #     pose = np.zeros(7, dtype=float) ## xyz + quat
+  #     pose[0:3] = pos
+  #     pose[3:7] = quat
+  #     poses.append(pose)
+
+  #   return poses
   
   ## returns the joint positions to achieve pose: (7, )
   def _solve_ik(self, robot: Robot, pose: np.ndarray) -> Optional[np.ndarray]:
