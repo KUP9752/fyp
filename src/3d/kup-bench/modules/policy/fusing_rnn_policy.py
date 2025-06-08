@@ -30,7 +30,9 @@ from modules.policy.fusing_policy import FusingPolicy
 from modules.dataset.demo_dataset import DemoDataset
 from lib.fuse_config import FuseConfig
 
-class FusingRNN_Policy(FusingPolicy):
+
+##NOTE does not currently work with proprio not sure why yet
+class FusingRNNPolicy(FusingPolicy):
   def __str__(self):
     return f"fusing_policy-fuse_config:{self.fuse_config}-is_grasp:{self.is_grasp}-use_proprio:{self.use_proprio}-fusing_opts:{self.fusing_opts}-proprio_opts:{self.proprio_opts}"
   
@@ -54,6 +56,7 @@ class FusingRNN_Policy(FusingPolicy):
     proprio_opts: dict = {},
     rnn_opts: dict = {}
   ):
+    
     super().__init__(
       action_shape,
       cam_type,
@@ -70,61 +73,56 @@ class FusingRNN_Policy(FusingPolicy):
     self.rnn = nn.LSTM(
       **self.rnn_opts
     )
+    self.rnn.flatten_parameters()
+
+    ## modify these to use the out encoding size of the rnn
+    self.action_head[0] = nn.Linear(self.rnn_opts["hidden_size"], 200)
+    if self.is_grasp:
+      self.grasp_head[0] = nn.Linear(self.rnn_opts["hidden_size"], 128)
 
     self.rnn_hidden_size = self.rnn_opts["hidden_size"]
-
-  ## Not needed to separate with `forward()` but feels nicer to know which branch we are taking 3 classes removed from the task
-  def inference_forward(self, 
-    image: torch.Tensor, 
-    hidden_state: Optional[tuple[torch.Tensor, torch.Tensor]] = None,
-    proprio: Optional[torch.Tensor]= None,
-  ):
-    if proprio is None and self.use_proprio:
-      raise RuntimeError(f"[rnn_encoder - forward] Proprioceptive training selected but data not given!")
-    
-    image =  image.unsqueeze(0) ## (1, 1, ..) add seq_len = 1
-    feats, ret_dict = self.feats(image) ## (1, ..) size because now its inference
-
-    feats =  feats.view(1, 1, -1) ## (1, 1, ..) add seq_len = 1
-
-    if self.use_proprio:
-      assert proprio is not None, f"[rnn_encoder - inference_forward] must have proprio at this point"
-      proprio = proprio.unsqueeze(0) ## as abovee add seq_len (1, 1, ..)
-      jpos_feats, jpos_dict = self.jpos_feats(proprio)
-      
-      feats = torch.cat([feats, jpos_feats], dim = -1)
-      ret_dict |= jpos_dict
-
-    rnn_out, (h, c) = self.rnn(feats, hidden_state)
-
-    enc = h[-1]
-
-    return enc, ret_dict | {
-      "rnn_ret": rnn_out,
-      "h": h, 
-      "c": c
-    }
 
   ## output size is the hidden size, this can later be used to do whatever
   ## THIS IS FOR TRAINING WITH ENTIRE KNOWN LENGTHS
   def forward(self,
     image,
-    lengths,
+    lengths: Optional[torch.Tensor],
     hidden_state: Optional[tuple] = None, ## of tensors (h, c)
     proprio: Optional[torch.Tensor]= None,
   ): ## image here can contain channels from differnt camears including depth
     if proprio is None and self.use_proprio:
-      raise RuntimeError(f"[rnn_encoder - forward] Proprioceptive training selected but data not given!")
+      raise RuntimeError(f"[fusing_rnn_policy - forward] Proprioceptive training selected but data not given!")
     ## we want these of shape: (B, t, c, w, h)
     ## t is the time series that is going to be fed into the lstm, so we want some ordering now from dataset
+
+    if lengths is None:
+      # print(f"{image.shape = }")
+      # image = image.unsqueeze(0)## add seq_len = 1
+      # print(f"{image.shape = }")
+      
+      feats, ret_dict = self.feats(image) ## (1, ..) because inference
+      feats = feats.view(1, 1, -1) ## (1, 1, ..) add seq_len for lstm
+
+      rnn_out, (h, c) = self.rnn(feats, hidden_state)
+      enc = h[-1]
+
+      return self._feats_to_action(enc, proprio), ret_dict | {
+        "rnn_ret": rnn_out, 
+        "h": h, 
+        "c": c
+      }
+    
+
+    B, t, ch, w, h = image.shape
+    image = image.view(B * t, ch, w, h)
+    print(f"{image.shape =}")
     
     feats, ret_dict = self.feats(image)    
+    feats = feats.view(B, t, -1)
+    print(f"{feats.shape =}")
 
-    if self.use_proprio:
-      assert proprio is not None, f"[rnn_encoder - forward] must have proprio at this point"
-      jpos_feats, _ = self.jpos_feats(proprio)
-      
-      feats = torch.cat([feats, jpos_feats], dim = -1)
+    ## Shared until this point, then inference and training differs
+    ## inference:
 
     packed_in = pack_padded_sequence(
       feats, lengths.cpu(), batch_first=True, enforce_sorted=False
@@ -134,7 +132,11 @@ class FusingRNN_Policy(FusingPolicy):
 
     rnn_out, _ = pad_packed_sequence(packed_out, batch_first=True)
 
-    return rnn_out, ret_dict | {
+    flat = rnn_out.reshape(B * t, -1)
+    preds = self._feats_to_action(flat)
+    preds = preds.view(B, t, -1)
+    
+    return preds, ret_dict | {
       "rnn_ret": rnn_out, ## might be useful to have down the line 
       "h_n": h_n,
       "h_c": c_n
@@ -151,8 +153,8 @@ class FusingRNN_Policy(FusingPolicy):
     labels: torch.Tensor
 
     real_lengths = torch.LongTensor([inp.shape[0] for inp in inputs])
-    inputs_padded = pad_sequence(inputs, batch_first=True) ## CHECK: if it gives (B, t, ch, w, h)
-    labels_padded = pad_sequence(labels, batch_first=True) ## CHECK: if it gives (B, t, ch, w, h)
+    inputs_padded = pad_sequence(inputs, batch_first=True)
+    labels_padded = pad_sequence(labels, batch_first=True)
 
     ## NOTE: handle other dict entries as well
     proprio_padded = None
@@ -252,21 +254,24 @@ class FusingRNN_Policy(FusingPolicy):
         pred_pose = pred_actions[:, :-1]   # (B, T, ...)
         true_pose = labels[:, :-1]
 
-        pred_grasp = pred_actions[:,  -1]  # (B, T) 
-        true_grasp = labels[:, -1]
 
         pose_err = mse_loss(pred_pose, true_pose)       
-        grasp_err = bce_loss(pred_grasp, true_grasp)  
 
         ## sum over pose dims
         pose_err = pose_err.sum(dim = -1) ## (B, t)
         pose_err  = pose_err * mask.float()
-        grasp_err = grasp_err * mask.float()
-
-        ## average over valid frames
+        
         num_valid = mask.sum()
         pose_loss = pose_err.sum() / num_valid
-        grasp_loss = grasp_err.sum() / num_valid
+        if self.is_grasp:
+          pred_grasp = pred_actions[:,  -1]  # (B, T) 
+          true_grasp = labels[:, -1]
+          grasp_err = bce_loss(pred_grasp, true_grasp)  
+          grasp_err = grasp_err * mask.float()
+          grasp_loss = grasp_err.sum() / num_valid
+        else: 
+          grasp_loss = 0
+        ## average over valid frames
         
         loss = pose_loss + lambda_grasp_loss * grasp_loss
         
@@ -274,7 +279,7 @@ class FusingRNN_Policy(FusingPolicy):
         optimiser.step()
 
         total_pose_loss += pose_loss.item()
-        total_grasp_loss += grasp_loss.item()
+        total_grasp_loss += grasp_loss.item() if self.is_grasp else 0.
 
         loss = (total_pose_loss + lambda_grasp_loss * total_grasp_loss) / len(loader)
 

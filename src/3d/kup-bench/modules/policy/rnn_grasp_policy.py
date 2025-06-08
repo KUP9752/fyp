@@ -108,8 +108,8 @@ class RNNGraspPolicy(nn.Module):
     labels: torch.Tensor
 
     real_lengths = torch.LongTensor([inp.shape[0] for inp in inputs])
-    inputs_padded = pad_sequence(inputs, batch_first=True) ## CHECK: if it gives (B, t, ch, w, h)
-    labels_padded = pad_sequence(labels, batch_first=True) ## CHECK: if it gives (B, t, ch, w, h)
+    inputs_padded = pad_sequence(inputs, batch_first=True) 
+    labels_padded = pad_sequence(labels, batch_first=True) 
 
     ## NOTE: handle other dict entries as well
     proprio_padded = None

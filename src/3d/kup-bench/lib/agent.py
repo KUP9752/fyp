@@ -7,6 +7,7 @@ from modules.policy.cam_attention_policy import CamAttentionPolicy
 from modules.policy.resnet_grasp_policy import ResNetGraspPolicy
 from modules.policy.rnn_grasp_policy import RNNGraspPolicy
 from modules.policy.fusing_policy import FusingPolicy
+from modules.policy.fusing_rnn_policy import FusingRNNPolicy
 
 from rlbench.demo import Demo
 from rlbench.backend.observation import Observation
@@ -19,6 +20,11 @@ import numpy as np
 from lib.utils import pick_obs_from_cam, pick_joint_angles
 
 class Agent(object):
+    RNN_POLICIES = [
+      PolicyType.RNN_GRASP,
+      PolicyType.FUSING_RNN
+    ]
+
     def __init__(self,
       action_shape: int,
       policy_type: PolicyType,
@@ -52,7 +58,10 @@ class Agent(object):
         case PolicyType.FUSING:
           self.policy = FusingPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
           self.tensor_agg = self._catter
-          # self.prev_state = None
+        case PolicyType.FUSING_RNN:
+          self.policy = FusingRNNPolicy(action_shape=action_shape, cam_type = cam_type, **policy_args)
+          self.tensor_agg = self._catter
+          self.prev_state = None
         case PolicyType.CAM_ATTENTION:
           self.policy = CamAttentionPolicy(action_shape, cam_type, **policy_args) ## NOTE: other varaible settings here
           self.tensor_agg = self._stacker
@@ -124,7 +133,7 @@ class Agent(object):
         )
     
     def _act_rnn(self, obs: Observation) -> tuple[torch.Tensor, dict]:
-      assert self.policy_type == PolicyType.RNN_GRASP, f"[agent - (act_rnn)] sequential act RNN function is called with a policy that is not RNN"
+      assert self.policy_type in self.RNN_POLICIES, f"[agent - (act_rnn)] sequential act RNN function is called with a policy that is not RNN"
 
 
       proprio = self._get_proprio_tensor(obs) if self.policy.use_proprio else None
@@ -154,7 +163,7 @@ class Agent(object):
       
       ### this is a sequence model, so delegate to the other act method
       ## NOTE: add other sequence based models here
-      if self.policy_type == PolicyType.RNN_GRASP:
+      if self.policy_type in self.RNN_POLICIES:
         return self._act_rnn(obs)
       
       ## all else can just run inference

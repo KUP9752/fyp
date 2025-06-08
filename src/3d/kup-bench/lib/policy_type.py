@@ -7,6 +7,7 @@ class PolicyType(Enum):
   RESNET_GRASP = auto()
   RNN_GRASP = auto()
   FUSING = auto()
+  FUSING_RNN = auto()
   CAM_ATTENTION = auto()
   
   def __str__(self) -> str:
@@ -23,6 +24,8 @@ class PolicyType(Enum):
         return "rnn_grasp_policy"
       case PolicyType.FUSING:
         return "fusing_policy"
+      case PolicyType.FUSING_RNN:
+        return "fusing_rnn_policy"
       case PolicyType.CAM_ATTENTION:
         return "cam_attn_policy"
       case _:
