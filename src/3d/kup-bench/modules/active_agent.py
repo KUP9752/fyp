@@ -9,10 +9,13 @@ from rlbench.backend.observation import Observation
 from scipy.spatial.transform import Rotation as rot
 
 from pyrep.errors import ConfigurationError
+from pyrep.objects import Shape
 
 from lib.agent import Agent
 from lib.cam_type import CamType
 from lib.utils import pick_obs_from_cam
+
+import pdb
 
 class ActiveAgent_Plan1:
   def __str__(self) -> str:
@@ -31,11 +34,13 @@ class ActiveAgent_Plan1:
     self.cam_type = cam_type ## not really used
     self.il_agent = il_agent
     self.vis_thresh = vis_thresh
+    self.state = "init"
+    self.obstacle = Shape("obstacle")
     
     self.best = {"vis_score": -1, "joint_pos": None }
     
 
-  def _set_new_best(self, score: float, pose: np.ndarray): 
+  def _set_new_best_pose(self, score: float, pose: np.ndarray): 
     self.best["vis_score"] = score
     self.best["joint_pos"] = pose
   
@@ -78,17 +83,67 @@ class ActiveAgent_Plan1:
     if curr_pose.shape[0] != 7 or target_pose.shape[0] != 7:
       raise RuntimeError(f"[active_agent - (joint_velocity_from_pose)] Error the joint poses are not 7-dims (only panda arm supported currently)")
 
-    print(f"[joint_velocity_from_pose] {curr_pose = }")
-    print(f"[joint_velocity_from_pose] {target_pose = }")
+    # print(f"[joint_velocity_from_pose] {curr_pose = }")
+    # print(f"[joint_velocity_from_pose] {target_pose = }")
     
 
     error = target_pose - curr_pose
     vs = prop_gain * error 
-    print(f"[joint_velocity_from_pose] velocities = {vs}")
+    # print(f"[joint_velocity_from_pose] velocities = {vs}")
     action = np.append(vs, [0.]) ## add the gripper move, dont care about it
 
     return action
+  
+  def _apply_collision_safety(self, 
+    robot: Robot,
+    action: np.ndarray,
+    obs: Observation,
+    first_n_centre: int = 20,
+    clearance: float = 0.05, # is this too far?
+    blend: float = 0.02,
+    gain: float = 0.1,
+    damping: float = 0.01
+  ) -> np.ndarray:
+    
+    gripper_pos = robot.gripper.get_position()
 
+    pc = obs.wrist_point_cloud.reshape(-1, 3) ## get into (w*h, 3)
+    dists = np.linalg.norm(pc - gripper_pos, axis = 1)
+    ## calculate the distances from the gripper
+    idxs = np.argsort(dists)[:first_n_centre]
+    centroid = pc[idxs].mean(axis = 0)
+    min_dist = dists.min()
+
+
+    ##repulse dir
+    repulse_dir = gripper_pos - centroid
+    repulse_dir /= np.linalg.norm(repulse_dir) ## make into a unit vector
+
+    ## joint space to cartesion space
+    ## this is only translational repulsion, we are not pushing its rotation
+    J = robot.arm.get_jacobian() ## row-major (7, 6)
+    
+    ## moorepensrose pseudo inverse to find a minimium nor solution
+    ## there are many vectors to solve 7dof joints into 6dof cartesian
+    # J_pinv = J.T @ np.linalg.inv(J @ J.T + damping * np.eye(3)) ##damping added to stabilise inversion, blows up at singularity
+    # cartesion_vel = repulse_dir * gain ## gain is the maximum repulse we allow
+    cartesian_twist = np.zeros(6, dtype=np.float32)
+    cartesian_twist[:3] = repulse_dir * gain ## linear translation away
+    
+    repulse_jvel = J @ cartesian_twist
+
+    if min_dist <= clearance:
+      alpha_blend = 1. ## full repulsion
+    elif min_dist >= clearance + blend:
+      alpha_blend = 0. ## no repulsion
+    else:
+      alpha_blend = (clearance + blend - min_dist) / blend
+
+    ## calculate repulsive action from obstacle
+    
+    action[:7] = (1 - alpha_blend) * action[:7] + repulse_jvel
+    return action
+  
   def _get_masked_pc_and_mask(self, 
     rgb: np.ndarray, 
     world_pc: np.ndarray, ## NOTE: VisionSensor with no 'rel_to' param gives in terms of world
@@ -154,7 +209,8 @@ class ActiveAgent_Plan1:
     try: 
       return robot.arm.solve_ik_via_sampling(
         position=pose[:3], # (x, y, z)
-        quaternion=pose[3:] # (qx, qy, qz, qw)
+        quaternion=pose[3:],  # (qx, qy, qz, qw),
+        ignore_collisions=True
       )
     except ConfigurationError as err:
       print(f"[active_agent (solve_ik)] Error: '{err}', continuing to sample")
@@ -168,7 +224,8 @@ class ActiveAgent_Plan1:
   ) -> tuple[Observation, int, bool]: ##obs, reward, done
     done = False
     count = 0
-
+    robot = task_env._robot
+      
     while not done:
       action, rets = self.il_agent.act(obs)
       action = action.squeeze(0)
@@ -180,13 +237,19 @@ class ActiveAgent_Plan1:
 
       vis_score = self.visibility_score(obs)
       print(f"il - {vis_score = }")
+
+      ## mark if a good view is found
+      if vis_score > self.best["vis_score"]:
+        print(f"il - adding to best pose, {vis_score = }")
+        self._set_new_best_pose(vis_score, robot.gripper.get_pose())
+
       if vis_score < self.vis_thresh:
         self.state = "active"
         return obs, _, done
       
       if max_eplen is not None:
         if count >= max_eplen:
-          self.state = "done"
+          self.state = "done-il"
           return obs, _, False ## not done fail this iteration get to active
         count += 1
       
@@ -196,48 +259,50 @@ class ActiveAgent_Plan1:
     pose_samples: int
   ) -> tuple[Observation, int, bool]: ##obs, reward, done
     robot = task_env._robot
+    done = False
 
-    vis_score = self.visibility_score(obs)
-
-    if vis_score >= self.vis_thresh:
-      return obs, 0, False ## not sure placeholder values, i gueuss this sohuld do act_il?
-      
-
+    ## we already know the vis score is low if we are here
     for pose in self._sample_camera_poses(
       robot.gripper.get_position(), 
-      pose_samples
+      pose_samples,
+      
     ):
       ## finds the joint positions to get this pose
       jpos_target = self._solve_ik(robot, pose)
 
       if jpos_target is None:
-        continue ## check next sample
+        continue ## check next sample, already printing the error in _solve_ik
 
-      print(f"act_active {jpos_target.shape = } (from solve_ik)")
+      # print(f"act_active {jpos_target.shape = } (from solve_ik)")
       jpos_target = jpos_target.squeeze(0)
       action =  self._velocity_action_from_pose(robot, jpos_target)
 
-      print(f"act_active {action.shape = }")
+      # print(f"act_active {action.shape = }")
       
       obs, _, done = task_env.step(action) ## step to new pose
+
       if done: 
         self.state = "done"
         return obs, _ , done
 
-      s = self.visibility_score(obs)
-      print(f"act_active - {vis_score = }")
+      vis_score = self.visibility_score(obs)
+      print(f"act_active1 - {vis_score = }")
 
-      if s > self.best["vis_score"]:
-        self._set_new_best(s, jpos_target)
+      if vis_score > self.best["vis_score"]:
+        print(f"active - adding to best pose, {vis_score = }")
+        self._set_new_best_pose(vis_score, robot.gripper.get_pose()) ## if the visuals here are good, mark this to fall back to later
     
     best_jpos = self._get_best_joint_pos()
+    ## this only hits in the first 'active' loop when no sample can be reached (certainly possible as the dam solve always fails)
     if  best_jpos is None:
-      raise NotImplementedError("[active_agent - act] No better pose found, but I cant jsut give up here, needs to do something")
+      ## not sure if we have no views, maybe force one when close to t he obstacle so we don't got too far back?
+      return obs, -1,  done ## -1 for error, no one cares about the int anyway
+      
     ## otherwise move to best:
     ## when velocities get involved this may need more calculations
     action = self._velocity_action_from_pose(robot, best_jpos)
 
-    return  task_env.step(action) ## get to the previous best, not sure, this made sense
+    return task_env.step(action) ## get to the previous best, not sure, this made sense
     
 
   ## full action loop unlike the other agents
@@ -246,40 +311,62 @@ class ActiveAgent_Plan1:
     init_obs: Observation,
     task_env: TaskEnvironment,
     pose_samples: int = 20,
-    max_loops: int = 200
-  ) -> bool:
+    max_loops: int = 5,
+    within_obs: float = 0.1 # this is gonna be the vertical distance, I wanna see when we are about level with the obstacle
+  ) -> tuple[bool, dict]:
     
+    self.obstacle = Shape("obstacle") ## this was not initialising properly for some reason
+
     done = False    
     obs = init_obs
-    vis_score = self.visibility_score(obs)
-    print(f"(start) act - {vis_score = }")
+    robot = task_env._robot
 
-    if vis_score >= self.vis_thresh:
-      self.state = "il"
-    else:
-      self.state = "active"
+    self.state = "init"
+    get_z_dist = lambda: np.linalg.norm(self.obstacle.get_position()[2] - robot.gripper.get_position()[2])
+    
+    ## We want to move close to the obstacle first
+    if self.state == "init": ## just started and are at the very top
+      # pdb.set_trace()
+      while get_z_dist() >= within_obs:
+        
+        action, rets = self.il_agent.act(obs)
+        action = action.squeeze(0)
 
-    ## look for a better pose until it finds a good enogh one to start il
+        ## in case we are getting too close (clearance is gretar than the limit in while)
+        action = self._apply_collision_safety(robot, np.asarray(action), obs)
+
+        obs, _, done = task_env.step(action) ## cannot be done here but will ad shortcut
+        if done: 
+          self.state = "done"
+          break
+      print(f"Reached within {within_obs} of obstacle")
+      self.state = "start"
+
+    # return False, {}
+  
+    if done:
+      print(f"Done somehow before any active vision")
+      return done, {"when": "done trying to reach the obstacle"}
+      
     for _ in range(max_loops):
-      if self.state == "active":
+      if done:
+        return done, {"when": "during the max loops", "last_state": self.state}
+        break
+
+      vis_score = self.visibility_score(obs)
+      print(f"(start) act - {vis_score = }")
+
+      if vis_score >= self.vis_thresh:
+        self.state = "il"
+        obs, _, done = self.act_il(obs, task_env)
+      else:
+        self.state = "active"
         obs, _ , done = self.act_active(obs, task_env, pose_samples)
 
-        if done: 
-          self.state = "done"
-          break
+          
 
-        vis_score = self.visibility_score(obs)
-        print(f"active - {vis_score = }")
-        
-        if vis_score >= self.vis_thresh:
-          self.state = "il"
       
-      if self.state == "il":
-        ## act il should only return if the vis score drops significantly
-        obs, _ , done = self.act_il(obs, task_env)
-        if done: 
-          self.state = "done"
-          break
+        
 
-    return done
+
 
