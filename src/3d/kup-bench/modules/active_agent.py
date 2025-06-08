@@ -39,7 +39,7 @@ class ActiveAgent_Plan1:
     self.best["vis_score"] = score
     self.best["joint_pos"] = pose
   
-  def _get_best_joint_pos_action(self) -> Optional[np.ndarray]:
+  def _get_best_joint_pos(self) -> Optional[np.ndarray]:
     return self.best["joint_pos"]
 
   ## TODO: this can combine multuple different things down the line
@@ -64,8 +64,30 @@ class ActiveAgent_Plan1:
     
     return mask.sum() / mask.size ## h * w
     
-  # def get_joint_velocity(curr, target, )
-  ## NOTE: play around with 
+  ## simple proportional control - can be made more advanced if needed
+  def _velocity_action_from_pose(self, 
+    robot: Robot,
+    target_pose: np.ndarray, ## also 7-dims
+    prop_gain: float = 1.,
+  ) -> np.ndarray:
+    curr_pose = robot.gripper.get_pose()
+    ##make sure they are np arrays, they might be tensors at this point
+    curr_pose = np.asarray(curr_pose, np.float32).reshape(-1) ## (7, ) -> (7)
+    target_pose = np.asarray(target_pose, np.float32).reshape(-1) ## (7, ) -> (7)
+
+    if curr_pose.shape[0] != 7 or target_pose.shape[0] != 7:
+      raise RuntimeError(f"[active_agent - (joint_velocity_from_pose)] Error the joint poses are not 7-dims (only panda arm supported currently)")
+
+    print(f"[joint_velocity_from_pose] {curr_pose = }")
+    print(f"[joint_velocity_from_pose] {target_pose = }")
+    
+
+    error = target_pose - curr_pose
+    vs = prop_gain * error 
+    print(f"[joint_velocity_from_pose] velocities = {vs}")
+    action = np.append(vs, [0.]) ## add the gripper move, dont care about it
+
+    return action
 
   def _get_masked_pc_and_mask(self, 
     rgb: np.ndarray, 
@@ -74,7 +96,7 @@ class ActiveAgent_Plan1:
     hsv_high: np.ndarray,
   ) -> tuple:
     ## the vision_sensor gives the point cloud in world frame
-    hsv = hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
+    hsv =  cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
     mask = cv2.inRange(hsv, hsv_low, hsv_high) ## mention in report how this cam to be
     mask = mask / 255 ## above gives in range [0, 255]
 
@@ -186,17 +208,16 @@ class ActiveAgent_Plan1:
       pose_samples
     ):
       ## finds the joint positions to get this pose
-      jpos_action = self._solve_ik(robot, pose)
+      jpos_target = self._solve_ik(robot, pose)
 
-      if jpos_action is None:
+      if jpos_target is None:
         continue ## check next sample
 
-      print(f"act_active {jpos_action.shape = } (from solve_ik)")
-      jpos_action = jpos_action.squeeze(0)
+      print(f"act_active {jpos_target.shape = } (from solve_ik)")
+      jpos_target = jpos_target.squeeze(0)
+      action =  self._velocity_action_from_pose(robot, jpos_target)
 
-      action = np.append(jpos_action, [0.]) ## add the gripper move, dont care about it
-
-      print(f"act_active {jpos_action.shape = } (squeezed)")
+      print(f"act_active {action.shape = }")
       
       obs, _, done = task_env.step(action) ## step to new pose
       if done: 
@@ -207,15 +228,17 @@ class ActiveAgent_Plan1:
       print(f"act_active - {vis_score = }")
 
       if s > self.best["vis_score"]:
-        self._set_new_best(s, action)
-
-    if self._get_best_joint_pos_action() is None:
+        self._set_new_best(s, jpos_target)
+    
+    best_jpos = self._get_best_joint_pos()
+    if  best_jpos is None:
       raise NotImplementedError("[active_agent - act] No better pose found, but I cant jsut give up here, needs to do something")
     ## otherwise move to best:
     ## when velocities get involved this may need more calculations
+    action = self._velocity_action_from_pose(robot, best_jpos)
 
-    return  task_env.step(self._get_best_joint_pos_action())
-    ## cant be None here
+    return  task_env.step(action) ## get to the previous best, not sure, this made sense
+    
 
   ## full action loop unlike the other agents
   ## call as .act(task_env.reset()[1], task_env)
