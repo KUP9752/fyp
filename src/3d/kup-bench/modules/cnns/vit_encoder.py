@@ -54,8 +54,15 @@ class MultiViewEncoder(nn.Module):
 
       self.pos_embed = nn.Parameter(torch.zeros((1, self.total_tokens, embed_dim)))
 
-      encoder_layer = nn.TransformerEncoderLayer(d_model = embed_dim, nhead = num_heads)
-      self.encoder = nn.TransformerEncoder(encoder_layer=encoder_layer, num_layers=self.trans_num_layers)
+      encoder_layer = nn.TransformerEncoderLayer(
+        batch_first = True, 
+        d_model = embed_dim, 
+        nhead = num_heads
+      )
+      self.encoder = nn.TransformerEncoder(
+        encoder_layer=encoder_layer, 
+        num_layers=self.trans_num_layers,
+      )
 
       self.pool = nn.AdaptiveAvgPool1d(1)
     
@@ -81,11 +88,9 @@ class MultiViewEncoder(nn.Module):
       
       x = torch.cat(patches, dim = 1) ## ## (B, tokens, E)
       ## flatted spatial
-      x = x + self.pos_embed
+      x = x + self.pos_embed ## (B, n_tokens, E)
 
-      x = x.transpose(0, 1) ## transformer wants (n_tokens, B, E), 
       vit_out = self.encoder(x)
-      vit_out = vit_out.transpose(0, 1) ## back to (B, n_tokens, E)
 
       pool_x = vit_out.transpose(1, 2) ## (B, E, n_tokens)
       pooled_out = self.pool(pool_x) # (B, E)
@@ -129,7 +134,7 @@ class MultiViewTemporalEncoder(nn.Module):
       self.pos_embed_space = nn.Parameter(torch.zeros(1, self.view_patches, embed_dim))
       self.pos_embed_time = nn.Parameter(torch.zeros(1, self.max_eplen, embed_dim))
 
-      encoder_layer = nn.TransformerEncoderLayer(d_model = embed_dim, nhead = num_heads)
+      encoder_layer = nn.TransformerEncoderLayer(batch_first=True, d_model = embed_dim, nhead = num_heads)
       self.encoder = nn.TransformerEncoder(encoder_layer=encoder_layer, num_layers=self.trans_num_layers )
     
     def forward(self, 
@@ -175,12 +180,10 @@ class MultiViewTemporalEncoder(nn.Module):
 
       mask = torch.arange(S, device=lengths.device).unsqueeze(0)
       valid_mask = (mask < (lengths.unsqueeze(1) * self.view_patches))
-      key_padding_mask = ~valid_mask ## not valit bitmask
+      key_padding_mask = ~valid_mask ## not valid, bitmask
 
 
-      x = x.transpose(0, 1) ## transformer wants (S, B, E)
       vit_out = self.encoder(x, src_key_padding_mask=key_padding_mask)
-      vit_out = vit_out.transpose(0, 1) ## back to (B, S, E)
 
       valid_token_mask = valid_mask.unsqueeze(-1).float() ## (B, S, 1)
       sum_feats = (vit_out * valid_token_mask).sum(dim = 1) ## (B, E)
