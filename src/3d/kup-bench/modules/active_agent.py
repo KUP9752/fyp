@@ -13,7 +13,7 @@ from pyrep.objects import Shape
 
 from lib.agent import Agent
 from lib.cam_type import CamType
-from lib.utils import pick_obs_from_cam
+from lib.utils import pick_obs_from_cam, GRIPPER_OPEN
 
 import pdb
 
@@ -92,7 +92,7 @@ class ActiveAgent_Plan1:
     error = target_pose - curr_pose
     vs = prop_gain * error 
     # print(f"[joint_velocity_from_pose] velocities = {vs}")
-    action = np.append(vs, [0.]) ## add the gripper move, dont care about it
+    action = np.append(vs, [GRIPPER_OPEN]) ## add the gripper move, dont care about it
 
     return action
   
