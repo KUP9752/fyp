@@ -75,10 +75,12 @@ class FusingRNNPolicy(FusingPolicy):
     )
     self.rnn.flatten_parameters()
 
+    self.final_feat_size = self.rnn_opts["hidden_size"] + self.jpos_feats.output_size if self.use_proprio  else 0 
+
     ## modify these to use the out encoding size of the rnn
-    self.action_head[0] = nn.Linear(self.rnn_opts["hidden_size"], 200)
+    self.action_head[0] = nn.Linear(self.final_feat_size, 200)
     if self.is_grasp:
-      self.grasp_head[0] = nn.Linear(self.rnn_opts["hidden_size"], 128)
+      self.grasp_head[0] = nn.Linear(self.final_feat_size, 128)
 
     self.rnn_hidden_size = self.rnn_opts["hidden_size"]
 
