@@ -157,7 +157,9 @@ class Agent(object):
       ## prep proprio data for models that need it
       if self.policy_type in [
         PolicyType.SIMPLE_GRASP,
-        PolicyType.DEPTH_GRASP
+        PolicyType.DEPTH_GRASP,
+        PolicyType.FUSING, 
+        # PolicyType.FUSING_RNN, ## NOTE FUSING_RNNN proprio does not work
       ] and self.policy.use_proprio: ## NOTE add as more need proprio
         return self._act_proprio(obs)
       

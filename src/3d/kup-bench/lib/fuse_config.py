@@ -19,6 +19,10 @@ class FuseConfig(Enum):
   Wfilm_D = auto() ## depth modulated colour
   W_Dfilm = auto() ##  colour modulated depth
   Wfilm_Dfilm = auto() ## depth modulated colour
+  
+  Wfilm_D_LATE = auto() ## depth modulated colour
+  W_Dfilm_LATE = auto() ##  colour modulated depth
+  Wfilm_Dfilm_LATE = auto() ## depth modulated colour
 
   #w + d + l + r
   W_D_L_R = auto() ## all separated but cated before linear layer

@@ -39,25 +39,34 @@ class FilmModulator(nn.Module):
   def __init__(self,
     in1: int, ## modulated
     in2: int, ##modulatee
-    feat_dim: int = 64,
+    feat_dim: int,
     do_both: bool = False
   ):
     super(FilmModulator, self).__init__()
     self.do_both = do_both
-  
+    self.init_encoding = in1 != in2
+      
     ## will be modulating 1 with 2, does notdo any down sampling modulate on entire resolution
-    self.enc1 = ShallowEncoder(in1, out_channels=feat_dim)
-    self.enc2 = ShallowEncoder(in2, out_channels=feat_dim)
+    if self.init_encoding:
+      self.enc1 = ShallowEncoder(in1, out_channels=feat_dim)
+      self.enc2 = ShallowEncoder(in2, out_channels=feat_dim)
 
+    if not self.init_encoding and feat_dim != in1:
+      raise RuntimeError(f"[film_net - (FilmModulator)] Error no init_enc but the feat dim is not the same")
+    
+    
     self.one_on_two = FiLMLayer(in_channels=feat_dim, cond_dim=feat_dim)
 
     if self.do_both:
       self.two_on_one = FiLMLayer(in_channels=feat_dim, cond_dim=feat_dim)
 
   def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
-
-    x1feats: torch.Tensor = self.enc1(x1)
-    x2feats: torch.Tensor = self.enc2(x2)
+    if self.init_encoding:
+      x1feats: torch.Tensor = self.enc1(x1)
+      x2feats: torch.Tensor = self.enc2(x2)
+    else: 
+      x1feats: torch.Tensor = x1
+      x2feats: torch.Tensor = x2
 
     x2pool = F.adaptive_avg_pool2d(x2feats, (1, 1)).view(x2feats.size(0), -1)
     if self.do_both:
@@ -68,26 +77,53 @@ class FilmModulator(nn.Module):
     return self.one_on_two(x1feats, x2pool)
 
 
-## TODO this might be too large, maybe do only 1 level or even smaller steps
 class ShallowEncoder(nn.Module):
   def __init__(self, 
       in_channels,
-      base_channels = 32,
-      out_channels = 64,
+      out_channels = 6,
     ):
     super(ShallowEncoder, self).__init__()
     # Calculate number of downsampling steps needed
     # Input assumed 64x64, we use conv+pool twice to go to 16x16
     self.encoder = nn.Sequential(
       # Block 1: 64x64 -> 32x32
-      nn.Conv2d(in_channels, base_channels, kernel_size=3, stride=1, padding=1, bias=False),
-      nn.BatchNorm2d(base_channels),
+      nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False),
+      nn.BatchNorm2d(out_channels),
       nn.ReLU(inplace=True),
-      # Block 2: 32x32 -> 16x16
-      nn.Conv2d(base_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False),
-      nn.BatchNorm2d(base_channels*2),
-      nn.ReLU(inplace=True), ## (B, out, 8, 8)
     )
 
   def forward(self, x):
     return self.encoder(x) 
+  
+## to be used with attention, the above encodere is too coarse
+class DeepEncoder(nn.Module):
+    def __init__(self, 
+        in_channels,
+        base_channels = 4,
+        out_channels = 16,
+      ):
+      super(DeepEncoder, self).__init__()
+      # Calculate number of downsampling steps needed
+      # Input assumed 64x64, we use conv+pool twice to go to 16x16
+      self.encoder = nn.Sequential(
+        # Block 1: 64x64 -> 32x32
+        nn.Conv2d(in_channels, base_channels, kernel_size=3, stride=2, padding=1, bias=False),
+        nn.BatchNorm2d(base_channels),
+        nn.MaxPool2d(2), ## NOTE: this is the same as `nn.MaxPool2d(kernel_size=(2, 2), stride=2, padding=0)` less explicit though
+        nn.ReLU(inplace=True),
+        # Block 2: 32x32 -> 16x16
+        nn.Conv2d(base_channels, base_channels*2, kernel_size=3, stride=1, padding=1, bias=False),
+        nn.BatchNorm2d(base_channels*2),
+        nn.MaxPool2d(2),
+        nn.ReLU(inplace=True),
+        # Block 3: keep at 16x16, expand channels
+        nn.Conv2d(base_channels*2, out_channels, kernel_size=3, stride=1, padding=1, bias=False),
+        nn.BatchNorm2d(out_channels),
+        nn.MaxPool2d(2), 
+        nn.ReLU(inplace=True),
+        # (16, 4, 4)
+      )
+      self.flat_out_size = 16 * 4 * 4
+
+    def forward(self, x):
+      return self.encoder(x)  # (B, out_channels, 16, 16)

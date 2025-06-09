@@ -34,10 +34,10 @@ from lib.fuse_config import FuseConfig
 ##NOTE does not currently work with proprio not sure why yet
 class FusingRNNPolicy(FusingPolicy):
   def __str__(self):
-    return f"fusing_policy-fuse_config:{self.fuse_config}-is_grasp:{self.is_grasp}-use_proprio:{self.use_proprio}-fusing_opts:{self.fusing_opts}-proprio_opts:{self.proprio_opts}"
+    return f"fusing_rnn_policy-fuse_config:{self.fuse_config}-is_grasp:{self.is_grasp}-use_proprio:{self.use_proprio}-fusing_opts:{self.fusing_opts}-proprio_opts:{self.proprio_opts}"
   
   def __repr__(self):
-    return f"FusingPolicy(fuse_config={self.fuse_config}, is_grasp={self.is_grasp}, use_proprio={self.use_proprio}, config={self.config}, fusing_opts={self.fusing_opts}, proprio_opts={self.proprio_opts})"
+    return f"FusingRNNPolicy(fuse_config={self.fuse_config}, is_grasp={self.is_grasp}, use_proprio={self.use_proprio}, config={self.config}, fusing_opts={self.fusing_opts}, proprio_opts={self.proprio_opts})"
   
   default_rnn_opts = {
     "input_size" : 512,
@@ -75,7 +75,10 @@ class FusingRNNPolicy(FusingPolicy):
     )
     self.rnn.flatten_parameters()
 
-    self.final_feat_size = self.rnn_opts["hidden_size"] + self.jpos_feats.output_size if self.use_proprio  else 0 
+    if self.use_proprio:
+      raise RuntimeError(f"I give up, I think the proprio unpadding isnt correct, but it doesnt fking matter cuz im not gonna have enough time to run nor examine it so no proprio for rnn, tough")
+
+    self.final_feat_size = self.rnn_opts["hidden_size"] + (self.jpos_feats.output_size if self.use_proprio else 0)
 
     ## modify these to use the out encoding size of the rnn
     self.action_head[0] = nn.Linear(self.final_feat_size, 200)
@@ -117,11 +120,11 @@ class FusingRNNPolicy(FusingPolicy):
 
     B, t, ch, w, h = image.shape
     image = image.view(B * t, ch, w, h)
-    print(f"{image.shape =}")
+    # print(f"{image.shape =}")
     
     feats, ret_dict = self.feats(image)    
     feats = feats.view(B, t, -1)
-    print(f"{feats.shape =}")
+    # print(f"{feats.shape =}")
 
     ## Shared until this point, then inference and training differs
     ## inference:
@@ -135,7 +138,7 @@ class FusingRNNPolicy(FusingPolicy):
     rnn_out, _ = pad_packed_sequence(packed_out, batch_first=True)
 
     flat = rnn_out.reshape(B * t, -1)
-    preds = self._feats_to_action(flat)
+    preds = self._feats_to_action(flat, proprio)
     preds = preds.view(B, t, -1)
     
     return preds, ret_dict | {
@@ -163,7 +166,6 @@ class FusingRNNPolicy(FusingPolicy):
     if self.use_proprio:
       proprio = [d["proprio"] for d in loader_dict]## should always exist, might be empty
       proprio_padded = pad_sequence(proprio, batch_first=True)
-
 
     ## need to return shape (B, t, ch, w, h) for the input and labels
     ## also returning lenths for LSTM use later
