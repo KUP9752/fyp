@@ -263,14 +263,12 @@ class FusingRNNPolicy(FusingPolicy):
         
         num_valid = mask.sum()
         pose_loss = pose_err.sum() / num_valid
-        if self.is_grasp:
-          pred_grasp = pred_actions[:,  -1]  # (B, T) 
-          true_grasp = labels[:, -1]
-          grasp_err = bce_loss(pred_grasp, true_grasp)  
-          grasp_err = grasp_err * mask.float()
-          grasp_loss = grasp_err.sum() / num_valid
-        else: 
-          grasp_loss = 0
+
+        pred_grasp = pred_actions[:,  -1]  # (B, T) 
+        true_grasp = labels[:, -1]
+        grasp_err = bce_loss(pred_grasp, true_grasp)  
+        grasp_err = grasp_err * mask.float()
+        grasp_loss = grasp_err.sum() / num_valid
         ## average over valid frames
         
         loss = pose_loss + lambda_grasp_loss * grasp_loss
@@ -279,7 +277,7 @@ class FusingRNNPolicy(FusingPolicy):
         optimiser.step()
 
         total_pose_loss += pose_loss.item()
-        total_grasp_loss += grasp_loss.item() if self.is_grasp else 0.
+        total_grasp_loss += grasp_loss.item() 
 
         loss = (total_pose_loss + lambda_grasp_loss * total_grasp_loss) / len(loader)
 

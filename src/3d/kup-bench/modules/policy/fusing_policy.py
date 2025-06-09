@@ -79,7 +79,8 @@ class FusingPolicy(nn.Module):
       nn.Dropout(0.2),
       nn.Linear(200, 50),
       nn.ReLU(inplace=False),
-      nn.Linear(50, action_shape - 1) ## predicts 8 - 1 dim action, no pose predication here
+      ## NOTE: do full regression here if not grasp
+      nn.Linear(50, action_shape - 1) if self.is_grasp else nn.Linear(50, action_shape)
     )
 
     ## conditional on setting
@@ -98,13 +99,14 @@ class FusingPolicy(nn.Module):
       jfeats, _ = self.jpos_feats(proprio)
       feats = torch.cat([feats, jfeats], dim = -1) ## cat on feature dimension
 
-    pose = self.action_head(feats)
+    pose = self.action_head(feats) ## will predict size = 8 if not grasp so this is action
     if self.is_grasp:  
       grasp = self.grasp_head(feats) #type: ignore (//NOTE: this is handled)
-    else: 
-      grasp = torch.ones((pose.shape[0], 1)).to(torch.device("cuda" if torch.cuda.is_available() else "cpu")) ## just keep open
+      action = torch.cat([pose, grasp], dim = 1) ## (B, 8)
+    else:
+      action = pose
 
-    return torch.cat([pose, grasp], dim = 1) ## (b, 8)
+    return action 
   
   ## this is used whent he "demo" options is selected for dataset, so we can catch the demos randomly but process in batch size
   def _collate_demos(self, batch)-> tuple[torch.Tensor, torch.Tensor, dict]:
@@ -217,13 +219,9 @@ class FusingPolicy(nn.Module):
         pred_actions, _ = model(inputs, proprio = proprio_inputs)
 
         ## [:, x] to preserve the batch shape (batch_size, X)
-        pose_loss = mse_loss(pred_actions[:, :-1], labels[:, :-1]) ## only the pose not he gripper action
+        pose_loss = mse_loss(pred_actions[:, :-1], labels[:, :-1]) ## only the pose not the gripper action
+        grasp_loss = bce_loss(pred_actions[:, -1], labels[:, -1])
 
-        if self.is_grasp:
-          grasp_loss = bce_loss(pred_actions[:, -1], labels[:, -1])
-        else:
-          grasp_loss = 0
-        
         loss = pose_loss + lambda_grasp_loss * grasp_loss
         
         loss.backward()
@@ -231,7 +229,7 @@ class FusingPolicy(nn.Module):
         scheduler.step()
 
         running_pose_loss += pose_loss.item()
-        running_grasp_loss += grasp_loss.item() if self.is_grasp else 0
+        running_grasp_loss += grasp_loss.item()
 
       loss = (running_pose_loss + lambda_grasp_loss * running_grasp_loss) / len(loader)
 
