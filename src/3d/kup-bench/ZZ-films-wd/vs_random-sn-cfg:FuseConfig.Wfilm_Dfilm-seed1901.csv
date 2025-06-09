@@ -1,0 +1,6 @@
+,seed,config,agent,error,task_name,cam_type,epochs,control_done_count,test_done_count,avg_control_final_distance,avg_control_min_distance,avg_test_min_distance,avg_test_final_distance
+0,1901,FuseConfig.Wfilm_Dfilm,fusing_policy,False,Vision_Random,wrist+wrist_depth,100,0,0,0.29308833039926024,0.2164583026411222,0.3252296488591452,0.3717569517218966
+1,1901,FuseConfig.Wfilm_Dfilm,fusing_policy,False,Vision_Random,wrist+wrist_depth,200,0,0,0.236316042589282,0.19635809253353556,0.284126248392293,0.3408637987211787
+2,1901,FuseConfig.Wfilm_Dfilm,fusing_policy,False,Vision_Random,wrist+wrist_depth,400,1,0,0.14920685898544322,0.12928885440628154,0.26908715512228965,0.2887665058560421
+3,1901,FuseConfig.Wfilm_Dfilm,fusing_policy,False,Vision_Random,wrist+wrist_depth,600,2,0,0.1765865673353691,0.12773594140294633,0.28060938326810414,0.32947915863625954
+4,1901,FuseConfig.Wfilm_Dfilm,fusing_policy,False,Vision_Random,wrist+wrist_depth,800,1,0,0.2009026765160066,0.12165163501843998,0.30402376864256786,0.37867218262169455

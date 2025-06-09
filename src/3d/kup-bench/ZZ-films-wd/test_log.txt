@@ -1,0 +1,353 @@
+2025-06-09 16:10:36,413 - Starting long test.
+2025-06-09 16:10:45,634 - === Starting Long Test:
+2025-06-09 16:10:56,585 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 231, in main
+    control_dicts = run_determined_grasp_with_agent(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/task_utils.py", line 415, in run_determined_grasp_with_agent
+    task_env.reset()
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/rlbench/task_environment.py", line 76, in reset
+    self._scene.reset()
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/rlbench/backend/scene.py", line 160, in reset
+    self.robot.arm.set_joint_positions(self._start_arm_joint_pos, disable_dynamics=True)
+  File "/home/kup/Desktop/code/fyp/.venv3-11/lib/python3.11/site-packages/pyrep/robots/robot_component.py", line 115, in set_joint_positions
+    sim.simSetModelProperty(self._handle, prior)
+  File "/home/kup/Desktop/code/fyp/.venv3-11/lib/python3.11/site-packages/pyrep/backend/sim.py", line 597, in simSetModelProperty
+    _check_return(ret)
+  File "/home/kup/Desktop/code/fyp/.venv3-11/lib/python3.11/site-packages/pyrep/backend/sim.py", line 27, in _check_return
+    raise RuntimeError(
+RuntimeError: The call failed on the V-REP side. Return value: -1
+2025-06-09 16:10:56,586 - The call failed on the V-REP side. Return value: -1
+2025-06-09 16:10:56,599 - Added error rows to dfs
+2025-06-09 16:11:14,948 - Something Went Wrong! Marking row in DF
+Traceback (most recent call last):
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/test_vs.py", line 231, in main
+    control_dicts = run_determined_grasp_with_agent(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/task_utils.py", line 414, in run_determined_grasp_with_agent
+    task_env = env.get_task(task, **task_params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/rlbench/environment.py", line 147, in get_task
+    self._scene.unload()
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/rlbench/backend/scene.py", line 104, in unload
+    self.task.unload()
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/rlbench/backend/task.py", line 316, in unload
+    self.get_base().remove()
+    ^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/src/3d/kup-bench/rlbench/backend/task.py", line 335, in get_base
+    self._base_object = Dummy(self.name)
+                        ^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/.venv3-11/lib/python3.11/site-packages/pyrep/objects/object.py", line 24, in __init__
+    self._handle = sim.simGetObjectHandle(name_or_handle)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kup/Desktop/code/fyp/.venv3-11/lib/python3.11/site-packages/pyrep/backend/sim.py", line 94, in simGetObjectHandle
+    raise RuntimeError('Handle %s does not exist.' % objectName)
+RuntimeError: Handle vision_random does not exist.
+2025-06-09 16:11:14,948 - Handle vision_random does not exist.
+2025-06-09 16:11:14,963 - Added error rows to dfs
+2025-06-09 16:12:56,614 - Starting long test.
+2025-06-09 16:13:06,990 - === Starting Long Test:
+2025-06-09 16:14:15,145 - Starting long test.
+2025-06-09 16:14:24,636 - === Starting Long Test:
+2025-06-09 16:15:08,295 - len(test_dicts) = 10
+2025-06-09 16:15:08,296 - len(control_dicts) = 10
+2025-06-09 16:15:59,575 - len(test_dicts) = 10
+2025-06-09 16:15:59,575 - len(control_dicts) = 10
+2025-06-09 16:17:08,856 - len(test_dicts) = 10
+2025-06-09 16:17:08,856 - len(control_dicts) = 10
+2025-06-09 16:18:36,336 - len(test_dicts) = 10
+2025-06-09 16:18:36,336 - len(control_dicts) = 10
+2025-06-09 16:20:21,747 - len(test_dicts) = 10
+2025-06-09 16:20:21,747 - len(control_dicts) = 10
+2025-06-09 16:21:04,503 - len(test_dicts) = 10
+2025-06-09 16:21:04,503 - len(control_dicts) = 10
+2025-06-09 16:21:55,145 - len(test_dicts) = 10
+2025-06-09 16:21:55,145 - len(control_dicts) = 10
+2025-06-09 16:23:03,743 - len(test_dicts) = 10
+2025-06-09 16:23:03,743 - len(control_dicts) = 10
+2025-06-09 16:24:30,271 - len(test_dicts) = 10
+2025-06-09 16:24:30,271 - len(control_dicts) = 10
+2025-06-09 16:26:14,850 - len(test_dicts) = 10
+2025-06-09 16:26:14,850 - len(control_dicts) = 10
+2025-06-09 16:27:02,287 - len(test_dicts) = 10
+2025-06-09 16:27:02,295 - len(control_dicts) = 10
+2025-06-09 16:28:03,714 - len(test_dicts) = 10
+2025-06-09 16:28:03,722 - len(control_dicts) = 10
+2025-06-09 16:29:32,796 - len(test_dicts) = 10
+2025-06-09 16:29:32,804 - len(control_dicts) = 10
+2025-06-09 16:31:31,308 - len(test_dicts) = 10
+2025-06-09 16:31:31,308 - len(control_dicts) = 10
+2025-06-09 16:33:57,073 - len(test_dicts) = 10
+2025-06-09 16:33:57,081 - len(control_dicts) = 10
+2025-06-09 16:34:32,303 - len(test_dicts) = 10
+2025-06-09 16:34:32,311 - len(control_dicts) = 10
+2025-06-09 16:35:13,275 - len(test_dicts) = 10
+2025-06-09 16:35:13,283 - len(control_dicts) = 10
+2025-06-09 16:36:06,160 - len(test_dicts) = 10
+2025-06-09 16:36:06,168 - len(control_dicts) = 10
+2025-06-09 16:37:05,476 - len(test_dicts) = 10
+2025-06-09 16:37:05,484 - len(control_dicts) = 10
+2025-06-09 16:38:15,199 - len(test_dicts) = 10
+2025-06-09 16:38:15,207 - len(control_dicts) = 10
+2025-06-09 16:38:51,370 - len(test_dicts) = 10
+2025-06-09 16:38:51,378 - len(control_dicts) = 10
+2025-06-09 16:39:38,327 - len(test_dicts) = 10
+2025-06-09 16:39:38,335 - len(control_dicts) = 10
+2025-06-09 16:40:30,663 - len(test_dicts) = 10
+2025-06-09 16:40:30,671 - len(control_dicts) = 10
+2025-06-09 16:41:31,683 - len(test_dicts) = 10
+2025-06-09 16:41:31,691 - len(control_dicts) = 10
+2025-06-09 16:42:43,784 - len(test_dicts) = 10
+2025-06-09 16:42:43,792 - len(control_dicts) = 10
+2025-06-09 16:43:21,101 - len(test_dicts) = 10
+2025-06-09 16:43:21,109 - len(control_dicts) = 10
+2025-06-09 16:44:07,095 - len(test_dicts) = 10
+2025-06-09 16:44:07,103 - len(control_dicts) = 10
+2025-06-09 16:44:57,654 - len(test_dicts) = 10
+2025-06-09 16:44:57,662 - len(control_dicts) = 10
+2025-06-09 16:46:01,202 - len(test_dicts) = 10
+2025-06-09 16:46:01,210 - len(control_dicts) = 10
+2025-06-09 16:47:12,401 - len(test_dicts) = 10
+2025-06-09 16:47:12,409 - len(control_dicts) = 10
+2025-06-09 16:47:57,708 - len(test_dicts) = 10
+2025-06-09 16:47:57,716 - len(control_dicts) = 10
+2025-06-09 16:48:51,275 - len(test_dicts) = 10
+2025-06-09 16:48:51,275 - len(control_dicts) = 10
+2025-06-09 16:50:03,498 - len(test_dicts) = 10
+2025-06-09 16:50:03,506 - len(control_dicts) = 10
+2025-06-09 16:51:35,817 - len(test_dicts) = 10
+2025-06-09 16:51:35,825 - len(control_dicts) = 10
+2025-06-09 16:53:27,309 - len(test_dicts) = 10
+2025-06-09 16:53:27,317 - len(control_dicts) = 10
+2025-06-09 16:54:11,633 - len(test_dicts) = 10
+2025-06-09 16:54:11,641 - len(control_dicts) = 10
+2025-06-09 16:55:06,473 - len(test_dicts) = 10
+2025-06-09 16:55:06,481 - len(control_dicts) = 10
+2025-06-09 16:56:17,346 - len(test_dicts) = 10
+2025-06-09 16:56:17,354 - len(control_dicts) = 10
+2025-06-09 16:57:49,225 - len(test_dicts) = 10
+2025-06-09 16:57:49,233 - len(control_dicts) = 10
+2025-06-09 16:59:33,712 - len(test_dicts) = 10
+2025-06-09 16:59:33,720 - len(control_dicts) = 10
+2025-06-09 17:00:23,553 - len(test_dicts) = 10
+2025-06-09 17:00:23,561 - len(control_dicts) = 10
+2025-06-09 17:01:28,788 - len(test_dicts) = 10
+2025-06-09 17:01:28,788 - len(control_dicts) = 10
+2025-06-09 17:02:58,590 - len(test_dicts) = 10
+2025-06-09 17:02:58,598 - len(control_dicts) = 10
+2025-06-09 17:04:58,943 - len(test_dicts) = 10
+2025-06-09 17:04:58,951 - len(control_dicts) = 10
+2025-06-09 17:07:27,394 - len(test_dicts) = 10
+2025-06-09 17:07:27,395 - len(control_dicts) = 10
+2025-06-09 17:08:07,615 - len(test_dicts) = 10
+2025-06-09 17:08:07,623 - len(control_dicts) = 10
+2025-06-09 17:08:47,753 - len(test_dicts) = 10
+2025-06-09 17:08:47,761 - len(control_dicts) = 10
+2025-06-09 17:09:37,694 - len(test_dicts) = 10
+2025-06-09 17:09:37,702 - len(control_dicts) = 10
+2025-06-09 17:10:35,628 - len(test_dicts) = 10
+2025-06-09 17:10:35,636 - len(control_dicts) = 10
+2025-06-09 17:11:42,835 - len(test_dicts) = 10
+2025-06-09 17:11:42,844 - len(control_dicts) = 10
+2025-06-09 17:12:19,332 - len(test_dicts) = 10
+2025-06-09 17:12:19,340 - len(control_dicts) = 10
+2025-06-09 17:13:01,489 - len(test_dicts) = 10
+2025-06-09 17:13:01,497 - len(control_dicts) = 10
+2025-06-09 17:13:53,375 - len(test_dicts) = 10
+2025-06-09 17:13:53,383 - len(control_dicts) = 10
+2025-06-09 17:14:54,250 - len(test_dicts) = 10
+2025-06-09 17:14:54,258 - len(control_dicts) = 10
+2025-06-09 17:16:05,925 - len(test_dicts) = 10
+2025-06-09 17:16:05,934 - len(control_dicts) = 10
+2025-06-09 17:16:43,638 - len(test_dicts) = 10
+2025-06-09 17:16:43,646 - len(control_dicts) = 10
+2025-06-09 17:17:26,350 - len(test_dicts) = 10
+2025-06-09 17:17:26,358 - len(control_dicts) = 10
+2025-06-09 17:18:17,165 - len(test_dicts) = 10
+2025-06-09 17:18:17,166 - len(control_dicts) = 10
+2025-06-09 17:19:19,328 - len(test_dicts) = 10
+2025-06-09 17:19:19,336 - len(control_dicts) = 10
+2025-06-09 17:20:34,691 - len(test_dicts) = 10
+2025-06-09 17:20:34,699 - len(control_dicts) = 10
+2025-06-09 17:21:17,946 - len(test_dicts) = 10
+2025-06-09 17:21:17,954 - len(control_dicts) = 10
+2025-06-09 17:22:08,387 - len(test_dicts) = 10
+2025-06-09 17:22:08,395 - len(control_dicts) = 10
+2025-06-09 17:23:19,114 - len(test_dicts) = 10
+2025-06-09 17:23:19,123 - len(control_dicts) = 10
+2025-06-09 17:24:47,505 - len(test_dicts) = 10
+2025-06-09 17:24:47,513 - len(control_dicts) = 10
+2025-06-09 17:26:33,876 - len(test_dicts) = 10
+2025-06-09 17:26:33,884 - len(control_dicts) = 10
+2025-06-09 17:27:17,602 - len(test_dicts) = 10
+2025-06-09 17:27:17,610 - len(control_dicts) = 10
+2025-06-09 17:28:12,911 - len(test_dicts) = 10
+2025-06-09 17:28:12,919 - len(control_dicts) = 10
+2025-06-09 17:29:22,749 - len(test_dicts) = 10
+2025-06-09 17:29:22,757 - len(control_dicts) = 10
+2025-06-09 17:30:51,324 - len(test_dicts) = 10
+2025-06-09 17:30:51,332 - len(control_dicts) = 10
+2025-06-09 17:32:38,393 - len(test_dicts) = 10
+2025-06-09 17:32:38,401 - len(control_dicts) = 10
+2025-06-09 17:33:27,591 - len(test_dicts) = 10
+2025-06-09 17:33:27,599 - len(control_dicts) = 10
+2025-06-09 17:34:30,275 - len(test_dicts) = 10
+2025-06-09 17:34:30,283 - len(control_dicts) = 10
+2025-06-09 17:35:59,507 - len(test_dicts) = 10
+2025-06-09 17:35:59,515 - len(control_dicts) = 10
+2025-06-09 17:37:53,996 - len(test_dicts) = 10
+2025-06-09 17:37:54,004 - len(control_dicts) = 10
+2025-06-09 17:40:14,428 - len(test_dicts) = 10
+2025-06-09 17:40:14,436 - len(control_dicts) = 10
+2025-06-09 17:40:48,900 - len(test_dicts) = 10
+2025-06-09 17:40:48,901 - len(control_dicts) = 10
+2025-06-09 17:41:28,554 - len(test_dicts) = 10
+2025-06-09 17:41:28,562 - len(control_dicts) = 10
+2025-06-09 17:42:15,465 - len(test_dicts) = 10
+2025-06-09 17:42:15,473 - len(control_dicts) = 10
+2025-06-09 17:43:14,779 - len(test_dicts) = 10
+2025-06-09 17:43:14,779 - len(control_dicts) = 10
+2025-06-09 17:44:19,018 - len(test_dicts) = 10
+2025-06-09 17:44:19,026 - len(control_dicts) = 10
+2025-06-09 17:44:53,948 - len(test_dicts) = 10
+2025-06-09 17:44:53,956 - len(control_dicts) = 10
+2025-06-09 17:45:31,853 - len(test_dicts) = 10
+2025-06-09 17:45:31,861 - len(control_dicts) = 10
+2025-06-09 17:46:19,158 - len(test_dicts) = 10
+2025-06-09 17:46:19,166 - len(control_dicts) = 10
+2025-06-09 17:47:17,112 - len(test_dicts) = 10
+2025-06-09 17:47:17,120 - len(control_dicts) = 10
+2025-06-09 17:48:26,453 - len(test_dicts) = 10
+2025-06-09 17:48:26,453 - len(control_dicts) = 10
+2025-06-09 17:49:03,136 - len(test_dicts) = 10
+2025-06-09 17:49:03,136 - len(control_dicts) = 10
+2025-06-09 17:49:49,981 - len(test_dicts) = 10
+2025-06-09 17:49:49,989 - len(control_dicts) = 10
+2025-06-09 17:50:39,531 - len(test_dicts) = 10
+2025-06-09 17:50:39,539 - len(control_dicts) = 10
+2025-06-09 17:51:40,947 - len(test_dicts) = 10
+2025-06-09 17:51:40,955 - len(control_dicts) = 10
+2025-06-09 17:52:49,057 - len(test_dicts) = 10
+2025-06-09 17:52:49,065 - len(control_dicts) = 10
+2025-06-09 17:53:31,436 - len(test_dicts) = 10
+2025-06-09 17:53:31,444 - len(control_dicts) = 10
+2025-06-09 17:54:22,094 - len(test_dicts) = 10
+2025-06-09 17:54:22,102 - len(control_dicts) = 10
+2025-06-09 17:55:29,858 - len(test_dicts) = 10
+2025-06-09 17:55:29,866 - len(control_dicts) = 10
+2025-06-09 17:56:55,402 - len(test_dicts) = 10
+2025-06-09 17:56:55,410 - len(control_dicts) = 10
+2025-06-09 17:58:38,613 - len(test_dicts) = 10
+2025-06-09 17:58:38,621 - len(control_dicts) = 10
+2025-06-09 17:59:21,104 - len(test_dicts) = 10
+2025-06-09 17:59:21,112 - len(control_dicts) = 10
+2025-06-09 18:00:15,958 - len(test_dicts) = 10
+2025-06-09 18:00:15,966 - len(control_dicts) = 10
+2025-06-09 18:01:24,209 - len(test_dicts) = 10
+2025-06-09 18:01:24,217 - len(control_dicts) = 10
+2025-06-09 18:02:49,959 - len(test_dicts) = 10
+2025-06-09 18:02:49,959 - len(control_dicts) = 10
+2025-06-09 18:04:32,038 - len(test_dicts) = 10
+2025-06-09 18:04:32,046 - len(control_dicts) = 10
+2025-06-09 18:05:19,873 - len(test_dicts) = 10
+2025-06-09 18:05:19,881 - len(control_dicts) = 10
+2025-06-09 18:06:20,938 - len(test_dicts) = 10
+2025-06-09 18:06:20,947 - len(control_dicts) = 10
+2025-06-09 18:07:50,039 - len(test_dicts) = 10
+2025-06-09 18:07:50,040 - len(control_dicts) = 10
+2025-06-09 18:09:44,222 - len(test_dicts) = 10
+2025-06-09 18:09:44,230 - len(control_dicts) = 10
+2025-06-09 18:12:04,409 - len(test_dicts) = 10
+2025-06-09 18:12:04,417 - len(control_dicts) = 10
+2025-06-09 18:12:41,295 - len(test_dicts) = 10
+2025-06-09 18:12:41,303 - len(control_dicts) = 10
+2025-06-09 18:13:19,449 - len(test_dicts) = 10
+2025-06-09 18:13:19,457 - len(control_dicts) = 10
+2025-06-09 18:14:07,752 - len(test_dicts) = 10
+2025-06-09 18:14:07,760 - len(control_dicts) = 10
+2025-06-09 18:15:04,845 - len(test_dicts) = 10
+2025-06-09 18:15:04,853 - len(control_dicts) = 10
+2025-06-09 18:16:09,727 - len(test_dicts) = 10
+2025-06-09 18:16:09,735 - len(control_dicts) = 10
+2025-06-09 18:16:44,184 - len(test_dicts) = 10
+2025-06-09 18:16:44,192 - len(control_dicts) = 10
+2025-06-09 18:17:26,691 - len(test_dicts) = 10
+2025-06-09 18:17:26,699 - len(control_dicts) = 10
+2025-06-09 18:18:15,309 - len(test_dicts) = 10
+2025-06-09 18:18:15,317 - len(control_dicts) = 10
+2025-06-09 18:19:13,354 - len(test_dicts) = 10
+2025-06-09 18:19:13,362 - len(control_dicts) = 10
+2025-06-09 18:20:30,345 - len(test_dicts) = 10
+2025-06-09 18:20:30,353 - len(control_dicts) = 10
+2025-06-09 18:21:11,190 - len(test_dicts) = 10
+2025-06-09 18:21:11,198 - len(control_dicts) = 10
+2025-06-09 18:21:52,016 - len(test_dicts) = 10
+2025-06-09 18:21:52,024 - len(control_dicts) = 10
+2025-06-09 18:22:41,912 - len(test_dicts) = 10
+2025-06-09 18:22:41,921 - len(control_dicts) = 10
+2025-06-09 18:23:42,455 - len(test_dicts) = 10
+2025-06-09 18:23:42,463 - len(control_dicts) = 10
+2025-06-09 18:24:50,685 - len(test_dicts) = 10
+2025-06-09 18:24:50,693 - len(control_dicts) = 10
+2025-06-09 18:25:33,306 - len(test_dicts) = 10
+2025-06-09 18:25:33,315 - len(control_dicts) = 10
+2025-06-09 18:26:24,243 - len(test_dicts) = 10
+2025-06-09 18:26:24,251 - len(control_dicts) = 10
+2025-06-09 18:27:32,485 - len(test_dicts) = 10
+2025-06-09 18:27:32,493 - len(control_dicts) = 10
+2025-06-09 18:28:57,000 - len(test_dicts) = 10
+2025-06-09 18:28:57,008 - len(control_dicts) = 10
+2025-06-09 18:30:39,030 - len(test_dicts) = 10
+2025-06-09 18:30:39,038 - len(control_dicts) = 10
+2025-06-09 18:31:21,200 - len(test_dicts) = 10
+2025-06-09 18:31:21,208 - len(control_dicts) = 10
+2025-06-09 18:32:11,767 - len(test_dicts) = 10
+2025-06-09 18:32:11,776 - len(control_dicts) = 10
+2025-06-09 18:33:19,981 - len(test_dicts) = 10
+2025-06-09 18:33:19,989 - len(control_dicts) = 10
+2025-06-09 18:34:45,725 - len(test_dicts) = 10
+2025-06-09 18:34:45,733 - len(control_dicts) = 10
+2025-06-09 18:36:30,255 - len(test_dicts) = 10
+2025-06-09 18:36:30,263 - len(control_dicts) = 10
+2025-06-09 18:37:19,281 - len(test_dicts) = 10
+2025-06-09 18:37:19,289 - len(control_dicts) = 10
+2025-06-09 18:38:19,939 - len(test_dicts) = 10
+2025-06-09 18:38:19,947 - len(control_dicts) = 10
+2025-06-09 18:39:47,101 - len(test_dicts) = 10
+2025-06-09 18:39:47,109 - len(control_dicts) = 10
+2025-06-09 18:41:41,395 - len(test_dicts) = 10
+2025-06-09 18:41:41,403 - len(control_dicts) = 10
+2025-06-09 18:44:00,656 - len(test_dicts) = 10
+2025-06-09 18:44:00,664 - len(control_dicts) = 10
+2025-06-09 18:44:35,164 - len(test_dicts) = 10
+2025-06-09 18:44:35,172 - len(control_dicts) = 10
+2025-06-09 18:45:13,353 - len(test_dicts) = 10
+2025-06-09 18:45:13,361 - len(control_dicts) = 10
+2025-06-09 18:46:01,995 - len(test_dicts) = 10
+2025-06-09 18:46:02,003 - len(control_dicts) = 10
+2025-06-09 18:46:58,260 - len(test_dicts) = 10
+2025-06-09 18:46:58,268 - len(control_dicts) = 10
+2025-06-09 18:48:02,804 - len(test_dicts) = 10
+2025-06-09 18:48:02,812 - len(control_dicts) = 10
+2025-06-09 18:48:37,055 - len(test_dicts) = 10
+2025-06-09 18:48:37,063 - len(control_dicts) = 10
+2025-06-09 18:49:15,810 - len(test_dicts) = 10
+2025-06-09 18:49:15,819 - len(control_dicts) = 10
+2025-06-09 18:50:03,059 - len(test_dicts) = 10
+2025-06-09 18:50:03,067 - len(control_dicts) = 10
+2025-06-09 18:50:59,420 - len(test_dicts) = 10
+2025-06-09 18:50:59,428 - len(control_dicts) = 10
+2025-06-09 18:52:04,619 - len(test_dicts) = 10
+2025-06-09 18:52:04,627 - len(control_dicts) = 10
+2025-06-09 18:52:41,851 - len(test_dicts) = 10
+2025-06-09 18:52:41,859 - len(control_dicts) = 10
+2025-06-09 18:53:27,342 - len(test_dicts) = 10
+2025-06-09 18:53:27,350 - len(control_dicts) = 10
+2025-06-09 18:54:19,180 - len(test_dicts) = 10
+2025-06-09 18:54:19,188 - len(control_dicts) = 10
+2025-06-09 18:55:17,597 - len(test_dicts) = 10
+2025-06-09 18:55:17,597 - len(control_dicts) = 10
+2025-06-09 18:56:26,966 - len(test_dicts) = 10
+2025-06-09 18:56:26,966 - len(control_dicts) = 10
+2025-06-09 18:56:26,975 - DONE
