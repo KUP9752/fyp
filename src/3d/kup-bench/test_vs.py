@@ -42,7 +42,7 @@ def main():
   task = Vision_Random
   
   env = launch_test_env(
-    "data/20demos/normal-Vision_Random", 
+    "data/20demos/smaller-Vision_Random", 
     enableds = CamType.WRIST | CamType.RIGHT_SHOULDER | CamType.LEFT_SHOULDER,
   )
   
@@ -58,8 +58,8 @@ def main():
     10,
     env, 
     task, 
-    "data/20demos/normal-Vision_Random",
-    task_params = normal
+    "data/20demos/smaller-Vision_Random",
+    task_params = smaller
   )
   test_normal = load_demos_for(
     10,
@@ -77,23 +77,40 @@ def main():
     task_params = smaller
   )
   configs = [
-    # FuseConfig.WDLR,
-    # FuseConfig.WLR_D,
-    # FuseConfig.DEPTH_FEATS_GATED,
-    # FuseConfig.DEPTH_FEATS_ATTN,
-    # FuseConfig.WD_LR,
-    # FuseConfig.WD_LR_ATTN,
+    FuseConfig.WDLR,
+    FuseConfig.WLR_D,
+    FuseConfig.DEPTH_FEATS_GATED,
+    FuseConfig.DEPTH_FEATS_ATTN,
+    FuseConfig.WD_LR,
+    FuseConfig.WD_LR_ATTN,
     FuseConfig.Wfilm_D,
-    FuseConfig.W_Dfilm,
+    # FuseConfig.W_Dfilm,
     FuseConfig.Wfilm_Dfilm,
-    # FuseConfig.W_D_L_R,
+    FuseConfig.Wfilm_D_LATE,
+    FuseConfig.W_Dfilm_LATE,
+    FuseConfig.Wfilm_Dfilm_LATE,
+    FuseConfig.W_D_L_R,
     FuseConfig.W_D_L_R_FILM,
-    # FuseConfig.W_D_L_R_ATTN,
+    # FuseConfig.W_D_L_R_ATTN, ##bad
   ]
 
-  epochs = [100, 200, 600, 1000, 2000]
+  epochs = [
+    100, 
+    200, 
+    400, 
+    600, 
+    800,
+    # 1000, 
+    # 2000
+  ]
 
-  seeds = [3790, 1901, 4248, 6689, 7653]
+  seeds = [
+    3790,
+    1901,
+    4248,
+    6689,
+    7653
+  ]
   cam_types =  [ 
     CamType.WRIST,
     CamType.WRIST | CamType.WRIST_DEPTH,
@@ -120,11 +137,11 @@ def main():
   config_columns = [
     "seed",
     "config",
+    "agent", 
     "error",
     "task_name",
     "cam_type",
     "epochs",
-
     "control_done_count",
     "test_done_count",
 
@@ -134,10 +151,11 @@ def main():
     "avg_test_final_distance",
 
   ]
-  main_folder = "ZZ-films"
+  main_folder = "ZZ-small-then-normal"
 
   df_all_str = lambda config, seed: f"{main_folder}/ALLvs_random-sn-cfg:{config}-seed{seed}.csv"
   df_avg_str = lambda config, seed: f"{main_folder}/vs_random-sn-cfg:{config}-seed{seed}.csv"
+
 
   demo_columns = [
     "seed",
@@ -163,7 +181,7 @@ def main():
 
   make_grasp_agent = lambda ct, cfg,: Agent(
     action_shape= env.action_shape[0],
-    policy_type=PolicyType.FUSING,
+    policy_type=PolicyType.FUSING, ## NO RNN!!
     cam_type=ct,
 
     is_grasp = True, 
@@ -214,20 +232,20 @@ def main():
               env,
               task,
               agent, 
-              test_normal, 
+              test_smaller, 
               max_eplen="demo_max",
               do_extra_outs=True,
-              task_params=normal
+              task_params=smaller
             )
           
           test_dicts = run_determined_grasp_with_agent(
               env,
               task,
               agent, 
-              test_smaller, 
+              test_normal, 
               max_eplen="demo_max",
               do_extra_outs=True,
-              task_params=smaller
+              task_params=normal
             )
           # assert len(test_dicts) == len(control_dicts) == 10, "10 test demos see if this is respected"
           logger.info(f"{len(test_dicts) = }")
@@ -272,6 +290,7 @@ def main():
           df_avg.loc[avg_count] = {
             "seed": seed,
             "config": config,
+            "agent": agent.policy_type,
             "error": False,
             "task_name": get_task_name(task),
             "cam_type": ct,

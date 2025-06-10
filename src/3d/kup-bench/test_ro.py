@@ -26,10 +26,11 @@ from lib.utils import save_demos, load_demos
 from itertools import product
 
 if __name__ == "__main__": 
-  tasks = [ReachObs_Random] #, ReachObs_IndepRandom]
+  tasks = [ReachObs_IndepRandom] #, ReachObs_Random]
 
   epochs = [
-    100, 200, 500, 1000, 2000, #5000 # seems unnecessary
+    # 100, 200, 500, 1000, 2000, 
+    5000 # maybe do again if needed later
   ]
 
   demo_counts = [
@@ -38,9 +39,9 @@ if __name__ == "__main__":
   ]
 
   cam_types = [
-    # CamType.WRIST,
-    # CamType.LEFT_SHOULDER,
-    # CamType.RIGHT_SHOULDER,
+    CamType.WRIST,
+    CamType.LEFT_SHOULDER,
+    CamType.RIGHT_SHOULDER,
     CamType.WRIST | CamType.RIGHT_SHOULDER | CamType.LEFT_SHOULDER,
     CamType.WRIST | CamType.RIGHT_SHOULDER,
     CamType.WRIST | CamType.LEFT_SHOULDER,
@@ -52,10 +53,10 @@ if __name__ == "__main__":
     enableds = CamType.WRIST | CamType.RIGHT_SHOULDER | CamType.LEFT_SHOULDER,
   )
 
-  
 
   df = pd.DataFrame(columns=[
       "task_name",
+      "test_task_name",
       "cam_type",
       "epochs",
       "demo_count",
@@ -63,13 +64,8 @@ if __name__ == "__main__":
       "done_count",
       "min_distance",
       "final_distance",
-      "dataset_type",
-      "is_multi_cnn",
-      "lambda_attn",
-      "colour_pool",
-      "belows",
-      "aboves",
-    ], index = range(
+      "dataset_type"
+    ],index = range(
       len(tasks) 
       * len(epochs) 
       * len(demo_counts) 
@@ -86,25 +82,14 @@ if __name__ == "__main__":
     "shuffle_data": True, ##let "demo" use shuffling and other things, that benefit its learning for more than 1 demo
     "dataset_to_use": "demo", 
     "lock_loader_seed": 42,
-    "lambda_attn": None
-  },
+  }
   # fix the test dataset as this one
 
-  task_env = env.get_task(ReachObs_Random)
-  test_demos = load_demos_for(10, env,  ReachObs_Random, f"data/test/10demos")
-  
-
-  target = Shape("target")
-  target_rgb = torch.tensor(target.get_color())
-
-  make_agent = lambda ct, mc, pt: Agent(
+  make_agent = lambda ct: Agent(
     action_shape= env.action_shape[0],
-    policy_type=PolicyType.CAM_ATTENTION,
+    policy_type=PolicyType.SIMPLE,
     cam_type=ct,
     # config = "depth_ch",
-    target_rgb = target_rgb, 
-    is_multi_cnn = mc,
-    colour_score_pooling = pt
   )
 
   count = 0 
@@ -113,6 +98,8 @@ if __name__ == "__main__":
     # if task == ReachObs_Random and dt == "obs": continue ## was already done earlier
     task_env = env.get_task(task)
     task_env.reset()
+    test_demos = load_demos_for(10, env,  task, f"data/test/10demos")
+    # task_env = env.get_task(ReachObs_IndepRandom)
     for dc in demo_counts:
       demos = load_demos_for(dc, env, task, f"data/20demos")
       for ct in cam_types:
@@ -129,7 +116,6 @@ if __name__ == "__main__":
 
           # training_params["dataset_to_use"] = dt  
           training_params["epochs"] = ep  
-          training_params["lambda_attn"] = la
 
           agent = make_agent(ct)
 
@@ -150,11 +136,9 @@ if __name__ == "__main__":
           done_count = len([d["done"] for d in ret_dicts if d["done"]])
           eplens = [d["max_eplen"] for d in ret_dicts]
 
-          belows =[d["avg_attentions_below_obstacle"] for d in ret_dicts]
-          aboves =[d["avg_attentions_above_obstacle"] for d in ret_dicts]
-
           df.loc[count] = {
-            "task_name": get_task_name(task), 
+            "task_name": get_task_name(task),
+            "test_task_name": get_task_name(task),
             "cam_type": agent.cam_type, 
             "epochs": ep,
             "demo_count": dc, 
@@ -163,12 +147,6 @@ if __name__ == "__main__":
             "min_distance": sum(min_dists) / len(min_dists),
             "final_distance": sum(final_dists) / len(final_dists),
             "dataset_type": training_params["dataset_to_use"],
-            "is_multi_cnn": mc,
-            "lambda_attn": la,
-            "colour_pool": pt,
-            "belows": belows, 
-            "aboves": aboves,
-            
           }
           count += 1
-          df.to_csv("cam_attn-maxpooling--ro-randoms-cam.csv", index=True)
+          df.to_csv("train_random-test_indep-ro-randoms-cam.csv", index=True)

@@ -29,7 +29,7 @@ if __name__ == "__main__":
   tasks = [ReachObs_Random] #, ReachObs_IndepRandom]
 
   epochs = [
-    100, 200, 500, 1000, 2000, #5000 # seems unnecessary
+    100, 200, 500, 1000, 2000, 5000 # seems unnecessary
   ]
 
   demo_counts = [

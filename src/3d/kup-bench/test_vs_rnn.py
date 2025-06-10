@@ -58,8 +58,8 @@ def main():
     10,
     env, 
     task, 
-    "data/20demos/normal-Vision_Random",
-    task_params = normal
+    "data/20demos/smaller-Vision_Random",
+    task_params = smaller
   )
   test_normal = load_demos_for(
     10,
@@ -85,7 +85,10 @@ def main():
     FuseConfig.WD_LR_ATTN,
     FuseConfig.Wfilm_D,
     FuseConfig.W_Dfilm,
-    FuseConfig.Wfilm_Dfilm,
+    # FuseConfig.Wfilm_Dfilm,
+    FuseConfig.Wfilm_D_LATE,
+    # FuseConfig.W_Dfilm_LATE,
+    FuseConfig.Wfilm_Dfilm_LATE,
     FuseConfig.W_D_L_R,
     FuseConfig.W_D_L_R_FILM,
     FuseConfig.W_D_L_R_ATTN,
@@ -96,17 +99,18 @@ def main():
     200, 
     400,
     600, 
-    # 800, 
+    800, 
     # 1000,
     # 2000
   ]
 
   seeds = [
     3790,
-    1901,
-    4248,
-    6689,
-    7653
+    # 1901,
+    # 4248,
+    # 6689,
+    # 7653
+    ## TODO: three seeds with minibatch = 10 3 with minibathc = 5 ?
   ]
   cam_types =  [ 
     CamType.WRIST,
@@ -149,10 +153,10 @@ def main():
     "avg_test_final_distance",
 
   ]
-  main_folder = "ZZ-lstm-run"
+  main_folder = "ZZ-lstm-run-small-first"
 
-  df_all_str = lambda config, seed: f"{main_folder}/ALLvs_random-ns-cfg:{config}-seed{seed}.csv"
-  df_avg_str = lambda config, seed: f"{main_folder}/vs_random-ns-cfg:{config}-seed{seed}.csv"
+  df_all_str = lambda config, seed: f"{main_folder}/ALLvs_random-sn-cfg:{config}-seed{seed}.csv"
+  df_avg_str = lambda config, seed: f"{main_folder}/vs_random-sn-cfg:{config}-seed{seed}.csv"
 
   demo_columns = [
     "seed",
@@ -229,20 +233,20 @@ def main():
               env,
               task,
               agent, 
-              test_normal, 
+              test_smaller, 
               max_eplen="demo_max",
               do_extra_outs=True,
-              task_params=normal
+              task_params=smaller
             )
           
           test_dicts = run_determined_grasp_with_agent(
               env,
               task,
               agent, 
-              test_smaller, 
+              test_normal, 
               max_eplen="demo_max",
               do_extra_outs=True,
-              task_params=smaller
+              task_params=normal
             )
           # assert len(test_dicts) == len(control_dicts) == 10, "10 test demos see if this is respected"
           logger.info(f"{len(test_dicts) = }")

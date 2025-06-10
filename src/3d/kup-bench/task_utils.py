@@ -139,7 +139,7 @@ def run_reach_task(
     
   return distances, done
 
-def run_determined_reach_with_agent(
+def run_determined_reach_with_agent_attn(
     env: Environment, 
     task: type[Task], 
     agent: Agent, 
@@ -210,6 +210,58 @@ def run_determined_reach_with_agent(
       "max_eplen": max_eplen,
       "avg_attentions_below_obstacle": torch.stack(atts_below_obs, dim=0).mean(dim=0, dtype=torch.float32) if len(atts_below_obs) > 0 else None,
       "avg_attentions_above_obstacle": torch.stack(atts_above_obs, dim=0).mean(dim=0, dtype=torch.float32) if len(atts_above_obs) > 0 else None,
+    })
+
+
+  return results
+
+def run_determined_reach_with_agent(
+    env: Environment, 
+    task: type[Task], 
+    agent: Agent, 
+    rec_demos: list[Demo],# | list[tuple[Demo, int]], 
+    max_eplen: int | Literal["demo_max"] = "demo_max",
+    within_err_dist: Optional[float] = None,
+    task_params: dict = {},
+) -> list[dict]:
+  
+  results: list[dict] = []
+  if max_eplen == "demo_max":
+    max_eplen = max(list(map(len, rec_demos)))
+
+  obs: Observation
+  results: list[dict] = []
+
+  agent.policy.to("cpu")
+  for rec_demo in rec_demos:
+    task_env = env.get_task(task, **task_params)
+    task_env.reset()
+    if isinstance(rec_demo, Demo):
+      _, obs = task_env.reset_to_demo(rec_demo) 
+    done = False
+    distances = []
+
+    for _ in range(max_eplen):
+      action, pol_dict = agent.act(obs)
+      action = action.squeeze()
+
+
+      obs, reward, done = task_env.step(action)
+      gripper = Object.get_object("Panda_gripper")
+      target = Object.get_object("target")
+      distance = np.linalg.norm(gripper.get_position() - target.get_position())
+
+      distances.append(distance)
+
+      if within_err_dist is not None:
+        done = done or distance <= within_err_dist
+
+      if done: break
+
+    results.append({
+      "done": done,
+      "distances": distances,
+      "max_eplen": max_eplen,
     })
 
 
