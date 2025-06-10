@@ -94,6 +94,24 @@ def main():
     # FuseConfig.W_D_L_R_ATTN, ##bad
   ]
 
+  configs = [
+    FuseConfig.WDLR,
+    # FuseConfig.WLR_D,
+    # FuseConfig.DEPTH_FEATS_GATED,
+    # FuseConfig.DEPTH_FEATS_ATTN,
+    # FuseConfig.WD_LR,
+    # FuseConfig.WD_LR_ATTN,
+    FuseConfig.Wfilm_D,
+    FuseConfig.W_Dfilm,
+    FuseConfig.Wfilm_Dfilm,
+    FuseConfig.Wfilm_D_LATE,
+    FuseConfig.W_Dfilm_LATE,
+    FuseConfig.Wfilm_Dfilm_LATE,
+    # FuseConfig.W_D_L_R,
+    # FuseConfig.W_D_L_R_FILM,
+    # FuseConfig.W_D_L_R_ATTN, ##bad
+  ]
+
   epochs = [
     100, 
     200, 
