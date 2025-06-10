@@ -101,17 +101,20 @@ class ActiveAgent_Plan1:
     action: np.ndarray,
     obs: Observation,
     first_n_centre: int = 20,
-    clearance: float = 0.05, # is this too far?
+    clearance: float = 0.2, # 20 cm  (min_pc_dist) and 10cm ignore so 10 cm after that
     blend: float = 0.02,
     gain: float = 0.1,
-    damping: float = 0.01
+    min_pc_dist: float = 0.1 # want to ignore the grippers becuase they wil always be clsoe, gripper is about 0.0885 from the camera
   ) -> np.ndarray:
     
     gripper_pos = robot.gripper.get_position()
 
     pc = obs.wrist_point_cloud.reshape(-1, 3) ## get into (w*h, 3)
-    dists = np.linalg.norm(pc - gripper_pos, axis = 1)
+    target_pc, _ = self._get_masked_pc_and_mask(obs.wrist_rgb, obs.wrist_point_cloud)
+    pc -= target_pc ## this is to exclude the target from this backoff
     ## calculate the distances from the gripper
+    dists = np.linalg.norm(pc - gripper_pos, axis = 1)
+    dists = dists[dists > min_pc_dist] # ignore the grippers that we can see
     idxs = np.argsort(dists)[:first_n_centre]
     centroid = pc[idxs].mean(axis = 0)
     min_dist = dists.min()
@@ -122,13 +125,8 @@ class ActiveAgent_Plan1:
     repulse_dir /= np.linalg.norm(repulse_dir) ## make into a unit vector
 
     ## joint space to cartesion space
-    ## this is only translational repulsion, we are not pushing its rotation
     J = robot.arm.get_jacobian() ## row-major (7, 6)
     
-    ## moorepensrose pseudo inverse to find a minimium nor solution
-    ## there are many vectors to solve 7dof joints into 6dof cartesian
-    # J_pinv = J.T @ np.linalg.inv(J @ J.T + damping * np.eye(3)) ##damping added to stabilise inversion, blows up at singularity
-    # cartesion_vel = repulse_dir * gain ## gain is the maximum repulse we allow
     cartesian_twist = np.zeros(6, dtype=np.float32)
     cartesian_twist[:3] = repulse_dir * gain ## linear translation away
     
@@ -143,14 +141,14 @@ class ActiveAgent_Plan1:
 
     ## calculate repulsive action from obstacle
     
-    action[:7] = (1 - alpha_blend) * action[:7] + repulse_jvel
+    action[:7] = (1 - alpha_blend) * action[:7] + alpha_blend * repulse_jvel
     return action
   
   def _get_masked_pc_and_mask(self, 
     rgb: np.ndarray, 
     world_pc: np.ndarray, ## NOTE: VisionSensor with no 'rel_to' param gives in terms of world
-    hsv_low: np.ndarray,
-    hsv_high: np.ndarray,
+    hsv_low: np.ndarray = np.array([0, 177, 0]),
+    hsv_high: np.ndarray = np.array([179, 255, 255]),
   ) -> tuple:
     ## the vision_sensor gives the point cloud in world frame
     hsv =  cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
@@ -163,19 +161,21 @@ class ActiveAgent_Plan1:
     masked_pc = pc_flat[mask_flat]
     return masked_pc, mask
   
+  # \(k\) from \({pc}^{world}\) where \( m_k \in \{\text{True, False}\} \) as \( \{ {pc}^{target}_k | m_k = True \} \) where $m$ comes from the aforementioned colour range extraction
 
   def _sample_camera_poses(self, 
     robot: Robot,
     n_samples: int, 
     radius: float,
-    max_angle_rad = np.deg2rad(30)
-  ):
+    max_angle_rad = np.deg2rad(60),
+    # k_sample: int = 10
+  ) -> list[np.ndarray]:
     curr_pose = robot.gripper.get_pose()
     curr_pos = curr_pose[:3]
     curr_quat = curr_pose[3:]
     curr_rot = rot.from_quat(curr_quat)
 
-    poses = []
+    samples = []
     joint_sets = []
     for _ in range(n_samples):
       axis = np.random.rand(3) ## pick an axis
@@ -189,54 +189,62 @@ class ActiveAgent_Plan1:
       new_pose = np.zeros(7, dtype=float) ## xyz + quat
       new_pose[0:3] = curr_pos
       new_pose[3:7] = new_quat
-      poses.append(new_pose)
-      
-    return poses
+      samples.append((abs(angle), new_pose))
+    
+
+    poses = [pose for (_, pose) in sorted(samples, key = lambda s: s[0])]
+    # return poses[:k_sample] ## only take top k
+    return poses ## don't really care about top k here, rotation is cheap
   
 
-  # def _sample_camera_poses(self, 
-  #   robot: Robot,
-  #   n_samples: int, 
-  #   radius: float,
-  # ):
-  #   ee_pos = robot.gripper.get_position()
-  #   poses = []
-  #   for _ in range(n_samples):
-  #     ## get position
-  #     # uniform sampling on sphere surface around gripper pose
-  #     theta = np.arccos(2 * np.random.rand() - 1)
-  #     phi   = 2 * np.pi * np.random.rand()
-  #     x_off = radius * np.sin(theta) * np.cos(phi)
-  #     y_off = radius * np.sin(theta) * np.sin(phi)
-  #     z_off = radius * np.cos(theta)
-  #     off = np.array([x_off, y_off, z_off])
-  #     pos = ee_pos + off
+  def _sample_camera_poses(self, 
+    robot: Robot,
+    n_samples: int, 
+    radius: float,
+    k_sample: int = 10
+  ):
+    
+    ee_pos = robot.gripper.get_position()
+    ## arbitrary pick maybe make this look towards the target later
+    centre = ee_pos + np.array([0., 0., - radius])
+    samples = []
+    for _ in range(n_samples):
+      ## get position
+      # uniform sampling on sphere surface around gripper pose
+      theta = np.arccos(2 * np.random.rand() - 1)
+      phi   = 2 * np.pi * np.random.rand()
+      x_off = radius * np.sin(theta) * np.cos(phi)
+      y_off = radius * np.sin(theta) * np.sin(phi)
+      z_off = radius * np.cos(theta)
+      off = np.array([x_off, y_off, z_off])
+      pos = centre + off
 
 
-  #     ## get rotation
-  #     ## TODO add math for this in the report
-  #     # forward = ee_pos - pos ## same as - off
-  #     forward = -off
-  #     forward /= np.linalg.norm(forward)
-  #     world_up = np.array([0.0, 0.0, 1.])
-  #     right = np.cross(world_up, forward)
+      ## get rotation
+      ## TODO add math for this in the report
+      # forward = ee_pos - pos ## same as - off
+      forward = -off
+      forward /= np.linalg.norm(forward)
+      world_up = np.array([0.0, 0.0, 1.])
+      right = np.cross(world_up, forward)
 
-  #     ## handle case when up ~= forward
-  #     if np.linalg.norm(right) < 1e-6:
-  #         world_up = np.array([1.0, 0.0, 0.0])
-  #         right = np.cross(world_up, forward)
-  #     right /= np.linalg.norm(right)
-  #     true_up = np.cross(forward, right)
+      ## handle case when up ~= forward
+      if np.linalg.norm(right) < 1e-6:
+          world_up = np.array([1.0, 0.0, 0.0])
+          right = np.cross(world_up, forward)
+      right /= np.linalg.norm(right)
+      true_up = np.cross(forward, right)
 
-  #     R_mat = np.stack([right, true_up, forward], axis=1)  # 3 x 3 rot
-  #     quat = rot.from_matrix(R_mat).as_quat()  
+      R_mat = np.stack([right, true_up, forward], axis=1)  # 3 x 3 rot
+      quat = rot.from_matrix(R_mat).as_quat()  
 
-  #     pose = np.zeros(7, dtype=float) ## xyz + quat
-  #     pose[0:3] = pos
-  #     pose[3:7] = quat
-  #     poses.append(pose)
+      pose = np.zeros(7, dtype=float) ## xyz + quat
+      pose[0:3] = pos
+      pose[3:7] = quat
+      samples.append((np.linalg.norm(pos - ee_pos), pose))
 
-  #   return poses
+    poses = [pose for (_, pose) in sorted(samples, key = lambda s: s[0])]
+    return poses[:k_sample] ## take closest k
   
   ## returns the joint positions to achieve pose: (7, )
   def _solve_ik(self, robot: Robot, pose: np.ndarray) -> Optional[np.ndarray]:
@@ -344,7 +352,7 @@ class ActiveAgent_Plan1:
   def act(self, 
     init_obs: Observation,
     task_env: TaskEnvironment,
-    pose_samples: int = 20,
+    pose_samples: int = 100,
     max_loops: int = 5,
     within_obs: float = 0.1 # this is gonna be the vertical distance, I wanna see when we are about level with the obstacle
   ) -> tuple[bool, dict]:
