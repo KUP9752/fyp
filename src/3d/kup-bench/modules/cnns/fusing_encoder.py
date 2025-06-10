@@ -41,8 +41,8 @@ class FusingEncoder(nn.Module):
       "attn_deep_fuse": True, ## works better
     },
     "film":{
-      "downer_cnn_layers": [64, 64, 128, 128],
-      "double_downer_cnn_layers": [128, 128, 128, 128],
+      "downer_cnn_layers": [32, 48, 64, 128],
+      "double_downer_cnn_layers": [36, 72, 128, 128],
     },
     "mvt":{
       "embed_dim":  128, 

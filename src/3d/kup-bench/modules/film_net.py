@@ -111,7 +111,7 @@ class DeepEncoder(nn.Module):
         nn.BatchNorm2d(base_channels),
         nn.MaxPool2d(2), ## NOTE: this is the same as `nn.MaxPool2d(kernel_size=(2, 2), stride=2, padding=0)` less explicit though
         nn.ReLU(inplace=True),
-        # Block 2: 32x32 -> 16x16
+        # Block 2: 32x32 -> 8x8
         nn.Conv2d(base_channels, base_channels*2, kernel_size=3, stride=1, padding=1, bias=False),
         nn.BatchNorm2d(base_channels*2),
         nn.MaxPool2d(2),
