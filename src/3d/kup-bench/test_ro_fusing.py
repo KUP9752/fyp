@@ -49,7 +49,7 @@ if __name__ == "__main__":
   task = ReachObs_Random #, ReachObs_Random]
 
   epochs = [
-    100, 200, 500, 1000, 2000, 5000 # maybe do again if needed later
+    100, 200, 500, 1000, #2000, 5000 # maybe do again if needed later
   ]
 
   seeds = [
@@ -62,14 +62,14 @@ if __name__ == "__main__":
 
   demo_count = 10
   cam_types = [
-    # CamType.WRIST,
+    CamType.WRIST,
     CamType.WRIST | CamType.WRIST_DEPTH,
-    # CamType.LEFT_SHOULDER,
-    # CamType.RIGHT_SHOULDER,
-    # CamType.WRIST | CamType.RIGHT_SHOULDER | CamType.LEFT_SHOULDER,
+    CamType.LEFT_SHOULDER |  CamType.RIGHT_SHOULDER,
+    CamType.WRIST | CamType.RIGHT_SHOULDER | CamType.LEFT_SHOULDER,
+    CamType.WRIST | CamType.RIGHT_SHOULDER | CamType.LEFT_SHOULDER | CamType.WRIST_DEPTH,
+
     # CamType.WRIST | CamType.RIGHT_SHOULDER,
     # CamType.WRIST | CamType.LEFT_SHOULDER,
-    # CamType.LEFT_SHOULDER |  CamType.RIGHT_SHOULDER,
   ]
 
   env = launch_test_env(
@@ -78,12 +78,12 @@ if __name__ == "__main__":
   )
 
   configs = [
-    # FuseConfig.WDLR,
-    # FuseConfig.WLR_D,
-    # FuseConfig.DEPTH_FEATS_GATED,
-    # FuseConfig.DEPTH_FEATS_ATTN,
-    # FuseConfig.WD_LR,
-    # FuseConfig.WD_LR_ATTN,
+    FuseConfig.WDLR,
+    FuseConfig.WLR_D,
+    FuseConfig.DEPTH_FEATS_GATED,
+    FuseConfig.DEPTH_FEATS_ATTN,
+    FuseConfig.WD_LR,
+    FuseConfig.WD_LR_ATTN,
     FuseConfig.Wfilm_D,
     FuseConfig.W_Dfilm,
     FuseConfig.Wfilm_Dfilm,
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     FuseConfig.W_Dfilm_LATE,
     FuseConfig.Wfilm_Dfilm_LATE,
     # FuseConfig.W_D_L_R,
-    # FuseConfig.W_D_L_R_FILM,
+    FuseConfig.W_D_L_R_FILM,
     # FuseConfig.W_D_L_R_ATTN, ##bad
   ]
   ##fixed mb size this time
