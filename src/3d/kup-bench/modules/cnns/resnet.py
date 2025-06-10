@@ -6,7 +6,7 @@ FALLBACK = "resnet18"
 
 class ResNetEncoder(nn.Module):
   def __init__(self,
-    in_channels = 3,
+    in_channels = 5,
     resnet_name: str = FALLBACK,
     kernel_size = None,
   ):
