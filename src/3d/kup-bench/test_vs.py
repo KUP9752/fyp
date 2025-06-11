@@ -58,8 +58,8 @@ def main():
     10,
     env, 
     task, 
-    "data/20demos/smaller-Vision_Random",
-    task_params = smaller
+    "data/20demos/normal-Vision_Random",
+    task_params = normal
   )
   test_normal = load_demos_for(
     10,
@@ -76,48 +76,31 @@ def main():
     "data/test/10demos/smaller-Vision_Random",
     task_params = smaller
   )
+  
   configs = [
-    FuseConfig.WDLR,
+    # FuseConfig.WDLR,
     FuseConfig.WLR_D,
     FuseConfig.DEPTH_FEATS_GATED,
     FuseConfig.DEPTH_FEATS_ATTN,
     FuseConfig.WD_LR,
     FuseConfig.WD_LR_ATTN,
-    FuseConfig.Wfilm_D,
+    # FuseConfig.Wfilm_D,
     # FuseConfig.W_Dfilm,
-    FuseConfig.Wfilm_Dfilm,
-    FuseConfig.Wfilm_D_LATE,
-    FuseConfig.W_Dfilm_LATE,
-    FuseConfig.Wfilm_Dfilm_LATE,
-    FuseConfig.W_D_L_R,
-    FuseConfig.W_D_L_R_FILM,
-    # FuseConfig.W_D_L_R_ATTN, ##bad
-  ]
-
-  configs = [
-    FuseConfig.WDLR,
-    # FuseConfig.WLR_D,
-    # FuseConfig.DEPTH_FEATS_GATED,
-    # FuseConfig.DEPTH_FEATS_ATTN,
-    # FuseConfig.WD_LR,
-    # FuseConfig.WD_LR_ATTN,
-    FuseConfig.Wfilm_D,
-    FuseConfig.W_Dfilm,
-    FuseConfig.Wfilm_Dfilm,
-    FuseConfig.Wfilm_D_LATE,
-    FuseConfig.W_Dfilm_LATE,
-    FuseConfig.Wfilm_Dfilm_LATE,
+    # FuseConfig.Wfilm_Dfilm,
+    # FuseConfig.Wfilm_D_LATE,
+    # FuseConfig.W_Dfilm_LATE,
+    # FuseConfig.Wfilm_Dfilm_LATE,
     # FuseConfig.W_D_L_R,
     # FuseConfig.W_D_L_R_FILM,
     # FuseConfig.W_D_L_R_ATTN, ##bad
   ]
 
   epochs = [
-    100, 
-    200, 
+    # 100, 
+    # 200, 
     400, 
-    600, 
-    800,
+    # 600, 
+    # 800,
     # 1000, 
     # 2000
   ]
@@ -169,10 +152,10 @@ def main():
     "avg_test_final_distance",
 
   ]
-  main_folder = "ZZ-small-then-normal"
+  file = "vs_random-ns-sepdeps-400eps"
 
-  df_all_str = lambda config, seed: f"{main_folder}/ALLvs_random-sn-cfg:{config}-seed{seed}.csv"
-  df_avg_str = lambda config, seed: f"{main_folder}/vs_random-sn-cfg:{config}-seed{seed}.csv"
+  df_all_str =f"ALL{file}.csv"
+  df_avg_str =f"{file}.csv"
 
 
   demo_columns = [
@@ -212,25 +195,31 @@ def main():
 
     ## others are defaulted
   )
+  df_all = pd.DataFrame(
+    columns=demo_columns, 
+    index = range(
+      len(combs)
+      * 10 ## 10 runs
+      * len(seeds) 
+      * len(configs)
+      ) 
+  )
+  df_avg = pd.DataFrame(
+    columns=config_columns, 
+    index = range(
+      len(combs)
+      * len(seeds) 
+      * len(configs)
+    ) 
+  )
+  all_count = 0
+  avg_count = 0
+
+  df_all.to_csv(df_all_str, index=True)
+  df_avg.to_csv(df_avg_str, index=True)
   logger.info("=== Starting Long Test:")
   for seed in seeds:
     for config in configs:
-
-      df_all = pd.DataFrame(
-        columns=demo_columns, 
-        index = range(len(combs) * 10) 
-      )
-      df_avg = pd.DataFrame(
-        columns=config_columns, 
-        index = range(len(combs)) 
-      )
-
-      all_count = 0
-      avg_count = 0
-
-      df_all.to_csv(df_all_str(config, seed), index=True)
-      df_avg.to_csv(df_avg_str(config, seed), index=True)
-
       for (ep, ct) in combs:
         training_params["epochs"] = ep
         training_params["lock_loader_seed"] = seed
@@ -250,20 +239,20 @@ def main():
               env,
               task,
               agent, 
-              test_smaller, 
+              test_normal, 
               max_eplen="demo_max",
               do_extra_outs=True,
-              task_params=smaller
+              task_params=normal
             )
           
           test_dicts = run_determined_grasp_with_agent(
               env,
               task,
               agent, 
-              test_normal, 
+              test_smaller, 
               max_eplen="demo_max",
               do_extra_outs=True,
-              task_params=normal
+              task_params=smaller
             )
           # assert len(test_dicts) == len(control_dicts) == 10, "10 test demos see if this is respected"
           logger.info(f"{len(test_dicts) = }")
@@ -303,7 +292,7 @@ def main():
 
             }
             all_count+= 1
-            df_all.to_csv(df_all_str(config, seed), index=True)
+            df_all.to_csv(df_all_str, index=True)
 
           df_avg.loc[avg_count] = {
             "seed": seed,
@@ -325,7 +314,7 @@ def main():
 
           }
           avg_count += 1
-          df_avg.to_csv(df_avg_str(config, seed), index=True)
+          df_avg.to_csv(df_avg_str, index=True)
 
         except Exception as e:
           
@@ -341,7 +330,7 @@ def main():
               "epochs": training_params["epochs"],
             }
             all_count+= 1
-            df_all.to_csv(df_all_str(config, seed), index=True)
+            df_all.to_csv(df_all_str, index=True)
 
           df_avg.loc[avg_count] = {
             "seed": seed,
@@ -352,7 +341,7 @@ def main():
             "epochs": training_params["epochs"],
           }
           avg_count += 1
-          df_avg.to_csv(df_avg_str(config, seed), index=True)
+          df_avg.to_csv(df_avg_str, index=True)
 
           logger.info("Added error rows to dfs")
 

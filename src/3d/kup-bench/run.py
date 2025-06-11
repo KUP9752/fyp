@@ -58,32 +58,28 @@ from modules.policy.fusing_policy import FuseConfig
 from itertools import product
 DATASET  = 'data/20demos'
 #%%
-task = Vision_Random
 
-normal = {
+smaller = {
   "scale": 0.5,
-  "wrist_cam_distance": 0.3
+}
+normal = {
+  "scale": 1,
 }
 
-
 #%%
-
 env = launch_test_env(
   dataset_root=DATASET,
   enableds = CamType.WRIST | CamType.RIGHT_SHOULDER | CamType.LEFT_SHOULDER
 )
 #%%
-task = Vision_Static
-
-# agent = Agent(
-#   env.action_shape[0],
-#   policy_type = PolicyType.FUSING,
-#   cam_type = CamType.WRIST,
-#   config = FuseConfig.WDLR
-#   is_grasp = True
-#   use_proprio = False
-#   # opts = {}
-# )
+test_smaller = load_demos_for(
+    10,
+    env, 
+    task, 
+    "data/test/10demos/smaller-Vision_Random",
+    task_params = smaller
+)
+#%%
 
 # model_name = f"rwd-{get_task_name(task)}-{agent}--{now()}"
 # model_path = f"./all-models/reach-with-demos/{model_name}.pth"
@@ -92,19 +88,15 @@ task = Vision_Static
 
 #%%
 task = Vision_Random
-normal = {
-  "scale": 1.,
-  "wrist_cam_distance": 0.6
-}
 
 env._dataset_root = f"data/20demos/normal-{get_task_name(task)}"
 task_env = env.get_task(task, **normal)
 
-demos = task_env.get_demos(1, live_demos=False)
-#%10
+demos = task_env.get_demos(10, live_demos=False)
+#%%
 training_params = {
-  "epochs": 1, 
-  "minibatch_size": 5,
+  "epochs": 600, 
+  "minibatch_size": 10,
   "lr": 1e-3,
   "shuffle_obs_in_demo": False,
   "shuffle_data": True,
@@ -113,31 +105,56 @@ training_params = {
   "lambda_grasp_loss": 1,
 }
 
-# bs = [False, True]
-# for p in bs:
-#   for g in bs:
-agent = Agent(
-  env.action_shape[0],
-  policy_type = PolicyType.FUSING,
-  cam_type = CamType.WRIST | CamType.WRIST_DEPTH,
-  fuse_config = FuseConfig.W_Dfilm,
-  is_grasp = True,
-  use_proprio = False,
-  # opts = {}
-)
-agent.ingest(demos, **training_params) ## trains here
+configs = [
+    # FuseConfig.WDLR,
+    # FuseConfig.WLR_D,
+    # FuseConfig.DEPTH_FEATS_GATED,
+    # FuseConfig.DEPTH_FEATS_ATTN,
+    # FuseConfig.WD_LR,
+    # FuseConfig.WD_LR_ATTN,
+    # FuseConfig.Wfilm_D,
+    # FuseConfig.W_Dfilm,
+    # FuseConfig.Wfilm_Dfilm,
 
+    # FuseConfig.Wfilm_D_LATE,
+    # FuseConfig.W_Dfilm_LATE,
+    # FuseConfig.Wfilm_Dfilm_LATE,
+
+    FuseConfig.W_D_L_R_FILM, # TODO not fixed
+
+    # FuseConfig.W_D_L_R,
+    # FuseConfig.W_D_L_R_ATTN,
+  ]
+# print()
+agent = Agent(
+  action_shape= env.action_shape[0],
+  policy_type=PolicyType.FUSING_RNN, 
+  cam_type= CamType.WRIST | CamType.RIGHT_SHOULDER | CamType.LEFT_SHOULDER,
+
+  is_grasp = True, 
+
+  fuse_config = FuseConfig.WDLR,
+  fusing_opts = {}, ## make sure to use defaults 
+
+  use_proprio = False,
+  proprio_opts = {}, ## make sure to use defaults 
+
+  ## others are defaulted
+)
+agent.ingest(demos, **training_params)
 #%%
 # agent.policy.load_state_dict(torch.load("models/PROMISING-rwd-reach-1-demo-wrist+r_shoulder-ReachObs_Random-PolicyType.CAM_ATTENTION.pth"))
 #%%
+
+
 rets = run_determined_grasp_with_agent(
   env, 
   task, 
   agent, 
-  demos, 
+  test_smaller, 
   max_eplen="demo_max", 
   do_extra_outs=False, 
-  task_params = normal
+  task_params = smaller
 )[0]
 # rets
 # # print(f"Above: {rets['avg_attentions_above_obstacle']}")
@@ -158,45 +175,44 @@ rets = run_determined_grasp_with_agent(
 # env.get_task(ReachObs_Random)
 # target_rgb = Shape("target").get_color()
 #%%
-# from modules.dataset.demo_dataset import DemoDataset
-# from torch.utils.data import DataLoader
-# from torch.nn.utils.rnn import pad_sequence
+from modules.dataset.demo_dataset import DemoDataset
+from torch.utils.data import DataLoader
+from torch.nn.utils.rnn import pad_sequence
 
-# def collate(batch):
-#     ## batch contains [(input, labels)] where each input is a complete demo (in terms of the data in sequence rgb for example)
-#     ## input: (t, ch, w, h) 
-#     inputs, labels, loader = zip(*batch)
-#     [print(f"{input.shape}") for input in inputs]
+def collate(batch):
+    ## batch contains [(input, labels)] where each input is a complete demo (in terms of the data in sequence rgb for example)
+    ## input: (t, ch, w, h) 
+    inputs, labels, loader = zip(*batch)
+    [print(f"{input.shape}") for input in inputs]
 
-#     ## enforcing types for later
-#     print(f"{len(labels) =}")
+    ## enforcing types for later
+    print(f"{len(labels) =}")
     
-#     real_lengths = torch.LongTensor([inp.shape[0] for inp in inputs])
-#     print(f"{real_lengths.shape =}")
+    real_lengths = torch.LongTensor([inp.shape[0] for inp in inputs])
+    print(f"{real_lengths.shape =}")
     
-#     inputs_padded = pad_sequence(inputs, batch_first=True) ## CHECK: if it gives (B, t, ch, w, h)
-#     print(f"{inputs_padded.shape = }")
+    inputs_padded = pad_sequence(inputs, batch_first=True) ## CHECK: if it gives (B, t, ch, w, h)
+    print(f"{inputs_padded.shape = }")
 
-#     labels_padded = pad_sequence(labels, batch_first=True) ## CHECK: if it gives (B, t, ch, w, h)
-#     print(f"{labels_padded.shape = }")
+    labels_padded = pad_sequence(labels, batch_first=True) ## CHECK: if it gives (B, t, ch, w, h)
+    print(f"{labels_padded.shape = }")
 
 
-#     ## need to return shape (B, t, ch, w, h) for the input and labels
-#     ## also returning lenths for LSTM use later
-#     return inputs_padded, labels_padded, real_lengths
+    ## need to return shape (B, t, ch, w, h) for the input and labels
+    ## also returning lenths for LSTM use later
+    return inputs_padded, labels_padded, real_lengths
 
-# dataset = DemoDataset(demos, cam_type= CamType.WRIST | CamType.WRIST_DEPTH | CamType.LEFT_SHOULDER | CamType.RIGHT_SHOULDER, get_type="cat")
-# loader = DataLoader(
-#   dataset,
-#   shuffle = True,
-#   batch_size=10,
-#   collate_fn=collate,
-#   generator=torch.manual_seed(42)
-# )
+dataset = DemoDataset(demos, cam_type= CamType.WRIST | CamType.WRIST_DEPTH | CamType.LEFT_SHOULDER | CamType.RIGHT_SHOULDER, get_type="cat")
+loader = DataLoader(
+  dataset,
+  shuffle = True,
+  batch_size=2,
+  collate_fn=collate,
+  generator=torch.manual_seed(42)
+)
 
-# for ins, out, ls in loader:
-#   print(f"{ins.shape = }")
+for ins, out, ls in loader:
+  print(f"{ins.shape = }")
   
-#   plt.imshow(ins[4, 20, -1, :, :])
-#   break
+  break
   
