@@ -266,7 +266,7 @@ class FusingEncoder(nn.Module):
           do_both=True
         )
 
-        self.lr_downer = CNNEncoder(6, layers = self.opts["film"]["double_downer_cnn_layers"])
+        self.lr_downer = CNNEncoder(6, layers = self.opts["film"]["downer_cnn_layers"])
 
         self.feat_size = self.lr_downer.flat_out_size + self.wd_downer.flat_out_size
 
