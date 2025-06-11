@@ -49,7 +49,13 @@ if __name__ == "__main__":
   task = ReachObs_Random #, ReachObs_Random]
 
   epochs = [
-    100, 200, 500, 1000, #2000, 5000 # maybe do again if needed later
+   100, 
+   200,
+   500,
+   1000,
+   2000, 
+  #  5000
+   
   ]
 
   seeds = [
@@ -94,6 +100,7 @@ if __name__ == "__main__":
     FuseConfig.W_D_L_R_FILM,
     # FuseConfig.W_D_L_R_ATTN, ##bad
   ]
+
   ##fixed mb size this time
   training_params = {
     "epochs": None,
@@ -106,8 +113,8 @@ if __name__ == "__main__":
   }
   # fix the test dataset as this one
   main_folder = "ZZ-film-ro"
-  df_all_str = lambda config, seed: f"{main_folder}/ALLro_random-cfg:{config}-seed{seed}.csv"
-  df_avg_str = lambda config, seed: f"{main_folder}/ro_random-cfg:{config}-seed{seed}.csv"
+  df_all_str = f"{main_folder}/ALLro_random.csv"
+  df_avg_str = f"{main_folder}/ro_random.csv"
 
   all_columns=[
     "task_name",
@@ -138,7 +145,7 @@ if __name__ == "__main__":
     "agent",
     "error",
   ]
-  make_agent = lambda ct, cfg,: Agent(
+  make_agent = lambda ct, cfg: Agent(
     action_shape= env.action_shape[0],
     policy_type=PolicyType.FUSING, ## NO RNN!!
     cam_type=ct,
@@ -161,6 +168,10 @@ if __name__ == "__main__":
   test_demos = load_demos_for(10, env,  task, f"data/test/10demos")
   demos = load_demos_for(demo_count, env, task, f"data/20demos")
 
+
+  if len(demos) != demo_count:
+    raise RuntimeError("demo lengths are wrong")
+  
   all_count = 0 
   df_all = pd.DataFrame(
     columns=all_columns, 
@@ -183,10 +194,10 @@ if __name__ == "__main__":
       * len(seeds)
     )
   )
+  df_all.to_csv(df_all_str, index=True)
+  df_avg.to_csv(df_avg_str, index=True)
 
-  if len(demos) != demo_count:
-    raise RuntimeError("demo lengths are wrong")
-  
+
   for seed, config, ct, ep in product(seeds, configs, cam_types, epochs):
     training_params["epochs"] = ep  
     training_params["lock_loader_seed"] = seed  
@@ -229,7 +240,7 @@ if __name__ == "__main__":
           "error": False,
         }
         all_count += 1
-        df_all.to_csv(df_all_str(config, seed), index=True)
+        df_all.to_csv(df_all_str, index=True)
 
       df_avg.loc[avg_count] = {
         "task_name": get_task_name(task), 
@@ -245,7 +256,7 @@ if __name__ == "__main__":
         "error": False,
         }
       avg_count += 1
-      df_avg.to_csv(df_avg_str(config, seed), index=True)
+      df_avg.to_csv(df_avg_str, index=True)
 
     except Exception as e:
       logger.exception(f"Something Went Wrong! Marking row in DF")
@@ -260,7 +271,7 @@ if __name__ == "__main__":
           "epochs": training_params["epochs"],
         }
         all_count+= 1
-        df_all.to_csv(df_all_str(config, seed), index=True)
+        df_all.to_csv(df_all_str, index=True)
 
       df_avg.loc[avg_count] = {
         "seed": seed,
@@ -271,6 +282,6 @@ if __name__ == "__main__":
         "epochs": training_params["epochs"],
       }
       avg_count += 1
-      df_avg.to_csv(df_avg_str(config, seed), index=True)
+      df_avg.to_csv(df_avg_str, index=True)
 
       logger.info("Added error rows to dfs")
