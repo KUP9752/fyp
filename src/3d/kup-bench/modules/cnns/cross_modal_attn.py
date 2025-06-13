@@ -21,7 +21,7 @@ class CrossModalAttention(nn.Module):
       # query_feats, key_feats: (B, C, H, W)
       B, ch, h, w = query_feats.shape
       # Flatten spatial dims: (H*W, B, C)
-      q = query_feats.flatten(2).permute(2, 0, 1)
+      q = query_feats.flatten(2).permute(2, 0, 1) 
       k = key_feats.flatten(2).permute(2, 0, 1)
       v = k
 

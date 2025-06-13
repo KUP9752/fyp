@@ -42,7 +42,7 @@ class FusingRNNPolicy(FusingPolicy):
   default_rnn_opts = {
     "input_size" : 512,
     "hidden_size" : 256,
-    "num_layers" : 2,
+    "num_layers" : 1,
     "batch_first" : True,
     "bidirectional" : False, 
   }
@@ -258,20 +258,21 @@ class FusingRNNPolicy(FusingPolicy):
         pred_pose = pred_actions[:, :-1]   # (B, T, ...)
         true_pose = labels[:, :-1]
 
+        pred_grasp = pred_actions[:,  -1]  # (B, T) 
+        true_grasp = labels[:, -1]
 
         pose_err = mse_loss(pred_pose, true_pose)       
+        grasp_err = bce_loss(pred_grasp, true_grasp)  
+
 
         ## sum over pose dims
         pose_err = pose_err.sum(dim = -1) ## (B, t)
         pose_err  = pose_err * mask.float()
-        
+        grasp_err = grasp_err * mask.float()
+
+
         num_valid = mask.sum()
         pose_loss = pose_err.sum() / num_valid
-
-        pred_grasp = pred_actions[:,  -1]  # (B, T) 
-        true_grasp = labels[:, -1]
-        grasp_err = bce_loss(pred_grasp, true_grasp)  
-        grasp_err = grasp_err * mask.float()
         grasp_loss = grasp_err.sum() / num_valid
         ## average over valid frames
         

@@ -58,30 +58,30 @@ class CameraAttention(nn.Module):
 
     B, n, d = feats.shape
     # flat_t_scores = t_scores.unsqueeze(-1) ## same as below
-    print(f"{feats.shape = }")
-    print(f"{t_scores.shape = }")
+    # print(f"{feats.shape = }")
+    # print(f"{t_scores.shape = }")
     
     flat_t_scores = t_scores.view(B, n, 1)
-    print(f"{flat_t_scores.shape = }")
+    # print(f"{flat_t_scores.shape = }")
 
     comb = torch.cat([feats, flat_t_scores], dim = -1) # along feature dim: d
-    print(f"{comb.shape = }")
+    # print(f"{comb.shape = }")
 
     comb = comb.view(B * n, d + 1) ## not that colour score is added
-    print(f"{comb.shape = }")
+    # print(f"{comb.shape = }")
 
     scores = self.attention_mlp(comb) ## gives (B * num_cameras, 1)
-    print(f"{scores.shape = }")
+    # print(f"{scores.shape = }")
     scores = scores.view(B, n)  # (batch_size, num_cameras)
-    print(f"{scores.shape = }")
+    # print(f"{scores.shape = }")
 
     scores = scores.squeeze(-1)            # (batch_size, num_cameras)
-    print(f"{scores.shape = }")
+    # print(f"{scores.shape = }")
 
     ## //NOTE: normalisation, att_weights were always [0, 1] or leaning towards one cam, need normalisation
     scores = scores - scores.max(dim=1, keepdim=True)[0] ## logit stabilisation
-    print(f"{scores.shape = }")
-    print()
+    # print(f"{scores.shape = }")
+    # print()
     
     if temperature:
       return F.softmax(scores / temperature, dim=1)      
@@ -171,7 +171,7 @@ class CamAttentionPolicy(nn.Module):
     batch_size, num_cams, c, w, h = images.shape
     ## ensure same number of cams given
     assert num_cams == self.num_cams, f"[cam_attention_policy] Model Creation time num cams {self.num_cams} does not match the inference time tensor shape num cams: {num_cams}"
-    print("---FORWARD:")
+    # print("---FORWARD:")
     # MultiCamCNN forward pass per camera selected
     
     ## in order wrist -> ls -> rs
@@ -193,11 +193,11 @@ class CamAttentionPolicy(nn.Module):
     
     # print()
     feats = torch.stack(to_stack, dim = 1)  ## dim = 1 so (batch_size, num_cams, feat_size, 2, 2)
-    print(f"1-{feats.shape = }")
+    # print(f"1-{feats.shape = }")
     t_scores = torch.stack(target_scores, dim = 1) ## (b, num_cams, 1) last float being target score
-    print(f"{t_scores.shape = }")
+    # print(f"{t_scores.shape = }")
     t_scores = t_scores / (t_scores.sum(dim=1, keepdim=True) + 1e-6) ## normalisation with some epsilon, maybe can use softmax?
-    print(f"{t_scores.shape = }")
+    # print(f"{t_scores.shape = }")
     
     assert feats.shape[1] == self.num_cams, f"[cam_attention_policy] The image dimension ({feats.shape[1]}) is not the same as the number of cams being used for the policy ({self.num_cams})"  
 
@@ -208,18 +208,18 @@ class CamAttentionPolicy(nn.Module):
     
     ## TODO: wait something is wrong here why are the t_scores not used in any way
 
-    print(f"2-{feats.shape = }")
+    # print(f"2-{feats.shape = }")
     # CameraWise attention
     attention_weights: torch.Tensor = self.cam_attention(feats, t_scores) ## (B, num_cams)
-    print(f"{attention_weights.shape = }")
+    # print(f"{attention_weights.shape = }")
     
     fused_feats = (attention_weights.unsqueeze(-1) * feats).sum(dim=1)
-    print(f"{fused_feats.shape = }")
+    # print(f"{fused_feats.shape = }")
     
     # Policy Head
     actions = self.policy_head(fused_feats)
     # print(f"{actions.shape = }")
-    print("---END-FORWARD")
+    # print("---END-FORWARD")
     return actions, {
       "attention_weights": attention_weights,
       "kl_divergence": F.kl_div(attention_weights.log(), t_scores, reduction="batchmean")
@@ -308,10 +308,12 @@ class CamAttentionPolicy(nn.Module):
     writer = SummaryWriter()
     
     model.train()
-    
-    self.losses = torch.empty(epochs, dtype=torch.float32, device = device)
+    self.action_losses = []
+    self.attn_losses = []
+
     for epoch in progress(range(epochs)):
-      running_loss = 0
+      running_action_loss, running_attn_loss = 0., 0.
+
       for inputs, labels, loader_dict in loader:
         inputs, labels = inputs.to(device), labels.to(device)
         optimiser.zero_grad()
@@ -331,12 +333,12 @@ class CamAttentionPolicy(nn.Module):
         
         optimiser.step()
         scheduler.step()
-        running_loss += action_loss.item()
-        
-      epoch_loss = running_loss / len(loader)
-      self.losses[epoch] = epoch_loss
 
-      writer.add_scalar("Loss/train", epoch_loss, epoch)
+        running_action_loss += action_loss.item()
+        running_attn_loss += lambda_attn * attention_loss.item()
+        
+      self.action_losses.append(running_action_loss / len(loader))
+      self.attn_losses.append(running_attn_loss / len(loader))
       
     print(f"Done Training Policy on {len(demos)} Demos") 
     

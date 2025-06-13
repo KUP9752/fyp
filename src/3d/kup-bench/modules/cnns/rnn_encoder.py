@@ -15,7 +15,7 @@ class RNNEncoder(nn.Module):
     ## lstm options, pass as a dict when creating
     encoding_size = 512, ## default ouutput of CNNEncoder
     hidden_size = 256,
-    num_layers = 2,
+    num_layers = 1,
     batch_first = True, ## keep this true the dataloader handles it as batch first so, (B, t, ...)
     is_bidir = False, ## dont need it to be bidirectional ever i dont think
     config: Literal["depth_feats", "attn"] = "depth_feats",

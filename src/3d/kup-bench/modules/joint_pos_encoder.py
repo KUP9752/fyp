@@ -27,3 +27,4 @@ class JointPosEncoder(nn.Module):
     # joint_angles: (B, 7)
 
     return self.fc(joint_angles), {}
+  
